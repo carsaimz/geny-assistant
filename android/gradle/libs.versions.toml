@@ -6,7 +6,6 @@ appcompat = "1.7.0"
 material = "1.12.0"
 lifecycle = "2.8.7"
 coroutines = "1.9.0"
-capacitor = "6.2.0"
 junit = "4.13.2"
 orgJson = "20240303"
 
@@ -16,9 +15,6 @@ androidx-appcompat = { group = "androidx.appcompat", name = "appcompat", version
 google-material = { group = "com.google.android.material", name = "material", version.ref = "material" }
 androidx-lifecycle-runtime = { group = "androidx.lifecycle", name = "lifecycle-runtime-ktx", version.ref = "lifecycle" }
 kotlinx-coroutines-android = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-android", version.ref = "coroutines" }
-# Runtime Capacitor liga-se como projeto local a partir de app/node_modules
-# (@capacitor/android) — ver settings.gradle.kts e docs/build.md.
-capacitor-android-project = { name = "capacitor-android" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
 org-json = { group = "org.json", name = "json", version.ref = "orgJson" }
 

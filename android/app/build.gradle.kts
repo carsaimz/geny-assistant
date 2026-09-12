@@ -49,7 +49,9 @@ dependencies {
     implementation(libs.google.material)
     implementation(libs.androidx.lifecycle.runtime)
     implementation(libs.kotlinx.coroutines.android)
-    implementation(libs.capacitor.android.project)
+    // Runtime Capacitor: projeto local vindo de app/node_modules
+    // (@capacitor/android via npm) — ver settings.gradle.kts.
+    implementation(project(":capacitor-android"))
 
     testImplementation(libs.junit)
     // org.json real para testes JVM (o stub do android.jar lanca excecao)
