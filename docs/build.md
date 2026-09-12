@@ -56,6 +56,11 @@ gradle :app:testDebugUnitTest      # 14 testes JVM
 gradle :app:lintDebug
 ```
 
+> **Importante:** o runtime do Capacitor (`@capacitor/android`) distribui-se
+> via npm. Rode `npm ci` em `app/` **antes** de qualquer build Gradle — o
+> `settings.gradle.kts` liga `:capacitor-android` a partir de
+> `app/node_modules/@capacitor/android/capacitor`.
+
 Requisito: `gradle.properties` já configura cache; o CI usa Gradle 8.9 fixado
 (`gradle/actions/setup-gradle`). Sem wrapper no repositório nesta fase —
 instale Gradle 8.9 ou use o CI como referência.

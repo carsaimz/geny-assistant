@@ -22,3 +22,10 @@ dependencyResolutionManagement {
 
 rootProject.name = "GenyAssistant"
 include(":app")
+
+// O runtime do Capacitor distribui-se via npm (@capacitor/android) e liga-se
+// como projeto local do Gradle. Requer `npm ci` em app/ antes do build Android.
+include(":capacitor-android")
+project(":capacitor-android").projectDir =
+    file("../app/node_modules/@capacitor/android/capacitor")
+

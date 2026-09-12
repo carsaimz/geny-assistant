@@ -47,6 +47,15 @@ jobs:
         with:
           distribution: temurin
           java-version: 17
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: app/package-lock.json
+      # Runtime Capacitor vem de app/node_modules (settings.gradle.kts)
+      - name: Instalar dependências web
+        run: npm ci
+        working-directory: app
       - uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: "8.9"
