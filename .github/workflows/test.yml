@@ -55,7 +55,7 @@ jobs:
       - name: Instalar dependências web
         run: npm ci
         working-directory: app
-      - uses: gradle/actions/setup-gradle@v4
+      - uses: gradle/actions/setup-gradle@v6
         with:
           gradle-version: "8.9"
       - name: Unit tests
