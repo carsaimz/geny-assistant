@@ -1,0 +1,55 @@
+# Build APK — docs/TECHNICAL_SPEC.md §17.2 (workflow 4)
+name: Build APK
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    paths:
+      - "android/**"
+      - "app/**"
+  workflow_dispatch:
+
+jobs:
+  apk:
+    name: assembleDebug
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: app/package-lock.json
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: "8.9"
+
+      # Web build -> assets do Capacitor
+      - name: Build web
+        working-directory: app
+        run: |
+          npm ci
+          npm run build
+
+      - name: Sync assets
+        run: |
+          rm -rf android/app/src/main/assets/public/*
+          cp -r app/dist/. android/app/src/main/assets/public/
+
+      - name: Assemble debug
+        working-directory: android
+        run: gradle :app:assembleDebug
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: geny-assistant-debug-apk
+          path: android/app/build/outputs/apk/debug/*.apk
+          if-no-files-found: error

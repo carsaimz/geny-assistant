@@ -1,0 +1,51 @@
+# Build nativo — docs/TECHNICAL_SPEC.md §17.2 (workflow 3) e §17.3
+name: Build Native / Build Nativo
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    paths:
+      - "core/**"
+      - ".github/workflows/build-native.yml"
+  workflow_dispatch:
+
+jobs:
+  rust-android:
+    name: rust ${{ matrix.abi }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - abi: arm64-v8a
+            target: aarch64-linux-android
+          - abi: armeabi-v7a
+            target: armv7-linux-androideabi
+          - abi: x86_64
+            target: x86_64-linux-android
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: core
+      - name: Instalar NDK r27
+        uses: nttld/setup-ndk@v1
+        id: ndk
+        with:
+          ndk-version: r27c
+      - name: Instalar cargo-ndk
+        run: cargo install cargo-ndk --locked
+      - name: Build
+        working-directory: core
+        env:
+          ANDROID_NDK_HOME: ${{ steps.ndk.outputs.ndk-path }}
+        run: cargo ndk --target ${{ matrix.target }} --platform 26 -- build --release
+      - uses: actions/upload-artifact@v4
+        with:
+          name: geny-core-${{ matrix.abi }}
+          path: core/target/${{ matrix.target }}/release/libgeny_core.so
+          if-no-files-found: ignore
