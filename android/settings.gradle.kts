@@ -13,7 +13,9 @@ pluginManagement {
 }
 
 dependencyResolutionManagement {
-    repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
+    // PREFER_SETTINGS: o build.gradle do :capacitor-android (npm) registra
+    // repositórios próprios; os nossos (google/mavenCentral) têm prioridade.
+    repositoriesMode.set(RepositoriesMode.PREFER_SETTINGS)
     repositories {
         google()
         mavenCentral()
