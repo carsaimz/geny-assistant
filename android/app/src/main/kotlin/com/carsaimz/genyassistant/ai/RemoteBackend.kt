@@ -77,7 +77,12 @@ object RemoteBackend {
         return try {
             val parsed = JSONObject(content.substring(start, end + 1))
             val tool = parsed.optString("tool")
-            if (tool.isNotEmpty()) tool to parsed.optJSONObject("params") ?: JSONObject() else null
+            if (tool.isEmpty()) {
+                null
+            } else {
+                val params = parsed.optJSONObject("params") ?: JSONObject()
+                tool to params
+            }
         } catch (_: Exception) {
             null
         }

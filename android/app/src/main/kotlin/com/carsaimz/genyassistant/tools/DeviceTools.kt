@@ -2,6 +2,7 @@ package com.carsaimz.genyassistant.tools
 
 import android.content.Intent
 import android.os.Build
+import android.provider.Settings
 import org.json.JSONObject
 
 /** Ferramentas de dispositivo (docs §9.5 contexto): bateria, hora, wifi. */

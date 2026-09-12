@@ -1,6 +1,7 @@
 package com.carsaimz.genyassistant.tools
 
 import android.content.Intent
+import android.net.Uri
 import org.json.JSONArray
 import org.json.JSONObject
 
@@ -83,7 +84,7 @@ class WebSearchTool : Tool(
 ) {
     override fun execute(params: JSONObject, host: ToolHost): JSONObject {
         val query = params.getString("query")
-        val uri = Uri.parse("https://duckduckgo.com/?q=" + android.net.Uri.encode(query))
+        val uri = Uri.parse("https://duckduckgo.com/?q=" + Uri.encode(query))
         val intent = Intent(Intent.ACTION_VIEW, uri).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         host.appContext().startActivity(intent)
         return JSONObject().put("opened", "browser").put("query", query)
