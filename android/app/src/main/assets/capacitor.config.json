@@ -1,0 +1,13 @@
+{
+  "appId": "com.carsaimz.genyassistant",
+  "appName": "Geny Assistant",
+  "webDir": "dist",
+  "android": {
+    "allowMixedContent": false,
+    "captureInput": true,
+    "webContentsDebuggingEnabled": false
+  },
+  "server": {
+    "androidScheme": "https"
+  }
+}

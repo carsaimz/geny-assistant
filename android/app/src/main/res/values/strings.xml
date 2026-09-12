@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Geny Assistant</string>
+    <string name="tagline">Local-first assistant</string>
+    <string name="notif_channel_assistant">Assistant service</string>
+    <string name="notif_channel_assistant_desc">Keeps the Geny Assistant available in the background</string>
+    <string name="notif_assistant_running">Geny is active — everything runs on this device</string>
+    <string name="notif_reminder_title">Reminder</string>
+    <string name="action_open">Open</string>
+    <string name="confirm_allow_once">Allow once</string>
+    <string name="confirm_deny">Deny</string>
+</resources>

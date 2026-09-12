@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="geny_bg">#0F1115</color>
+    <color name="geny_accent">#7C6CFF</color>
+    <color name="geny_fg">#E8EAF0</color>
+    <color name="geny_ok">#3ECF8E</color>
+</resources>
