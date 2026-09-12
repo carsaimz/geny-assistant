@@ -53,7 +53,7 @@
     <application
         android:name=".GenyApplication"
         android:allowBackup="true"
-        android:backupRules="@xml/backup_rules"
+        android:fullBackupContent="@xml/backup_rules"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:icon="@drawable/ic_launcher"
         android:label="@string/app_name"
