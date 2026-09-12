@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="pt-BR" dir="ltr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="color-scheme" content="dark light" />
+    <meta name="theme-color" content="#0f1115" />
+    <meta
+      name="description"
+      content="Geny Assistant — assistente virtual local-first para Android"
+    />
+    <title>Geny Assistant</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='46' fill='%237c6cff'/%3E%3Ccircle cx='35' cy='42' r='8' fill='%23fff'/%3E%3Ccircle cx='65' cy='42' r='8' fill='%23fff'/%3E%3Cpath d='M32 68 Q50 80 68 68' stroke='%23fff' stroke-width='6' fill='none' stroke-linecap='round'/%3E%3C/svg%3E" />
+  </head>
+  <body>
+    <div id="app">
+      <header id="topbar">
+        <div class="brand">
+          <span class="logo" aria-hidden="true">◉</span>
+          <div>
+            <h1 id="app-name">Geny Assistant</h1>
+            <p id="app-tagline" class="tagline"></p>
+          </div>
+        </div>
+        <div class="topbar-actions">
+          <span id="status" class="status status-offline" role="status"></span>
+          <button id="btn-settings" class="icon-btn" type="button" aria-label="Configurações">⚙</button>
+        </div>
+      </header>
+
+      <main id="chat" aria-live="polite"></main>
+
+      <form id="composer" autocomplete="off">
+        <input
+          id="input"
+          type="text"
+          placeholder=""
+          aria-label="Mensagem"
+          maxlength="2000"
+        />
+        <button id="btn-send" type="submit" aria-label="Enviar">➤</button>
+      </form>
+    </div>
+
+    <aside id="settings-drawer" hidden aria-label="Configurações">
+      <!-- conteúdo montado por src/ui/settings.ts -->
+    </aside>
+
+    <dialog id="confirm-dialog">
+      <!-- diálogo de confirmação de ações sensíveis -->
+    </dialog>
+
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
