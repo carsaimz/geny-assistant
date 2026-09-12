@@ -48,7 +48,7 @@ jobs:
         working-directory: android
         run: gradle :app:assembleDebug
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: geny-assistant-debug-apk
           path: android/app/build/outputs/apk/debug/*.apk
