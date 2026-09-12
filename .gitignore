@@ -1,0 +1,58 @@
+# ===== Geny Assistant — monorepo gitignore =====
+
+# --- Modelos de IA (nunca versionar) ---
+models/**
+!models/README.md
+
+# --- Node / app web ---
+node_modules/
+app/node_modules/
+app/dist/
+*.log
+npm-debug.log*
+.vite/
+
+# --- Android ---
+android/.gradle/
+android/build/
+android/app/build/
+android/local.properties
+android/.idea/
+android/app/src/main/assets/public/*
+!android/app/src/main/assets/public/.gitkeep
+*.apk
+*.aab
+*.keystore
+!debug.keystore.example
+capture/*.hprof
+
+# --- Rust / C/C++ ---
+target/
+core/target/
+native/*/
+!native/README.md
+!native/.gitignore
+*.o
+*.so
+*.a
+ccache/
+
+# --- IDEs / editores ---
+.idea/
+*.iml
+.vscode/*
+!.vscode/extensions.json
+.DS_Store
+Thumbs.db
+
+# --- Segredos (nunca versionar) ---
+.env
+.env.*
+*.pem
+secrets/
+google-services.json
+
+# --- Temporários ---
+*.tmp
+*.swp
+tmp/
