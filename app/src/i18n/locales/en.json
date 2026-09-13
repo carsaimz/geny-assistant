@@ -5,6 +5,7 @@
   "status.root": "Root available",
   "nav.settings": "Settings",
   "chat.welcome": "Hi! I'm Geny. Everything runs on your device — no mandatory cloud, no telemetry. Try: \"what time is it?\", \"open the calculator\", \"make a note: buy coffee\".",
+  "chat.placeholder": "Ask Geny anything…",
   "chat.thinking": "Thinking…",
   "chat.tool.started": "Running tool…",
   "chat.tool.ok": "Done",

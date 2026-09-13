@@ -5,6 +5,7 @@
   "status.root": "Root 可用",
   "nav.settings": "设置",
   "chat.welcome": "你好！我是 Geny。一切都在你的设备上运行——无需云端，没有遥测。试试：“现在几点？”、“打开计算器”、“创建笔记：买咖啡”。",
+  "chat.placeholder": "向 Geny 提问…",
   "chat.thinking": "思考中…",
   "chat.tool.started": "正在执行工具…",
   "chat.tool.ok": "完成",
