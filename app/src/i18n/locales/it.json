@@ -32,5 +32,6 @@
   "tool.level.simple": "Semplice",
   "tool.level.explicit": "Esplicita",
   "tool.level.authenticated": "Autenticata",
-  "error.generic": "Qualcosa è andato storto. Riprova."
+  "error.generic": "Qualcosa è andato storto. Riprova.",
+  "error.bridge.contract": "Violazione del contratto del ponte nativo. Aggiorna l’app."
 }

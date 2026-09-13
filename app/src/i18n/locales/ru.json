@@ -32,5 +32,6 @@
   "tool.level.simple": "Простое",
   "tool.level.explicit": "Явное",
   "tool.level.authenticated": "С аутентификацией",
-  "error.generic": "Что-то пошло не так. Попробуйте снова."
+  "error.generic": "Что-то пошло не так. Попробуйте снова.",
+  "error.bridge.contract": "Нарушение контракта нативного моста. Обновите приложение."
 }

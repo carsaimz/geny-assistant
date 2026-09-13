@@ -32,5 +32,6 @@
   "tool.level.simple": "簡易",
   "tool.level.explicit": "明示的",
   "tool.level.authenticated": "認証Required",
-  "error.generic": "問題が発生しました。もう一度お試しください。"
+  "error.generic": "問題が発生しました。もう一度お試しください。",
+  "error.bridge.contract": "ネイティブブリッジの契約違反です。アプリを更新してください。"
 }

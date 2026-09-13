@@ -32,5 +32,6 @@
   "tool.level.simple": "Simple",
   "tool.level.explicit": "Explicite",
   "tool.level.authenticated": "Authentifiée",
-  "error.generic": "Une erreur est survenue. Veuillez réessayer."
+  "error.generic": "Une erreur est survenue. Veuillez réessayer.",
+  "error.bridge.contract": "Échec de contrat du pont natif. Mettez l’application à jour."
 }

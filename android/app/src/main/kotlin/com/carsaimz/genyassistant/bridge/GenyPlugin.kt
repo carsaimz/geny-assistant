@@ -116,25 +116,25 @@ class GenyPlugin : Plugin() {
         val toolId = call.getString("toolId")
         val paramsRaw = call.getString("paramsJson") ?: "{}"
         if (toolId == null) {
-            call.resolve(failure(callId, "", "toolId ausente"))
+            call.resolve(OutcomeEnvelope.failed(callId, "", "toolId ausente"))
             return
         }
         val tool = registry.get(toolId)
         if (tool == null) {
-            call.resolve(failure(callId, toolId, "ferramenta nao registrada: $toolId"))
+            call.resolve(OutcomeEnvelope.failed(callId, toolId, "ferramenta nao registrada: $toolId"))
             return
         }
         val params = try {
             JSONObject(paramsRaw)
         } catch (e: Exception) {
-            call.resolve(failure(callId, toolId, "paramsJson invalido: ${e.message}"))
+            call.resolve(OutcomeEnvelope.failed(callId, toolId, "paramsJson invalido: ${e.message}"))
             return
         }
 
         // Defesa em profundidade: SIMPLE+ exige aprovação prévia registrada
         // (via requestConfirmation) mesmo que a web já tenha confirmado.
         if (tool.confirmation != ConfirmationLevel.NONE && !confirmation.isPreApproved(toolId)) {
-            call.resolve(denied(callId, toolId, "sem aprovacao humana registrada"))
+            call.resolve(OutcomeEnvelope.denied(callId, toolId, "sem aprovacao humana registrada"))
             return
         }
 
@@ -142,7 +142,9 @@ class GenyPlugin : Plugin() {
         try {
             ToolRegistry.validate(def, params)
         } catch (e: IllegalArgumentException) {
-            call.resolve(failure(callId, toolId, e.message ?: "validacao falhou"))
+            call.resolve(
+                OutcomeEnvelope.failed(callId, toolId, e.message ?: "validacao falhou"),
+            )
             return
         }
 
@@ -152,15 +154,11 @@ class GenyPlugin : Plugin() {
                 val data = tool.execute(params, host)
                 db.recordToolCall(callId, toolId, params.toString(), "ok", started)
                 audit.log("tool", "ok: $toolId em ${System.currentTimeMillis() - started}ms")
-                JSObject().apply {
-                    put("status", "ok")
-                    put("tool_id", toolId)
-                    put("data", JSONObject(data.toString()))
-                }
+                OutcomeEnvelope.ok(callId, toolId, data)
             } catch (e: Exception) {
                 db.recordToolCall(callId, toolId, params.toString(), "failed", started)
                 audit.log("tool", "falha: $toolId — ${e.message}")
-                failure(callId, toolId, e.message ?: e.javaClass.simpleName)
+                OutcomeEnvelope.failed(callId, toolId, e.message ?: e.javaClass.simpleName)
             }
             call.resolve(result)
         }
@@ -308,21 +306,5 @@ class GenyPlugin : Plugin() {
         toolExecutor.shutdown()
         toolExecutor.awaitTermination(2, TimeUnit.SECONDS)
         super.handleOnDestroy()
-    }
-
-    private companion object {
-        fun failure(callId: String, toolId: String, error: String): JSObject = JSObject().apply {
-            put("status", "failed")
-            put("tool_id", toolId)
-            put("error", error)
-            put("callId", callId)
-        }
-
-        fun denied(callId: String, toolId: String, reason: String): JSObject = JSObject().apply {
-            put("status", "denied")
-            put("tool_id", toolId)
-            put("reason", reason)
-            put("callId", callId)
-        }
     }
 }

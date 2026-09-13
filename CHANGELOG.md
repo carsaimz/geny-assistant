@@ -4,6 +4,29 @@ Todas as mudanças notáveis deste projeto são documentadas aqui.
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/),
 versionamento [Semântico](https://semver.org/lang/pt-BR/).
 
+## [0.1.0-alpha.3] — Correção do contrato de invokeTool / invokeTool contract fix
+
+### Corrigido / Fixed
+
+- **Toda ferramenta falhava no Android (crítico)**: o `GenyPlugin.invokeTool`
+  resolvia com o objeto de outcome cru (`status/tool_id/data`) em vez do
+  envelope `{ outcomeJson: "<json>" }` esperado pela camada web — no
+  dispositivo, `JSON.parse(undefined)` produzia o erro
+  `"undefined" is not valid JSON` e a UI mostrava "Ação falhou" para
+  ferramentas que executavam de verdade (ex.: `apps.open` abria o app e
+  depois reportava falha). O mock web cumpria o contrato, por isso os
+  testes de browser não apanhavam o desvio. Correção: `OutcomeEnvelope`
+  centraliza `ok/failed/denied` com `outcomeJson` serializado + `callId`,
+  validado por testes JVM; teste de contrato do lado web varre o catálogo
+  e garante `outcomeJson` parseável em todas as ferramentas.
+  *Every tool call failed on Android (critical): `GenyPlugin.invokeTool`
+  resolved with the raw outcome object instead of the `{ outcomeJson:
+  "<json>" }` envelope the web layer expects — on device,
+  `JSON.parse(undefined)` threw `"undefined" is not valid JSON` and the UI
+  showed "failed" for tools that actually executed. The web mock honored
+  the contract, so browser tests never caught it. Fixed with
+  `OutcomeEnvelope` + JVM tests and a web-side contract test.*
+
 ## [0.1.0-alpha.2] — Correção do ecrã preto / Black-screen fix
 
 ### Corrigido / Fixed

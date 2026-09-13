@@ -32,5 +32,6 @@
   "tool.level.simple": "简单",
   "tool.level.explicit": "明确",
   "tool.level.authenticated": "需认证",
-  "error.generic": "出错了，请重试。"
+  "error.generic": "出错了，请重试。",
+  "error.bridge.contract": "原生桥接协议异常，请更新应用。"
 }

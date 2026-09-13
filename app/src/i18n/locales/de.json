@@ -32,5 +32,6 @@
   "tool.level.simple": "Einfach",
   "tool.level.explicit": "Explizit",
   "tool.level.authenticated": "Authentifiziert",
-  "error.generic": "Etwas ist schiefgelaufen. Bitte erneut versuchen."
+  "error.generic": "Etwas ist schiefgelaufen. Bitte erneut versuchen.",
+  "error.bridge.contract": "Vertragsverstoß der nativen Brücke. Bitte App aktualisieren."
 }

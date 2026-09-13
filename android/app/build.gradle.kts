@@ -18,8 +18,8 @@ android {
         applicationId = "com.carsaimz.genyassistant"
         minSdk = 26
         targetSdk = 35
-        versionCode = 2
-        versionName = "0.1.0-alpha.2"
+        versionCode = 3
+        versionName = "0.1.0-alpha.3"
     }
 
     signingConfigs {
@@ -66,6 +66,8 @@ android {
 
 dependencies {
     implementation(libs.androidx.core.ktx)
+    // Silero VAD (Fase 2, TODO core-01): ONNX Runtime Android
+    implementation(libs.onnxruntime.android)
     implementation(libs.androidx.appcompat)
     implementation(libs.google.material)
     implementation(libs.androidx.lifecycle.runtime)

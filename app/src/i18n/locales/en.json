@@ -32,5 +32,6 @@
   "tool.level.simple": "Simple",
   "tool.level.explicit": "Explicit",
   "tool.level.authenticated": "Authenticated",
-  "error.generic": "Something went wrong. Please try again."
+  "error.generic": "Something went wrong. Please try again.",
+  "error.bridge.contract": "Native bridge contract failure. Please update the app."
 }

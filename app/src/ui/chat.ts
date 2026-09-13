@@ -251,6 +251,12 @@ export class ChatUI {
         toolId,
         paramsJson: JSON.stringify(params),
       });
+      // Contrato da ponte (docs §12.4): o nativo resolve SEMPRE com
+      // outcomeJson serializado. A ausência do campo significa quebra de
+      // contrato — mensagem explícita em vez de "undefined" is not valid JSON.
+      if (typeof outcomeJson !== 'string') {
+        return { status: 'failed', tool_id: toolId, error: t('error.bridge.contract') };
+      }
       return JSON.parse(outcomeJson) as ToolOutcome;
     } catch (err) {
       return {

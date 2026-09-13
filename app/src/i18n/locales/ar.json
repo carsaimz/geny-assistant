@@ -32,5 +32,6 @@
   "tool.level.simple": "بسيط",
   "tool.level.explicit": "صريح",
   "tool.level.authenticated": "مصادق عليه",
-  "error.generic": "حدث خطأ ما. حاول مرة أخرى."
+  "error.generic": "حدث خطأ ما. حاول مرة أخرى.",
+  "error.bridge.contract": "فشل في عقد الجسر الأصلي. يرجى تحديث التطبيق."
 }

@@ -32,5 +32,6 @@
   "tool.level.simple": "Simples",
   "tool.level.explicit": "Explícita",
   "tool.level.authenticated": "Autenticada",
-  "error.generic": "Algo falhou. Tente novamente."
+  "error.generic": "Algo falhou. Tente novamente.",
+  "error.bridge.contract": "Falha de contrato na ponte nativa. Atualize a app."
 }
