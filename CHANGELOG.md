@@ -4,6 +4,45 @@ Todas as mudanças notáveis deste projeto são documentadas aqui.
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/),
 versionamento [Semântico](https://semver.org/lang/pt-BR/).
 
+## [0.1.0-alpha.2] — Correção do ecrã preto / Black-screen fix
+
+### Corrigido / Fixed
+
+- **Ecra preto ao abrir (crítico)**: o `#settings-drawer` tinha o atributo
+  `hidden` no HTML, mas `display: flex` no CSS sobrepunha o `display: none`
+  da folha de estilos do navegador — a gaveta vazia (380px, fundo escuro,
+  `position: fixed`) cobria 92% do ecrã desde o arranque. Correção: regra
+  global `[hidden] { display: none !important; }` + guarda de regressão.
+  *Black screen on launch (critical): the settings drawer's `hidden`
+  attribute was overridden by the author `display: flex` rule — an empty
+  dark fixed panel covered the screen on startup. Fixed with a global
+  `[hidden] { display: none !important; }` rule + regression guard.*
+- **Chave i18n ausente**: `chat.placeholder` era usada no código mas não
+  existia em nenhum locale — o campo de mensagem mostrava a chave crua.
+  Adicionada nos 11 idiomas + testes de integridade (todos os locales com
+  conjuntos de chaves idênticos; toda chave usada em código existe).
+  *Missing i18n key `chat.placeholder` added to all 11 locales with
+  integrity tests.*
+- **`captureInput: true` removido** do config Capacitor: instala uma
+  `BaseInputConnection` falsa que degrada a digitação do teclado na WebView.
+  *Removed `captureInput: true` (fake input connection breaks IME typing).*
+- **`webContentsDebuggingEnabled` omitido**: o default do Capacitor
+  (`ligado em builds debug, desligado em release`) é o correto — antes o
+  `false` explícito impedia inspecionar o APK debug via `chrome://inspect`.
+  *Omitted explicit flag; Capacitor default (debug-builds-only) restored.*
+
+### Adicionado / Added
+
+- **APK release assinado em CI**: segredos `KEYSTORE_BASE64`,
+  `KEYSTORE_PASSWORD`, `KEY_ALIAS`, `KEY_PASSWORD` + `signingConfig`
+  condicional no Gradle e verificação com `apksigner` no workflow Release.
+  Com fallback declarado: sem segredos, publica-se o APK debug como
+  instalável da alpha. *Signed release APK via CI secrets with apksigner
+  verification and declared debug fallback.*
+- **Testes de regressão de UI/i18n**: 3 novos testes (guarda `[hidden]`,
+  paridade de chaves entre locales, existência de chaves usadas no código).
+  15 testes no app (antes 12).
+
 ## [0.1.0-alpha.1] — Fase 1: Fundação
 
 ### Adicionado / Added
