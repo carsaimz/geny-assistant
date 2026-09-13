@@ -9,4 +9,9 @@
     <string name="action_open">Abrir</string>
     <string name="confirm_allow_once">Permitir una vez</string>
     <string name="confirm_deny">Denegar</string>
+    <string name="action_stop">Detener</string>
+    <string name="notif_channel_tts">Reproducción de voz</string>
+    <string name="notif_channel_tts_desc">Lee en voz alta las respuestas de Geny en el dispositivo</string>
+    <string name="notif_tts_title">Geny está hablando</string>
+    <string name="notif_tts_body">Toca para volver a la conversación</string>
 </resources>
