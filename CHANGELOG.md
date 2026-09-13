@@ -30,6 +30,15 @@ versionamento [Semântico](https://semver.org/lang/pt-BR/).
   (`ligado em builds debug, desligado em release`) é o correto — antes o
   `false` explícito impedia inspecionar o APK debug via `chrome://inspect`.
   *Omitted explicit flag; Capacitor default (debug-builds-only) restored.*
+- **CI reparado após majors do dependabot**: bumps major meseados
+  (TypeScript 7, AGP 9, Kotlin 2.4, material/appcompat 1.14/1.8) quebravam
+  `npm ci` (typescript-eslint 8 sem suporte a TS 7) e exigiriam Gradle 9.
+  Revertidos para a combinação comprovada (TS 5.9.3, AGP 8.7.3, Kotlin
+  2.0.21, material 1.12, appcompat 1.7); minors seguros mantidos (Vite 8,
+  globals 17, thiserror 2, coroutines 1.9). Dependabot passa a ignorar
+  majors até a migração deliberada (ver ROADMAP). *CI repaired after merged
+  dependabot majors; risky majors reverted, safe minors kept, dependabot
+  now ignores majors until the planned migration.*
 
 ### Adicionado / Added
 

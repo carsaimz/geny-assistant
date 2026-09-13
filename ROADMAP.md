@@ -124,6 +124,7 @@
 - [ ] **PT-POM (português de Moçambique/Angola)** (Fase 9): variante pt-PT com léxico local + voz.
 - [ ] **Smoke test visual no CI** (Fase 2/10): screenshots do app web em viewport móvel (escuro/claro/RTL) a cada PR para apanhar regressões de layout como o ecrã preto da alpha.1 antes de publicar APKs.
 - [ ] **Página de erro resiliente na WebView** (Fase 10): se um asset/falha impedir o carregamento, mostrar mensagem nativa acionável em vez de tela vazia.
+- [ ] **Adoção deliberada de majors** (Fase 10/tech-debt): AGP 9 + Gradle 9 (wrapper), Kotlin 2.4, compileSdk 36, TypeScript 7 (aguardar suporte do typescript-eslint), Vite 8 — uma etapa por PR com CI verde; majors do dependabot ficam ignorados até lá (alpha.2: majors meseados quebraram o CI em 2026-09).
 
 ---
 
