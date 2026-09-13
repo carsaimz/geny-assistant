@@ -17,8 +17,10 @@ android {
         consumerProguardFiles("consumer-rules.pro")
 
         ndk {
-            // Mesmos ABIs do :app — aparelhos modernos + emulador/dev.
-            abiFilters += listOf("arm64-v8a", "x86_64")
+            // Mesmos ABIs do :app — armeabi-v7a (32-bit), arm64-v8a, x86_64.
+            // Sem o armv7 o merge empacota o APK sem libgeny_llama_jni.so
+            // nessa ABI (silencioso) e telemóveis 32-bit ficam sem LLM.
+            abiFilters += listOf("armeabi-v7a", "arm64-v8a", "x86_64")
         }
 
         externalNativeBuild {

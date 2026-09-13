@@ -20,12 +20,14 @@ android {
         applicationId = "com.carsaimz.genyassistant"
         minSdk = 26
         targetSdk = 35
-        versionCode = 5
-        versionName = "0.3.0-alpha.1"
+        versionCode = 6
+        versionName = "0.3.0-alpha.2"
 
         ndk {
-            // arm64-v8a: aparelhos modernos; x86_64: emulador/dev.
-            abiFilters += listOf("arm64-v8a", "x86_64")
+            // APK universal multi-ABI: armeabi-v7a cobre telemóveis 32-bit
+            // (INSTALL_FAILED_NO_MATCHING_ABIS na 0.2/0.3 sem ele), arm64-v8a
+            // aparelhos modernos, x86_64 emulador/dev.
+            abiFilters += listOf("armeabi-v7a", "arm64-v8a", "x86_64")
         }
 
         externalNativeBuild {

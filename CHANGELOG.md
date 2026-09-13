@@ -4,6 +4,33 @@ Todas as mudanças notáveis deste projeto são documentadas aqui.
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/),
 versionamento [Semântico](https://semver.org/lang/pt-BR/).
 
+## [0.3.0-alpha.2] — Correção de instalação / Install fix
+
+### Corrigido / Fixed
+
+- **APK volta a instalar em telemóveis 32-bit (armeabi-v7a)**: o `abiFilters`
+  introduzido com o pipeline de voz (`725441d`) reduziu o APK a arm64-v8a +
+  x86_64 — em aparelhos 32-bit a instalação falhava com
+  `INSTALL_FAILED_NO_MATCHING_ABIS`, o que deixou as releases
+  v0.2.0-alpha.1 e v0.3.0-alpha.1 ininstaláveis (o encolhimento de 72 MB para
+  43–54 MB era o mesmo sintoma, não uma otimização). O APK universal passa a
+  conter armeabi-v7a, arm64-v8a e x86_64.
+  *APK installs again on 32-bit (armeabi-v7a) phones: the `abiFilters`
+  introduced with the voice pipeline (`725441d`) shrank the APK to arm64-v8a +
+  x86_64 — on 32-bit devices installation failed with
+  `INSTALL_FAILED_NO_MATCHING_ABIS`, making releases v0.2.0-alpha.1 and
+  v0.3.0-alpha.1 un-installable (the 72 MB → 43–54 MB shrink was the same
+  symptom, not an optimization). The universal APK now ships armeabi-v7a,
+  arm64-v8a and x86_64.*
+- **`libgeny_llama_jni.so` ausente no armv7**: o módulo `:llama-native`
+  mantinha o mesmo filtro antigo (arm64+x86_64), e o merge de JNI libs
+  empacotava o APK sem o LLM no armv7 silenciosamente. Filtros alinhados nos
+  dois módulos; llama.cpp v0.4.0 compila e carrega em armv7.
+  *Missing `libgeny_llama_jni.so` on armv7: the `:llama-native` module kept
+  the old filter (arm64+x86_64), so JNI lib merge silently packed the APK
+  without the LLM on armv7. Filters aligned across both modules; llama.cpp
+  v0.4.0 now builds and loads on armv7.*
+
 ## [0.3.0-alpha.1] — Fase 3: LLM local / Phase 3: Local LLM
 
 ### Adicionado / Added
