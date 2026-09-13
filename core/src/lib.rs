@@ -17,8 +17,14 @@ pub mod orchestrator;
 pub mod session;
 pub mod tools;
 
+#[cfg(feature = "vad")]
+pub mod vad;
+
 pub use error::{CoreError, Result};
 pub use orchestrator::{Orchestrator, Outcome, ToolExecutor, ToolOutcome};
+
+#[cfg(feature = "vad")]
+pub use vad::{EnergyVad, SegmentBuffer, VadConfig, VadDecision};
 
 /// Versão do núcleo, sincronizada com o `Cargo.toml`.
 pub const CORE_VERSION: &str = env!("CARGO_PKG_VERSION");

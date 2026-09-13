@@ -1,6 +1,6 @@
 [package]
 name = "geny-core"
-version = "0.1.0-alpha.1"
+version = "0.2.0-alpha.1"
 edition = "2021"
 rust-version = "1.75"
 description = "Geny Assistant — nucleo de orquestracao local-first em Rust (sessao, ferramentas, confirmacao, memoria, i18n)"
@@ -18,6 +18,8 @@ thiserror = "2.0"
 default = []
 # Bindings UniFFI para Kotlin (Fase 1 do roadmap: TODO core-07)
 uniffi = []
+# VAD — Voice Activity Detection (Fase 2: TODO core-01)
+vad = []
 
 [profile.release]
 lto = true
