@@ -4,6 +4,49 @@ Todas as mudanças notáveis deste projeto são documentadas aqui.
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/),
 versionamento [Semântico](https://semver.org/lang/pt-BR/).
 
+## [0.2.0-alpha.1] — Fase 2: Voz / Phase 2: Voice
+
+### Adicionado / Added
+
+- **Conversa por voz**: botão de microfone no chat com painel de gravação
+  (nível do microfone em tempo real, transcrição ao vivo, cancelar/parar) e
+  envio automático da transcrição como mensagem.
+  *Voice conversation: mic button in the chat with a recording panel
+  (real-time mic level, live transcript, cancel/stop) and the transcript
+  becomes the user's message.*
+- **STT dupla e local-first**: reconhecedor do sistema em modo on-device
+  (Android 12+ `createOnDeviceSpeechRecognizer`; `EXTRA_PREFER_OFFLINE` em
+  versões anteriores) e whisper.cpp compilado no app via NDK (JNI próprio,
+  submodule pinado v1.7.4, ABIs arm64-v8a/x86_64) com modelos GGML
+  tiny/base/small/medium baixados sob demanda e verificados por SHA-256
+  pinado — nenhum modelo embutido no APK.
+  *Dual local-first STT: system recognizer on-device plus whisper.cpp
+  compiled in-app via NDK with on-demand GGML models and pinned SHA-256.*
+- **VAD**: energia RMS com histerese (espelho no core Rust — feature `vad`,
+  6 testes) e Silero v5 via ONNX Runtime Android (modelo ~2 MB com SHA-256
+  pinado, fallback automático para energia).
+  *VAD: hysteresis RMS energy (mirrored in the Rust core) plus Silero v5 via
+  ONNX Runtime with automatic fallback.*
+- **TTS em serviço foreground** (`mediaPlayback`): motor TextToSpeech do
+  sistema, pt-BR/pt-PT/en primeiro, notificação com botão de parar, e botão
+  🔊 em cada resposta para reproduzir de novo.
+  *Foreground-service TTS with the system engine, stop notification and
+  per-message replay button.*
+- **Permissão RECORD_AUDIO em contexto** (nunca no arranque), via
+  PermissionCallback do Capacitor, com auditoria local.
+  *RECORD_AUDIO requested in context only, audited locally.*
+- **CI**: NDK r27.2 + CMake 3.22.1 + `submodules: recursive` em 4 workflows
+  e cache do build nativo (TODO ci-01).
+  *CI installs NDK/CMake, checks out submodules and caches native builds.*
+- **docs/user/voice.md** bilíngue (configuração de vozes, STT, VAD, TTS).
+
+### Corrigido / Fixed
+
+- `@PermissionCallback` sem argumentos (API Capacitor 6) e nível de RMS
+  lido do `AnalyserNode` no mock web — pegos por testes novos.
+  *Fixed callback annotation usage and the web-mock level meter — caught by
+  new tests.*
+
 ## [0.1.0-alpha.3] — Correção do contrato de invokeTool / invokeTool contract fix
 
 ### Corrigido / Fixed

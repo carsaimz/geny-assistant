@@ -65,11 +65,20 @@ Requisito: `gradle.properties` já configura cache; o CI usa Gradle 8.9 fixado
 (`gradle/actions/setup-gradle`). Sem wrapper no repositório nesta fase —
 instale Gradle 8.9 ou use o CI como referência.
 
-## 5. Submodules nativos (Fase 3)
+## 5. Submodules nativos (Fase 2+)
+
+O APK compila o whisper.cpp (JNI do STT local, docs §7.2). O submodule
+`native/whisper.cpp` está pinado na **v1.7.4** e o Gradle o usa via CMake
+(`android/app/src/main/cpp/CMakeLists.txt`).
 
 ```bash
-./scripts/setup-submodules.sh      # clona llama.cpp e whisper.cpp pinados
+git submodule update --init        # após clonar: traz native/whisper.cpp
+./scripts/setup-submodules.sh      # extras (llama.cpp chega na Fase 3)
 ```
+
+O Android Studio/Gradle exige também **NDK r27.2** e **CMake 3.22.1** no SDK
+(o CI instala ambos automaticamente). Sem o submodule, a configuração CMake
+falha com erro explícito apontando para `setup-submodules.sh`.
 
 ## 6. Modelos de IA (nada vai para o git)
 

@@ -16,19 +16,21 @@
 - [x] `scripts/`: bootstrap, build-rust-android, sync-web, download-model, setup-submodules
 - [x] CI/CD: lint + test + build-native + build-apk + release + dependabot
 
-## 🚧 Fase 2 — Voz / Voice (em andamento)
+## 🚧 Fase 2 — Voz / Voice (núcleo entregue em v0.2.0-alpha.1)
 
-- [ ] `android-01` Captura de áudio com gravação em contexto e permissão RECORD_AUDIO
-- [ ] `core-01` VAD Silero via ONNX Runtime no core (feature `vad`)
-- [ ] `core-02` Bindings whisper.cpp (STT) — modelos tiny/base/small/medium
-- [ ] `core-03` Bindings Piper (TTS) — vozes pt-BR, pt-PT e en primeiro
-- [ ] `app-01` UI apertar-para-falar no chat + exibição de transcrição
-- [ ] `android-02` Reprodução de áudio TTS em segundo plano via serviço
-- [ ] `ci-01` Cache de build whisper/piper no CI
-- [ ] `docs-01` docs/user/voice.md (configurar vozes e wake word)
+- [x] `android-01` Captura de áudio com gravação em contexto e permissão RECORD_AUDIO (#1)
+- [x] `core-01` VAD: energia RMS no core (feature `vad`, 6 testes) + Silero v5 ONNX no Android com fallback (#29)
+- [x] `core-02` Bindings whisper.cpp (JNI + CMake + submodule v1.7.4) — modelos tiny/base/small/medium sob demanda (#2)
+- [x] `android-02` TTS em segundo plano via serviço foreground (TextToSpeech on-device) (#30)
+- [x] `app-01` UI apertar-para-falar no chat + transcrição ao vivo + responder por voz (#4)
+- [x] `ci-01` Cache de build nativo no CI + NDK/CMake/submodules nos 4 workflows (#5)
+- [x] `docs-01` docs/user/voice.md (vozes, STT, VAD, TTS) (#31)
+- [ ] `core-03` TTS neural via Piper — movido para a Fase 3 (lote nativo junto com llama.cpp) (#3)
 
 ## Fase 3 — LLM local (próximas)
 
+- [ ] `core-03` TTS neural via Piper (vozes pt-BR, pt-PT, en) (#3, herdado da Fase 2)
+- [ ] `android-03b` Wake word opcional desligado por padrão (openWakeWord/ONNX)
 - [ ] `core-04` UniFFI: bindings geny-core ↔ Kotlin (`feature = "uniffi"`)
 - [ ] `core-05` Integração llama.cpp no core (sessão de inferência GGUF)
 - [ ] `android-03` Tela Modelos: download com progresso, hash, remoção, espaço

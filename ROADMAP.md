@@ -32,18 +32,25 @@
 - [x] Núcleo Rust: sessão, registro/validação de ferramentas, memória, i18n, seleção de backend
 - [x] Licença Apache-2.0 + documentação técnica completa (docs/TECHNICAL_SPEC.md)
 
-## 🚧 Fase 2 — Voz / Voice
+## 🚧 Fase 2 — Voz / Voice *(v0.2.0-alpha.1 — núcleo entregue)*
 
-- [ ] Captura de áudio (RECORD_AUDIO em contexto) com VAD Silero (ONNX)
-- [ ] STT local via whisper.cpp (tiny/base/small/medium, download sob demanda)
-- [ ] TTS local via Piper (vozes pt-BR, pt-PT, en primeiro)
-- [ ] Modo conversa por voz no chat (apertar-para-falar → ditado)
-- [ ] Wake word opcional (ONNX / openWakeWord), desligado por padrão
-- [ ] Métricas de latência voz→texto e texto→voz no log local
+- [x] Captura de áudio (RECORD_AUDIO em contexto) com VAD — energia RMS sempre
+  disponível + Silero v5 via ONNX Runtime (modelo ~2 MB, SHA-256 pinado)
+- [x] STT local: sistema on-device (Android 12+ `createOnDeviceSpeechRecognizer`)
+  e whisper.cpp compilado no app (JNI + submodule pinado v1.7.4) com modelos
+  tiny/base/small/medium baixados sob demanda
+- [x] TTS local em primeiro plano: motor TextToSpeech do sistema
+  (pt-BR/pt-PT/en primeiro), notificação cancelável
+- [x] Modo conversa por voz no chat (microfone → transcrição → resposta)
+- [ ] TTS neural via Piper e wake word — **movidos para a Fase 3** (mesmo
+  lote de build nativo do llama.cpp; ver ROADMAP Fase 3)
+- [x] Métricas de latência voz→texto no log local (sttMs no evento de resultado)
 
 ## Fase 3 — LLM local
 
-- [ ] Submodules llama.cpp + whisper.cpp pinados (scripts/setup-submodules.sh)
+- [ ] Submodule llama.cpp pinado (whisper.cpp já pinado @ v1.7.4 na Fase 2)
+- [ ] TTS neural via Piper (vozes pt-BR, pt-PT, en) — herdado da Fase 2
+- [ ] Wake word opcional (ONNX / openWakeWord), desligado por padrão — herdado da Fase 2
 - [ ] Bindings UniFFI Rust ↔ Kotlin do geny-core
 - [ ] Inferência GGUF on-device (arm64-v8a primeiro, depois armeabi-v7a/x86_64)
 - [ ] Gerenciador de modelos na UI: download, hash SHA-256, remoção, espaço

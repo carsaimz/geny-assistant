@@ -82,13 +82,23 @@ cd android && gradle :app:assembleDebug
 
 Guia completo: [`docs/build.md`](docs/build.md) · Modelos: [`scripts/download-model.sh`](scripts/download-model.sh)
 
-## Status — Fase 1 (Fundação) ✅ / Phase 1 (Foundation) ✅
+## Status — Fase 2 (Voz) 🚧 / Phase 2 (Voice) 🚧
 
-- ✅ Monorepo + CI/CD (5 workflows) + templates
-- ✅ Núcleo Rust: orquestrador, tool calling, confirmação em 4 níveis, memória, i18n — **37 testes**
-- ✅ App web: chat, roteador de intenções offline, modo remoto OpenAI-compat, 11 locales, RTL — **12 testes**
-- ✅ Android: ponte Capacitor com 18 ferramentas, confirmação nativa fail-safe, Keystore AES-256-GCM, auditoria rotativa, serviço em 1º plano, HUD overlay, notification listener — **14 testes**
-- ⏳ Próxima: **Fase 2 — Voz (STT/TTS local)** → ver [`ROADMAP.md`](ROADMAP.md)
+- ✅ Fase 1: monorepo + CI/CD (5 workflows) + núcleo Rust (**43 testes**) + app web
+  (**22 testes**) + Android (ponte com 18 ferramentas, confirmação fail-safe,
+  Keystore, auditoria, serviços) — **15 testes JVM**
+- 🎙️ **Fase 2 em andamento (v0.2.0-alpha.1)**: conversa por voz com captura em
+  contexto, STT dupla on-device (sistema + whisper.cpp via NDK com modelos
+  GGML sob demanda SHA-256), VAD (energia + Silero ONNX) e TTS em serviço
+  foreground — guia em [`docs/user/voice.md`](docs/user/voice.md)
+- ⏳ Próxima: whisper modelos maiores + Piper + wake word + **Fase 3 — LLM local** → ver [`ROADMAP.md`](ROADMAP.md)
+
+> **Nota de build**: o APK agora compila whisper.cpp — o CI faz checkout de
+> submodules e instala NDK r27.2 + CMake 3.22.1. Local: `git submodule update
+> --init` + SDK com os mesmos componentes (docs/build.md).
+>
+> *Build note: the APK now compiles whisper.cpp — CI checks out submodules
+> and installs NDK + CMake. Locally run `git submodule update --init`.*
 
 ## Segurança e privacidade / Security & privacy
 
