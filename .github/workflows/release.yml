@@ -42,11 +42,40 @@ jobs:
           rm -rf android/app/src/main/assets/public/*
           cp -r app/dist/. android/app/src/main/assets/public/
 
-      # Assinatura real usa segredos (KEYSTORE_BASE64, KEYSTORE_PASSWORD,
-      # KEY_ALIAS, KEY_PASSWORD) — nunca versionados (docs §17.5).
+      # Assinatura via segredos do repo (KEYSTORE_BASE64, KEYSTORE_PASSWORD,
+      # KEY_ALIAS, KEY_PASSWORD — docs §17.5). Sem segredos, o release sai
+      # sem assinar (fallback alpha) e o APK debug é o instalável.
+      - name: Preparar assinatura (secrets)
+        env:
+          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+        run: |
+          if [ -n "$KEYSTORE_BASE64" ]; then
+            echo "$KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/geny-release.jks"
+            {
+              echo "GENY_KEYSTORE_FILE=$RUNNER_TEMP/geny-release.jks"
+              echo "GENY_KEYSTORE_PASSWORD=$KEYSTORE_PASSWORD"
+              echo "GENY_KEY_ALIAS=$KEY_ALIAS"
+              echo "GENY_KEY_PASSWORD=$KEY_PASSWORD"
+            } >> "$GITHUB_ENV"
+            echo "Assinatura de release configurada."
+          else
+            echo "Sem secrets de assinatura — APK release sairá sem assinar."
+          fi
+
       - name: Assemble release (ou debug como fallback alpha)
         working-directory: android
         run: gradle :app:assembleRelease :app:assembleDebug
+
+      - name: Verificar assinatura
+        if: env.GENY_KEYSTORE_FILE != ''
+        run: |
+          APK=$(ls android/app/build/outputs/apk/release/*.apk | head -1)
+          APKSIGNER=$(ls "$ANDROID_HOME"/build-tools/*/apksigner | sort -V | tail -1)
+          echo "apksigner: $APKSIGNER"
+          "$APKSIGNER" verify --print-certs "$APK" | head -5
 
       - name: Renomear artefatos
         run: |
