@@ -5,6 +5,7 @@
   "status.root": "Root verfügbar",
   "nav.settings": "Einstellungen",
   "chat.welcome": "Hallo! Ich bin Geny. Alles läuft auf deinem Gerät — keine Cloud nötig, keine Telemetrie. Probiere: „Wie spät ist es?“, „Öffne den Taschenrechner“, „Notiz anlegen: Kaffee kaufen“.",
+  "chat.placeholder": "Frag Geny etwas…",
   "chat.thinking": "Denke nach…",
   "chat.tool.started": "Werkzeug wird ausgeführt…",
   "chat.tool.ok": "Erledigt",
