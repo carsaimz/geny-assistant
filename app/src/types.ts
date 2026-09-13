@@ -63,6 +63,14 @@ export interface Settings {
   model: string;
   baseUrl: string;
   apiKeySet: boolean;
+  /** Fala as respostas da Geny em voz alta (TTS local). */
+  voiceReplies: boolean;
+  /** Motor de reconhecimento: sistema on-device ou whisper.cpp local. */
+  sttEngine: 'system' | 'whisper';
+  /** Encerra a captura sozinho quando o VAD detecta fim da fala. */
+  vadAutoStop: boolean;
+  /** Modelo whisper selecionado (whisper-tiny/base/small/medium). */
+  whisperModel: string;
 }
 
 export interface ChatMessage {

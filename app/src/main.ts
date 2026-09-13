@@ -1,6 +1,6 @@
 /**
  * Bootstrap do app Geny Assistant (camada de apresentação).
- * Liga bridge, i18n, chat e configurações.
+ * Liga bridge, i18n, chat, voz e configurações.
  */
 import './style.css';
 import { bridge } from './core/bridge';
@@ -9,6 +9,7 @@ import { applyI18nDom, setLocale, t } from './i18n';
 import type { Settings } from './types';
 import { ChatUI } from './ui/chat';
 import { renderSettingsDrawer } from './ui/settings';
+import { VoiceController } from './ui/voice';
 
 const SETTINGS_KEY = 'geny.settings';
 
@@ -19,6 +20,10 @@ function defaultSettings(): Settings {
     model: '',
     baseUrl: '',
     apiKeySet: false,
+    voiceReplies: false,
+    sttEngine: 'system',
+    vadAutoStop: true,
+    whisperModel: 'whisper-tiny',
   };
 }
 
@@ -61,16 +66,22 @@ function redrawStatic(inputEl: HTMLInputElement): void {
   void refreshStatus();
 }
 
+function $(id: string): HTMLElement {
+  const el = document.getElementById(id);
+  if (el === null) throw new Error(`DOM incompleto: ${id}`);
+  return el;
+}
+
 async function boot(): Promise<void> {
   let currentSettings: Settings = loadSettings();
   setLocale(currentSettings.language);
 
-  const chatEl = document.getElementById('chat');
-  const composer = document.getElementById('composer');
-  const input = document.getElementById('input');
-  const btnSend = document.getElementById('btn-send');
-  const btnSettings = document.getElementById('btn-settings');
-  const drawer = document.getElementById('settings-drawer');
+  const chatEl = $('chat');
+  const composer = $('composer');
+  const input = $('input');
+  const btnSend = $('btn-send');
+  const btnSettings = $('btn-settings');
+  const drawer = $('settings-drawer');
   if (
     !(chatEl instanceof HTMLElement) ||
     !(composer instanceof HTMLFormElement) ||
@@ -89,7 +100,39 @@ async function boot(): Promise<void> {
       btnSend.disabled = busy;
       void refreshStatus();
     },
+    onAssistantReply: (text) => {
+      // Responder por voz (docs §7.4): TTS local do texto da Geny.
+      if (currentSettings.voiceReplies) {
+        void bridge.speak({ text, language: currentSettings.language });
+      }
+    },
   });
+
+  const voice = new VoiceController(
+    {
+      micBtn: $('btn-mic') as HTMLButtonElement,
+      panel: $('voice-panel'),
+      dot: $('voice-dot'),
+      statusText: $('voice-status-text'),
+      levelBar: $('voice-level-bar'),
+      transcript: $('voice-transcript'),
+      stop: $('btn-voice-stop') as HTMLButtonElement,
+      cancel: $('btn-voice-cancel') as HTMLButtonElement,
+    },
+    {
+      getEngine: () => currentSettings.sttEngine,
+      getLanguage: () => currentSettings.language,
+      getVadAutoStop: () => currentSettings.vadAutoStop,
+      getWhisperModel: () => currentSettings.whisperModel,
+      onSend: (text) => {
+        input.value = '';
+        void chat.send(text);
+      },
+      onModelEvent: (event) => {
+        window.dispatchEvent(new CustomEvent('geny:model-event', { detail: event }));
+      },
+    },
+  );
 
   const openDrawer = (): void => {
     renderSettingsDrawer(drawer, currentSettings, {
@@ -117,6 +160,7 @@ async function boot(): Promise<void> {
   window.addEventListener('offline', () => void refreshStatus());
 
   await chat.init();
+  await voice.init();
   redrawStatic(input);
   input.focus();
 }

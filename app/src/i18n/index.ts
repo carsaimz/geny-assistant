@@ -92,6 +92,13 @@ export function t(key: string): string {
   return DICTIONARIES[current][key] ?? DICTIONARIES.en[key] ?? key;
 }
 
+/** Como `t`, mas substitui placeholders {nome} por valores. */
+export function tf(key: string, params: Record<string, string | number>): string {
+  return t(key).replace(/\{(\w+)\}/g, (_match, name: string) =>
+    name in params ? String(params[name]) : `{${name}}`,
+  );
+}
+
 /** Aplica traduções a elementos estáticos com data-i18n / data-i18n-placeholder. */
 export function applyI18nDom(root: ParentNode = document): void {
   root.querySelectorAll<HTMLElement>('[data-i18n]').forEach((el) => {

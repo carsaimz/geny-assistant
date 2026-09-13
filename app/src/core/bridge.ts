@@ -8,6 +8,7 @@
  */
 import { Capacitor, registerPlugin } from '@capacitor/core';
 import type { ConfirmationLevel, DeviceContext, ToolDefinition, ToolOutcome } from '../types';
+import type { VoiceCapabilities, VoiceEvent } from './voice-types';
 
 export interface GenyBridge {
   listTools(): Promise<{ tools: ToolDefinition[] }>;
@@ -22,6 +23,24 @@ export interface GenyBridge {
     summary: string;
   }): Promise<{ approved: boolean }>;
   getDeviceContext(): Promise<{ json: string }>;
+  // ---- Voz (Fase 2, docs §7) ----
+  getVoiceCapabilities(): Promise<{ json: string }>;
+  startVoiceCapture(options: {
+    engine: string;
+    language: string;
+    vadAutoStop: boolean;
+    modelId: string;
+  }): Promise<{ started?: boolean }>;
+  stopVoiceCapture(): Promise<void>;
+  cancelVoiceCapture(): Promise<void>;
+  downloadVoiceModel(options: { kind: string; id: string }): Promise<void>;
+  deleteVoiceModel(options: { file: string }): Promise<{ deleted: boolean }>;
+  speak(options: { text: string; language: string }): Promise<void>;
+  stopSpeaking(): Promise<void>;
+  addListener(
+    eventName: 'genyVoice',
+    listenerFunc: (event: VoiceEvent) => void,
+  ): Promise<{ remove: () => void }> & { remove: () => void };
 }
 
 /** Handler de confirmação registrado pela UI (modal). */
@@ -149,6 +168,182 @@ function createWebMockBridge(): GenyBridge {
         locale: navigator.language,
       };
       return { json: JSON.stringify(ctx) };
+    },
+    ...createWebVoiceMock(),
+  };
+}
+
+// ----------------------------------------------------- mock de voz (web) --
+
+/**
+ * **PT** Mock de voz para o navegador: Web Speech API para STT (quando o
+ * browser tem reconhecimento) e speechSynthesis para TTS. Whisper nativo
+ * não existe no navegador — o mock reporta com honestidade.
+ * **EN** Browser voice mock: Web Speech API for STT (when the browser has
+ * recognition) and speechSynthesis for TTS. Native whisper does not exist
+ * in browsers — the mock reports that honestly.
+ */
+function createWebVoiceMock(): Pick<
+  GenyBridge,
+  | 'getVoiceCapabilities'
+  | 'startVoiceCapture'
+  | 'stopVoiceCapture'
+  | 'cancelVoiceCapture'
+  | 'downloadVoiceModel'
+  | 'deleteVoiceModel'
+  | 'speak'
+  | 'stopSpeaking'
+  | 'addListener'
+> {
+  interface SpeechRecognitionLike {
+    lang: string;
+    continuous: boolean;
+    interimResults: boolean;
+    maxAlternatives: number;
+    start(): void;
+    stop(): void;
+    abort(): void;
+    onresult: ((ev: unknown) => void) | null;
+    onerror: ((ev: { error?: string }) => void) | null;
+    onend: (() => void) | null;
+  }
+  type SRConstructor = new () => SpeechRecognitionLike;
+  const getSR = (): SRConstructor | null => {
+    const w = window as unknown as Record<string, unknown>;
+    return (w.SpeechRecognition ?? w.webkitSpeechRecognition ?? null) as SRConstructor | null;
+  };
+
+  const listeners = new Set<(event: VoiceEvent) => void>();
+  const emit = (event: VoiceEvent): void => {
+    listeners.forEach((fn) => fn(event));
+  };
+
+  let recognition: SpeechRecognitionLike | null = null;
+  let audioContext: AudioContext | null = null;
+  let stream: MediaStream | null = null;
+  let levelTimer: number | null = null;
+
+  const stopMeter = (): void => {
+    if (levelTimer !== null) {
+      window.clearInterval(levelTimer);
+      levelTimer = null;
+    }
+    if (audioContext) {
+      void audioContext.close().catch(() => undefined);
+      audioContext = null;
+    }
+    if (stream) {
+      stream.getTracks().forEach((tr) => tr.stop());
+      stream = null;
+    }
+  };
+
+  const startMeter = async (): Promise<void> => {
+    try {
+      stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      audioContext = new AudioContext();
+      const source = audioContext.createMediaStreamSource(stream);
+      const analyser = audioContext.createAnalyser();
+      analyser.fftSize = 512;
+      source.connect(analyser);
+      const buf = new Uint8Array(analyser.frequencyBinCount);
+      levelTimer = window.setInterval(() => {
+        if (!audioContext) return;
+        analyser.getByteTimeDomainData(buf);
+        let peak = 0;
+        for (const v of buf) peak = Math.max(peak, Math.abs(v - 128) / 128);
+        emit({ type: 'level', level: peak });
+      }, 100);
+    } catch {
+      // sem permissão/navegador sem suporte: a UI segue sem barra de nível
+    }
+  };
+
+  return {
+    async getVoiceCapabilities() {
+      const caps: VoiceCapabilities = {
+        mic: true,
+        systemStt: getSR() !== null,
+        whisperNative: false,
+        vadSilero: false,
+        vadEngine: 'energy',
+        tts: typeof speechSynthesis !== 'undefined',
+        whisperModels: [],
+      };
+      return { json: JSON.stringify(caps) };
+    },
+    async startVoiceCapture(options) {
+      const SR = getSR();
+      if (options.engine === 'whisper' || SR === null) {
+        window.setTimeout(() => {
+          emit({ type: 'error', code: 'unavailable' });
+        }, 0);
+        return { started: false };
+      }
+      void startMeter();
+      const rec = new SR();
+      rec.lang = options.language;
+      rec.continuous = false;
+      rec.interimResults = true;
+      rec.maxAlternatives = 1;
+      rec.onresult = (ev: unknown) => {
+        const results = (
+          ev as { results: ArrayLike<ArrayLike<{ transcript: string }>> & { length: number }; resultIndex: number }
+        ).results;
+        let text = '';
+        for (let i = 0; i < results.length; i += 1) {
+          const alt = results[i]?.[0];
+          if (alt) text += alt.transcript ?? '';
+        }
+        if (text.length > 0) emit({ type: 'partial', text });
+      };
+      rec.onerror = (ev: { error?: string }) => {
+        emit({ type: 'error', code: ev.error ?? 'speech_error' });
+        stopMeter();
+      };
+      rec.onend = () => {
+        stopMeter();
+      };
+      recognition = rec;
+      rec.start();
+      return { started: true };
+    },
+    async stopVoiceCapture() {
+      // onresult final chega antes de onend; nada a fazer aqui no mock.
+      recognition?.stop();
+      recognition = null;
+    },
+    async cancelVoiceCapture() {
+      recognition?.abort();
+      recognition = null;
+      stopMeter();
+    },
+    async downloadVoiceModel() {
+      window.setTimeout(() => {
+        emit({ type: 'error', code: 'models_unavailable_on_web' });
+      }, 0);
+    },
+    async deleteVoiceModel() {
+      return { deleted: false };
+    },
+    async speak({ text, language }) {
+      if (typeof speechSynthesis === 'undefined') return;
+      const utter = new SpeechSynthesisUtterance(text);
+      utter.lang = language;
+      speechSynthesis.cancel();
+      speechSynthesis.speak(utter);
+    },
+    async stopSpeaking() {
+      if (typeof speechSynthesis !== 'undefined') speechSynthesis.cancel();
+    },
+    addListener(_eventName, listenerFunc) {
+      listeners.add(listenerFunc);
+      const handle = {
+        remove: (): void => {
+          listeners.delete(listenerFunc);
+        },
+      };
+      return Object.assign(Promise.resolve(handle), handle);
     },
   };
 }

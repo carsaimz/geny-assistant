@@ -14,6 +14,8 @@ export interface ChatDeps {
   getSettings: () => Settings;
   getRemoteConfig: () => RemoteConfig | null;
   onStatusChange: (busy: boolean) => void;
+  /** Chamada para cada resposta final da Geny (usada pelo TTS — docs §7.4). */
+  onAssistantReply?: (text: string) => void;
 }
 
 export class ChatUI {
@@ -82,12 +84,30 @@ export class ChatUI {
       el.appendChild(body);
       return el;
     }
-    el.textContent = m.content;
+    const text = document.createElement('span');
+    text.className = 'msg-text';
+    text.textContent = m.content;
+    el.appendChild(text);
+    if (m.role === 'assistant' && m.content.trim().length > 0) {
+      const replay = document.createElement('button');
+      replay.type = 'button';
+      replay.className = 'icon-btn msg-replay';
+      replay.setAttribute('aria-label', t('voice.speak.replay'));
+      replay.title = t('voice.speak.replay');
+      replay.textContent = '🔊';
+      replay.addEventListener('click', () => {
+        void bridge.speak({ text: m.content, language: this.deps.getSettings().language });
+      });
+      el.appendChild(replay);
+    }
     return el;
   }
 
   private push(m: ChatMessage): void {
     this.messages.push(m);
+    if (m.role === 'assistant' && m.content.trim().length > 0) {
+      this.deps.onAssistantReply?.(m.content);
+    }
     this.render();
   }
 

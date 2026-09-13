@@ -38,9 +38,32 @@
           aria-label="Mensagem"
           maxlength="2000"
         />
+        <button id="btn-mic" class="icon-btn btn-mic" type="button" aria-label="Falar">
+          <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+            <path
+              fill="currentColor"
+              d="M12 14a3 3 0 0 0 3-3V6a3 3 0 1 0-6 0v5a3 3 0 0 0 3 3Zm5-3a5 5 0 0 1-10 0H5a7 7 0 0 0 6 6.92V21h2v-3.08A7 7 0 0 0 19 11h-2Z"
+            />
+          </svg>
+        </button>
         <button id="btn-send" type="submit" aria-label="Enviar">➤</button>
       </form>
     </div>
+
+    <section id="voice-panel" hidden aria-live="polite">
+      <div class="voice-status">
+        <span id="voice-dot" class="voice-dot" aria-hidden="true"></span>
+        <span id="voice-status-text"></span>
+      </div>
+      <div class="voice-level" aria-hidden="true">
+        <span id="voice-level-bar"></span>
+      </div>
+      <p id="voice-transcript"></p>
+      <div class="voice-actions">
+        <button id="btn-voice-cancel" type="button" class="btn-danger" data-i18n="voice.cancel">Cancelar</button>
+        <button id="btn-voice-stop" type="button" class="btn-primary" data-i18n="voice.stop">Parar</button>
+      </div>
+    </section>
 
     <aside id="settings-drawer" hidden aria-label="Configurações">
       <!-- conteúdo montado por src/ui/settings.ts -->

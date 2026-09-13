@@ -1,0 +1,68 @@
+/**
+ * Cliente de voz da camada web (docs §7, TODO app-01).
+ *
+ * **PT** Envolve os métodos/eventos de voz da ponte num fluxo simples para a
+ * UI: iniciar/parar captura, níveis de microfone, transcrições parciais e
+ * final, downloads de modelo e fala (TTS). No navegador (dev) o mock usa
+ * Web Speech API/speechSynthesis quando disponível — no Android o pipeline
+ * é o nativo (SpeechRecognizer on-device ou whisper.cpp + VAD Silero).
+ * **EN** Wraps the bridge voice methods/events into a simple flow for the
+ * UI: start/stop capture, mic levels, partial/final transcripts, model
+ * downloads and speaking (TTS). In the browser (dev) the mock uses Web
+ * Speech API/speechSynthesis when available — on Android the pipeline is
+ * native (on-device SpeechRecognizer or whisper.cpp + Silero VAD).
+ */
+
+export type VoiceEngine = 'system' | 'whisper';
+
+export type VoiceEvent =
+  | { type: 'level'; level: number }
+  | { type: 'speech'; active: boolean }
+  | { type: 'partial'; text: string }
+  | { type: 'transcribing'; }
+  | {
+      type: 'result';
+      final: boolean;
+      source: string;
+      text: string;
+      sttMs?: number;
+      samples?: number;
+      reason?: string;
+    }
+  | { type: 'error'; code: string; message?: string }
+  | { type: 'stopped'; reason: string }
+  | {
+      type: 'modelProgress';
+      kind: string;
+      id: string;
+      bytes: number;
+      total: number;
+    }
+  | { type: 'modelReady'; kind: string; id: string }
+  | { type: 'modelError'; kind: string; id: string; message?: string };
+
+export interface WhisperModelStatus {
+  id: string;
+  file: string;
+  bytes: number;
+  downloaded: boolean;
+}
+
+export interface VoiceCapabilities {
+  mic: boolean;
+  systemStt: boolean;
+  whisperNative: boolean;
+  vadSilero: boolean;
+  vadEngine: string;
+  tts: boolean;
+  whisperModels: WhisperModelStatus[];
+}
+
+export interface CaptureOptions {
+  engine: VoiceEngine;
+  language: string;
+  vadAutoStop: boolean;
+  modelId: string;
+}
+
+export type VoiceListener = (event: VoiceEvent) => void;
