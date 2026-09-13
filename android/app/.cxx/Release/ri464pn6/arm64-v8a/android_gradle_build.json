@@ -1,0 +1,87 @@
+{
+  "buildFiles": [
+    "/home/z/my-project/geny-assistant/android/app/src/main/cpp/CMakeLists.txt",
+    "/home/z/my-project/geny-assistant/native/whisper.cpp/CMakeLists.txt",
+    "/home/z/my-project/geny-assistant/native/whisper.cpp/ggml/CMakeLists.txt",
+    "/home/z/my-project/geny-assistant/native/whisper.cpp/ggml/src/CMakeLists.txt",
+    "/home/z/my-project/geny-assistant/native/whisper.cpp/ggml/src/ggml-cpu/CMakeLists.txt",
+    "/home/z/my-project/geny-assistant/native/whisper.cpp/src/CMakeLists.txt"
+  ],
+  "cleanCommandsComponents": [
+    [
+      "/tmp/my-project/buildtools/android-sdk/cmake/3.22.1/bin/ninja",
+      "-C",
+      "/home/z/my-project/geny-assistant/android/app/.cxx/Release/ri464pn6/arm64-v8a",
+      "clean"
+    ]
+  ],
+  "buildTargetsCommandComponents": [
+    "/tmp/my-project/buildtools/android-sdk/cmake/3.22.1/bin/ninja",
+    "-C",
+    "/home/z/my-project/geny-assistant/android/app/.cxx/Release/ri464pn6/arm64-v8a",
+    "{LIST_OF_TARGETS_TO_BUILD}"
+  ],
+  "libraries": {
+    "geny_whisper_jni::@6890427a1f51a3e7e1df": {
+      "toolchain": "toolchain",
+      "abi": "arm64-v8a",
+      "artifactName": "geny_whisper_jni",
+      "output": "/home/z/my-project/geny-assistant/android/app/build/intermediates/cxx/Release/ri464pn6/obj/arm64-v8a/libgeny_whisper_jni.so",
+      "runtimeFiles": [
+        "/home/z/my-project/geny-assistant/android/app/build/intermediates/cxx/Release/ri464pn6/obj/arm64-v8a/libwhisper.so",
+        "/home/z/my-project/geny-assistant/android/app/build/intermediates/cxx/Release/ri464pn6/obj/arm64-v8a/libggml.so",
+        "/home/z/my-project/geny-assistant/android/app/build/intermediates/cxx/Release/ri464pn6/obj/arm64-v8a/libggml-cpu.so",
+        "/home/z/my-project/geny-assistant/android/app/build/intermediates/cxx/Release/ri464pn6/obj/arm64-v8a/libggml-base.so"
+      ]
+    },
+    "ggml::@fe13e92dabd0655ddef2": {
+      "toolchain": "toolchain",
+      "abi": "arm64-v8a",
+      "artifactName": "ggml",
+      "output": "/home/z/my-project/geny-assistant/android/app/build/intermediates/cxx/Release/ri464pn6/obj/arm64-v8a/libggml.so",
+      "runtimeFiles": [
+        "/home/z/my-project/geny-assistant/android/app/build/intermediates/cxx/Release/ri464pn6/obj/arm64-v8a/libggml-cpu.so",
+        "/home/z/my-project/geny-assistant/android/app/build/intermediates/cxx/Release/ri464pn6/obj/arm64-v8a/libggml-base.so"
+      ]
+    },
+    "ggml-base::@fe13e92dabd0655ddef2": {
+      "toolchain": "toolchain",
+      "abi": "arm64-v8a",
+      "artifactName": "ggml-base",
+      "output": "/home/z/my-project/geny-assistant/android/app/build/intermediates/cxx/Release/ri464pn6/obj/arm64-v8a/libggml-base.so",
+      "runtimeFiles": []
+    },
+    "ggml-cpu::@fe13e92dabd0655ddef2": {
+      "toolchain": "toolchain",
+      "abi": "arm64-v8a",
+      "artifactName": "ggml-cpu",
+      "output": "/home/z/my-project/geny-assistant/android/app/build/intermediates/cxx/Release/ri464pn6/obj/arm64-v8a/libggml-cpu.so",
+      "runtimeFiles": [
+        "/home/z/my-project/geny-assistant/android/app/build/intermediates/cxx/Release/ri464pn6/obj/arm64-v8a/libggml-base.so"
+      ]
+    },
+    "whisper::@5c4c08eb26cb9fe5feee": {
+      "toolchain": "toolchain",
+      "abi": "arm64-v8a",
+      "artifactName": "whisper",
+      "output": "/home/z/my-project/geny-assistant/android/app/build/intermediates/cxx/Release/ri464pn6/obj/arm64-v8a/libwhisper.so",
+      "runtimeFiles": [
+        "/home/z/my-project/geny-assistant/android/app/build/intermediates/cxx/Release/ri464pn6/obj/arm64-v8a/libggml.so",
+        "/home/z/my-project/geny-assistant/android/app/build/intermediates/cxx/Release/ri464pn6/obj/arm64-v8a/libggml-cpu.so",
+        "/home/z/my-project/geny-assistant/android/app/build/intermediates/cxx/Release/ri464pn6/obj/arm64-v8a/libggml-base.so"
+      ]
+    }
+  },
+  "toolchains": {
+    "toolchain": {
+      "cCompilerExecutable": "/tmp/my-project/buildtools/android-sdk/ndk/27.2.12479018/toolchains/llvm/prebuilt/linux-x86_64/bin/clang.lld",
+      "cppCompilerExecutable": "/tmp/my-project/buildtools/android-sdk/ndk/27.2.12479018/toolchains/llvm/prebuilt/linux-x86_64/bin/clang++.lld"
+    }
+  },
+  "cFileExtensions": [
+    "c"
+  ],
+  "cppFileExtensions": [
+    "cpp"
+  ]
+}

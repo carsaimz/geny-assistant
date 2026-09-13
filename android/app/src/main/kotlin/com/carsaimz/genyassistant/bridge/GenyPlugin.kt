@@ -1,5 +1,6 @@
 package com.carsaimz.genyassistant.bridge
 
+import android.Manifest
 import android.app.Activity
 import android.content.Context
 import android.content.Intent
@@ -32,11 +33,15 @@ import com.carsaimz.genyassistant.tools.Tool
 import com.carsaimz.genyassistant.tools.ToolHost
 import com.carsaimz.genyassistant.tools.ToolRegistry
 import com.carsaimz.genyassistant.tools.WebSearchTool
+import com.carsaimz.genyassistant.voice.VoiceManager
+import com.getcapacitor.JSArray
 import com.getcapacitor.JSObject
 import com.getcapacitor.Plugin
 import com.getcapacitor.PluginCall
 import com.getcapacitor.PluginMethod
 import com.getcapacitor.annotation.CapacitorPlugin
+import com.getcapacitor.annotation.Permission
+import com.getcapacitor.annotation.PermissionCallback
 import org.json.JSONArray
 import org.json.JSONObject
 import java.io.File
@@ -45,10 +50,18 @@ import java.util.concurrent.TimeUnit
 
 /**
  * Ponte nativa Capacitor (docs §3.5): expõe catálogo de ferramentas, execução
- * validada, confirmação humana nativa, segredos do Keystore e contexto do
- * dispositivo para a camada web.
+ * validada, confirmação humana nativa, segredos do Keystore, contexto do
+ * dispositivo e o pipeline de voz (Fase 2) para a camada web.
+ *
+ * RECORD_AUDIO é solicitada EM CONTEXTO — só quando o usuário aciona o
+ * microfone (docs §14), nunca no arranque do app.
  */
-@CapacitorPlugin(name = "GenyBridge")
+@CapacitorPlugin(
+    name = "GenyBridge",
+    permissions = [
+        Permission(strings = [Manifest.permission.RECORD_AUDIO], alias = "microphone"),
+    ],
+)
 class GenyPlugin : Plugin() {
 
     private lateinit var registry: ToolRegistry
@@ -57,6 +70,7 @@ class GenyPlugin : Plugin() {
     private lateinit var confirmation: ConfirmationManager
     private lateinit var db: GenyDb
     private lateinit var toolExecutor: java.util.concurrent.ExecutorService
+    private var voice: VoiceManager? = null
 
     private val host = object : ToolHost {
         override fun appContext(): Context = context
@@ -302,9 +316,131 @@ class GenyPlugin : Plugin() {
         call.resolve(JSObject().put("value", secret ?: ""))
     }
 
+    // ---------------------------------------------------------------- voz --
+    // Fase 2 (docs §7): captura em contexto, STT sistema/whisper, TTS local.
+
+    /** Canal de eventos de voz: notifyListeners("genyVoice", {type, ...}). */
+    private fun voiceEmit(): (JSObject) -> Unit = { payload ->
+        notifyListeners(EVENT_VOICE, payload)
+    }
+
+    private fun voiceManager(): VoiceManager =
+        voice ?: VoiceManager(context, voiceEmit()).also { voice = it }
+
+    @PluginMethod
+    fun getVoiceCapabilities(call: PluginCall) {
+        call.resolve(JSObject().put("json", voiceManager().capabilities().toString()))
+    }
+
+    @PluginMethod
+    fun startVoiceCapture(call: PluginCall) {
+        val engineRaw = call.getString("engine") ?: "system"
+        val engine = if (engineRaw == "whisper") VoiceManager.Engine.WHISPER else VoiceManager.Engine.SYSTEM
+        val language = call.getString("language") ?: java.util.Locale.getDefault().toLanguageTag()
+        val vadAutoStop = call.getBoolean("vadAutoStop", true) ?: true
+        val modelId = call.getString("modelId") ?: "whisper-tiny"
+
+        // Permissão EM CONTEXTO: pede só agora, no toque no microfone.
+        if (getPermissionStates()["microphone"] != com.getcapacitor.PermissionState.GRANTED) {
+            requestPermissionForAlias("microphone", call, "onMicPermission")
+            return
+        }
+        val ok = voiceManager().startCapture(engine, language, vadAutoStop, modelId)
+        audit.log("voice", "captura iniciada: engine=$engine lang=$language ok=$ok")
+        if (ok) {
+            call.resolve()
+        } else {
+            call.resolve(JSObject().put("started", false))
+        }
+    }
+
+    @PermissionCallback
+    fun onMicPermission(call: PluginCall) {
+        if (getPermissionStates()["microphone"] == com.getcapacitor.PermissionState.GRANTED) {
+            // Repete o fluxo agora com a permissão concedida.
+            val engineRaw = call.getString("engine") ?: "system"
+            val engine = if (engineRaw == "whisper") VoiceManager.Engine.WHISPER else VoiceManager.Engine.SYSTEM
+            val language = call.getString("language") ?: java.util.Locale.getDefault().toLanguageTag()
+            val vadAutoStop = call.getBoolean("vadAutoStop", true) ?: true
+            val modelId = call.getString("modelId") ?: "whisper-tiny"
+            val ok = voiceManager().startCapture(engine, language, vadAutoStop, modelId)
+            audit.log("voice", "captura iniciada pós-permissão: ok=$ok")
+            if (ok) {
+                call.resolve()
+            } else {
+                call.resolve(JSObject().put("started", false))
+            }
+        } else {
+            audit.log("voice", "permissão de microfone negada")
+            voiceEmit()(JSObject().put("type", "error").put("code", "denied"))
+            call.resolve(JSObject().put("started", false))
+        }
+    }
+
+    @PluginMethod
+    fun stopVoiceCapture(call: PluginCall) {
+        voiceManager().stopCapture("user")
+        call.resolve()
+    }
+
+    @PluginMethod
+    fun cancelVoiceCapture(call: PluginCall) {
+        voiceManager().cancelCapture()
+        call.resolve()
+    }
+
+    @PluginMethod
+    fun downloadVoiceModel(call: PluginCall) {
+        val kind = call.getString("kind") ?: "stt"
+        val id = call.getString("id") ?: ""
+        if (id.isEmpty()) {
+            call.reject("id obrigatorio")
+            return
+        }
+        audit.log("voice", "download de modelo: $kind/$id")
+        voiceManager().downloadModel(kind, id)
+        call.resolve()
+    }
+
+    @PluginMethod
+    fun deleteVoiceModel(call: PluginCall) {
+        val file = call.getString("file") ?: ""
+        if (file.isEmpty()) {
+            call.reject("file obrigatorio")
+            return
+        }
+        val ok = voiceManager().deleteModel(file)
+        audit.log("voice", "modelo removido: $file ok=$ok")
+        call.resolve(JSObject().put("deleted", ok))
+    }
+
+    @PluginMethod
+    fun speak(call: PluginCall) {
+        val text = call.getString("text").orEmpty()
+        if (text.isBlank()) {
+            call.reject("text obrigatorio")
+            return
+        }
+        val language = call.getString("language") ?: java.util.Locale.getDefault().toLanguageTag()
+        com.carsaimz.genyassistant.voice.TtsService.speak(context, text, language)
+        call.resolve()
+    }
+
+    @PluginMethod
+    fun stopSpeaking(call: PluginCall) {
+        com.carsaimz.genyassistant.voice.TtsService.stop(context)
+        call.resolve()
+    }
+
     override fun handleOnDestroy() {
+        voice?.release()
+        voice = null
         toolExecutor.shutdown()
         toolExecutor.awaitTermination(2, TimeUnit.SECONDS)
         super.handleOnDestroy()
+    }
+
+    private companion object {
+        const val EVENT_VOICE = "genyVoice"
     }
 }

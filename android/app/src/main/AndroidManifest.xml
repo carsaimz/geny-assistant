@@ -27,6 +27,7 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MICROPHONE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK" />
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
@@ -90,6 +91,12 @@
         <service
             android:name=".overlay.HudOverlayService"
             android:exported="false" />
+
+        <!-- TTS local em primeiro plano (Fase 2, §7.3) -->
+        <service
+            android:name=".voice.TtsService"
+            android:exported="false"
+            android:foregroundServiceType="mediaPlayback" />
 
         <!-- Leitura de notificacoes (§9.3) -->
         <service

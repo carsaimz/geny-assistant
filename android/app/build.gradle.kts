@@ -13,13 +13,30 @@ val hasReleaseSigning = !genyKeystoreFile.isNullOrEmpty()
 android {
     namespace = "com.carsaimz.genyassistant"
     compileSdk = 35
+    // NDK pinado (mesma versão no CI) — evita auto-download do default.
+    ndkVersion = "27.2.12479018"
 
     defaultConfig {
         applicationId = "com.carsaimz.genyassistant"
         minSdk = 26
         targetSdk = 35
-        versionCode = 3
-        versionName = "0.1.0-alpha.3"
+        versionCode = 4
+        versionName = "0.2.0-alpha.1"
+
+        ndk {
+            // arm64-v8a: aparelhos modernos; x86_64: emulador/dev.
+            abiFilters += listOf("arm64-v8a", "x86_64")
+        }
+
+        externalNativeBuild {
+            cmake {
+                // Submodule pinado (native/whisper.cpp @ v1.7.4).
+                arguments += listOf(
+                    "-DWHISPER_DIR=${File(rootDir.parentFile, "native/whisper.cpp").absolutePath}",
+                    "-DCMAKE_BUILD_TYPE=Release",
+                )
+            }
+        }
     }
 
     signingConfigs {
@@ -57,6 +74,13 @@ android {
 
     kotlinOptions {
         jvmTarget = "17"
+    }
+
+    externalNativeBuild {
+        cmake {
+            path = file("src/main/cpp/CMakeLists.txt")
+            version = "3.22.1"
+        }
     }
 
     testOptions {

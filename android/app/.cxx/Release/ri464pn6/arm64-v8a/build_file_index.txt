@@ -1,0 +1,6 @@
+/home/z/my-project/geny-assistant/android/app/src/main/cpp/CMakeLists.txt
+/home/z/my-project/geny-assistant/native/whisper.cpp/CMakeLists.txt
+/home/z/my-project/geny-assistant/native/whisper.cpp/ggml/CMakeLists.txt
+/home/z/my-project/geny-assistant/native/whisper.cpp/ggml/src/CMakeLists.txt
+/home/z/my-project/geny-assistant/native/whisper.cpp/ggml/src/ggml-cpu/CMakeLists.txt
+/home/z/my-project/geny-assistant/native/whisper.cpp/src/CMakeLists.txt

@@ -1,0 +1,85 @@
+{
+	"backtraceGraph" : 
+	{
+		"commands" : 
+		[
+			"install"
+		],
+		"files" : 
+		[
+			"/home/z/my-project/geny-assistant/native/whisper.cpp/ggml/CMakeLists.txt"
+		],
+		"nodes" : 
+		[
+			{
+				"file" : 0
+			},
+			{
+				"command" : 0,
+				"file" : 0,
+				"line" : 252,
+				"parent" : 0
+			},
+			{
+				"command" : 0,
+				"file" : 0,
+				"line" : 253,
+				"parent" : 0
+			}
+		]
+	},
+	"installers" : 
+	[
+		{
+			"backtrace" : 1,
+			"component" : "Unspecified",
+			"destination" : "lib",
+			"paths" : 
+			[
+				"/home/z/my-project/geny-assistant/android/app/build/intermediates/cxx/Release/ri464pn6/obj/arm64-v8a/libggml.so"
+			],
+			"targetId" : "ggml::@fe13e92dabd0655ddef2",
+			"targetIndex" : 1,
+			"type" : "target"
+		},
+		{
+			"backtrace" : 1,
+			"component" : "Unspecified",
+			"destination" : "include",
+			"paths" : 
+			[
+				"/home/z/my-project/geny-assistant/native/whisper.cpp/ggml/include/ggml.h",
+				"/home/z/my-project/geny-assistant/native/whisper.cpp/ggml/include/ggml-cpu.h",
+				"/home/z/my-project/geny-assistant/native/whisper.cpp/ggml/include/ggml-alloc.h",
+				"/home/z/my-project/geny-assistant/native/whisper.cpp/ggml/include/ggml-backend.h",
+				"/home/z/my-project/geny-assistant/native/whisper.cpp/ggml/include/ggml-blas.h",
+				"/home/z/my-project/geny-assistant/native/whisper.cpp/ggml/include/ggml-cann.h",
+				"/home/z/my-project/geny-assistant/native/whisper.cpp/ggml/include/ggml-cuda.h",
+				"/home/z/my-project/geny-assistant/native/whisper.cpp/ggml/include/ggml-kompute.h",
+				"/home/z/my-project/geny-assistant/native/whisper.cpp/ggml/include/ggml-opt.h",
+				"/home/z/my-project/geny-assistant/native/whisper.cpp/ggml/include/ggml-metal.h",
+				"/home/z/my-project/geny-assistant/native/whisper.cpp/ggml/include/ggml-rpc.h",
+				"/home/z/my-project/geny-assistant/native/whisper.cpp/ggml/include/ggml-sycl.h",
+				"/home/z/my-project/geny-assistant/native/whisper.cpp/ggml/include/ggml-vulkan.h"
+			],
+			"type" : "file"
+		},
+		{
+			"backtrace" : 2,
+			"component" : "Unspecified",
+			"destination" : "lib",
+			"paths" : 
+			[
+				"/home/z/my-project/geny-assistant/android/app/build/intermediates/cxx/Release/ri464pn6/obj/arm64-v8a/libggml-base.so"
+			],
+			"targetId" : "ggml-base::@fe13e92dabd0655ddef2",
+			"targetIndex" : 2,
+			"type" : "target"
+		}
+	],
+	"paths" : 
+	{
+		"build" : "whisper-build/ggml",
+		"source" : "/home/z/my-project/geny-assistant/native/whisper.cpp/ggml"
+	}
+}

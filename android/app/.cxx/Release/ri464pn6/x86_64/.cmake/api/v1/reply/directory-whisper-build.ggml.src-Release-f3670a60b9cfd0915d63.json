@@ -1,0 +1,60 @@
+{
+	"backtraceGraph" : 
+	{
+		"commands" : 
+		[
+			"install",
+			"ggml_add_backend_library",
+			"ggml_add_cpu_backend_variant_impl"
+		],
+		"files" : 
+		[
+			"/home/z/my-project/geny-assistant/native/whisper.cpp/ggml/src/CMakeLists.txt",
+			"/home/z/my-project/geny-assistant/native/whisper.cpp/ggml/src/ggml-cpu/CMakeLists.txt"
+		],
+		"nodes" : 
+		[
+			{
+				"file" : 0
+			},
+			{
+				"command" : 2,
+				"file" : 0,
+				"line" : 299,
+				"parent" : 0
+			},
+			{
+				"command" : 1,
+				"file" : 1,
+				"line" : 8,
+				"parent" : 1
+			},
+			{
+				"command" : 0,
+				"file" : 0,
+				"line" : 241,
+				"parent" : 2
+			}
+		]
+	},
+	"installers" : 
+	[
+		{
+			"backtrace" : 3,
+			"component" : "Unspecified",
+			"destination" : "lib",
+			"paths" : 
+			[
+				"/home/z/my-project/geny-assistant/android/app/build/intermediates/cxx/Release/ri464pn6/obj/x86_64/libggml-cpu.so"
+			],
+			"targetId" : "ggml-cpu::@fe13e92dabd0655ddef2",
+			"targetIndex" : 3,
+			"type" : "target"
+		}
+	],
+	"paths" : 
+	{
+		"build" : "whisper-build/ggml/src",
+		"source" : "/home/z/my-project/geny-assistant/native/whisper.cpp/ggml/src"
+	}
+}

@@ -30,6 +30,7 @@ capture/*.hprof
 target/
 core/target/
 native/*/
+!native/whisper.cpp
 !native/README.md
 !native/.gitignore
 *.o

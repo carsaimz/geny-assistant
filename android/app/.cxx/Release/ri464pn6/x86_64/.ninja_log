@@ -1,0 +1,23 @@
+# ninja log v5
+1	2937	1789281885193970429	whisper-build/ggml/src/CMakeFiles/ggml-base.dir/ggml.c.o	d6871ac61a66788b
+2937	3895	1789281886159973154	whisper-build/ggml/src/CMakeFiles/ggml-base.dir/ggml-alloc.c.o	d4acbaa5183dfc7b
+0	4750	1789281887011975862	CMakeFiles/geny_whisper_jni.dir/geny_whisper_jni.cpp.o	3f5329677b7b31d
+0	5844	1789281888102979333	whisper-build/ggml/src/CMakeFiles/ggml-base.dir/ggml-opt.cpp.o	8d430eaadace85eb
+4750	8478	1789281890741987730	whisper-build/ggml/src/CMakeFiles/ggml-base.dir/ggml-threading.cpp.o	10d8e3485c6e7d9a
+3895	9585	1789281891842989028	whisper-build/ggml/src/CMakeFiles/ggml-base.dir/ggml-backend.cpp.o	dad65aa0d9b34336
+5844	13245	1789281895493994342	whisper-build/ggml/src/CMakeFiles/ggml-base.dir/ggml-quants.c.o	9398f1ac4b304029
+13246	13875	1789281896138996394	/home/z/my-project/geny-assistant/android/app/build/intermediates/cxx/Release/ri464pn6/obj/x86_64/libggml-base.so	efe23b6c8b993672
+8478	16567	1789281898824004925	whisper-build/ggml/src/CMakeFiles/ggml.dir/ggml-backend-reg.cpp.o	dd223267e5dc3670
+13875	21834	1789281904093003850	whisper-build/ggml/src/CMakeFiles/ggml-cpu.dir/ggml-cpu/ggml-cpu.cpp.o	1d6dab0b0dedd6fd
+21834	22349	1789281904617005509	whisper-build/ggml/src/CMakeFiles/ggml-cpu.dir/ggml-cpu/ggml-cpu-hbm.cpp.o	6b061ae8c31c867e
+9586	24137	1789281906324010921	whisper-build/ggml/src/CMakeFiles/ggml-cpu.dir/ggml-cpu/ggml-cpu.c.o	dc77b3f3e7ea13dc
+16570	24993	1789281907248012409	whisper-build/ggml/src/CMakeFiles/ggml-cpu.dir/ggml-cpu/ggml-cpu-aarch64.cpp.o	bff96afa7fc274b4
+22349	25151	1789281907414011955	whisper-build/ggml/src/CMakeFiles/ggml-cpu.dir/ggml-cpu/ggml-cpu-quants.c.o	36bcf5f3df0d8f30
+25151	29945	1789281912204009081	whisper-build/ggml/src/CMakeFiles/ggml-cpu.dir/ggml-cpu/amx/mmq.cpp.o	b26eb530e8369184
+24137	30520	1789281912753010803	whisper-build/ggml/src/CMakeFiles/ggml-cpu.dir/ggml-cpu/ggml-cpu-traits.cpp.o	51b1d576e192f317
+24993	30520	1789281912753010803	whisper-build/ggml/src/CMakeFiles/ggml-cpu.dir/ggml-cpu/amx/amx.cpp.o	ff09148654d45c77
+30521	31032	1789281913298012512	/home/z/my-project/geny-assistant/android/app/build/intermediates/cxx/Release/ri464pn6/obj/x86_64/libggml-cpu.so	2ee3d8c5f1c4b591
+31032	31473	1789281913740013898	/home/z/my-project/geny-assistant/android/app/build/intermediates/cxx/Release/ri464pn6/obj/x86_64/libggml.so	155785aba5792668
+29945	49729	1789281931947021749	whisper-build/src/CMakeFiles/whisper.dir/whisper.cpp.o	fe1ba530d46a4d0a
+49729	50288	1789281932549022999	/home/z/my-project/geny-assistant/android/app/build/intermediates/cxx/Release/ri464pn6/obj/x86_64/libwhisper.so	dbe6a878f2724875
+50288	50753	1789281933021023979	/home/z/my-project/geny-assistant/android/app/build/intermediates/cxx/Release/ri464pn6/obj/x86_64/libgeny_whisper_jni.so	fe257854017ef3a8

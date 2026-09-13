@@ -1,0 +1,14 @@
+{
+	"backtraceGraph" : 
+	{
+		"commands" : [],
+		"files" : [],
+		"nodes" : []
+	},
+	"installers" : [],
+	"paths" : 
+	{
+		"build" : "whisper-build/src",
+		"source" : "/home/z/my-project/geny-assistant/native/whisper.cpp/src"
+	}
+}

@@ -1,0 +1,70 @@
+{
+  "buildFiles": [
+    "/home/z/my-project/geny-assistant/android/app/src/main/cpp/CMakeLists.txt",
+    "/home/z/my-project/geny-assistant/native/whisper.cpp/CMakeLists.txt",
+    "/home/z/my-project/geny-assistant/native/whisper.cpp/ggml/CMakeLists.txt",
+    "/home/z/my-project/geny-assistant/native/whisper.cpp/ggml/src/CMakeLists.txt",
+    "/home/z/my-project/geny-assistant/native/whisper.cpp/ggml/src/ggml-cpu/CMakeLists.txt",
+    "/home/z/my-project/geny-assistant/native/whisper.cpp/src/CMakeLists.txt"
+  ],
+  "cleanCommandsComponents": [
+    [
+      "/tmp/my-project/buildtools/android-sdk/cmake/3.22.1/bin/ninja",
+      "-C",
+      "/home/z/my-project/geny-assistant/android/app/.cxx/Release/ri464pn6/x86_64",
+      "clean"
+    ]
+  ],
+  "buildTargetsCommandComponents": [
+    "/tmp/my-project/buildtools/android-sdk/cmake/3.22.1/bin/ninja",
+    "-C",
+    "/home/z/my-project/geny-assistant/android/app/.cxx/Release/ri464pn6/x86_64",
+    "{LIST_OF_TARGETS_TO_BUILD}"
+  ],
+  "libraries": {
+    "whisper::@5c4c08eb26cb9fe5feee": {
+      "artifactName": "whisper",
+      "abi": "x86_64",
+      "output": "/home/z/my-project/geny-assistant/android/app/build/intermediates/cxx/Release/ri464pn6/obj/x86_64/libwhisper.so",
+      "runtimeFiles": [
+        "/home/z/my-project/geny-assistant/android/app/build/intermediates/cxx/Release/ri464pn6/obj/x86_64/libggml.so",
+        "/home/z/my-project/geny-assistant/android/app/build/intermediates/cxx/Release/ri464pn6/obj/x86_64/libggml-cpu.so",
+        "/home/z/my-project/geny-assistant/android/app/build/intermediates/cxx/Release/ri464pn6/obj/x86_64/libggml-base.so"
+      ]
+    },
+    "geny_whisper_jni::@6890427a1f51a3e7e1df": {
+      "artifactName": "geny_whisper_jni",
+      "abi": "x86_64",
+      "output": "/home/z/my-project/geny-assistant/android/app/build/intermediates/cxx/Release/ri464pn6/obj/x86_64/libgeny_whisper_jni.so",
+      "runtimeFiles": [
+        "/home/z/my-project/geny-assistant/android/app/build/intermediates/cxx/Release/ri464pn6/obj/x86_64/libwhisper.so",
+        "/home/z/my-project/geny-assistant/android/app/build/intermediates/cxx/Release/ri464pn6/obj/x86_64/libggml.so",
+        "/home/z/my-project/geny-assistant/android/app/build/intermediates/cxx/Release/ri464pn6/obj/x86_64/libggml-cpu.so",
+        "/home/z/my-project/geny-assistant/android/app/build/intermediates/cxx/Release/ri464pn6/obj/x86_64/libggml-base.so"
+      ]
+    },
+    "ggml::@fe13e92dabd0655ddef2": {
+      "artifactName": "ggml",
+      "abi": "x86_64",
+      "output": "/home/z/my-project/geny-assistant/android/app/build/intermediates/cxx/Release/ri464pn6/obj/x86_64/libggml.so",
+      "runtimeFiles": [
+        "/home/z/my-project/geny-assistant/android/app/build/intermediates/cxx/Release/ri464pn6/obj/x86_64/libggml-cpu.so",
+        "/home/z/my-project/geny-assistant/android/app/build/intermediates/cxx/Release/ri464pn6/obj/x86_64/libggml-base.so"
+      ]
+    },
+    "ggml-base::@fe13e92dabd0655ddef2": {
+      "artifactName": "ggml-base",
+      "abi": "x86_64",
+      "output": "/home/z/my-project/geny-assistant/android/app/build/intermediates/cxx/Release/ri464pn6/obj/x86_64/libggml-base.so",
+      "runtimeFiles": []
+    },
+    "ggml-cpu::@fe13e92dabd0655ddef2": {
+      "artifactName": "ggml-cpu",
+      "abi": "x86_64",
+      "output": "/home/z/my-project/geny-assistant/android/app/build/intermediates/cxx/Release/ri464pn6/obj/x86_64/libggml-cpu.so",
+      "runtimeFiles": [
+        "/home/z/my-project/geny-assistant/android/app/build/intermediates/cxx/Release/ri464pn6/obj/x86_64/libggml-base.so"
+      ]
+    }
+  }
+}

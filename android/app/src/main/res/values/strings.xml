@@ -7,6 +7,13 @@
     <string name="notif_assistant_running">Geny is active — everything runs on this device</string>
     <string name="notif_reminder_title">Reminder</string>
     <string name="action_open">Open</string>
+    <string name="action_stop">Stop</string>
     <string name="confirm_allow_once">Allow once</string>
     <string name="confirm_deny">Deny</string>
+
+    <!-- Voz (Fase 2): serviço TTS em primeiro plano -->
+    <string name="notif_channel_tts">Voice playback</string>
+    <string name="notif_channel_tts_desc">Speaks the Geny Assistant replies on device</string>
+    <string name="notif_tts_title">Geny is speaking</string>
+    <string name="notif_tts_body">Touch to return to the conversation</string>
 </resources>
