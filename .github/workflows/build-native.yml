@@ -44,7 +44,7 @@ jobs:
         env:
           ANDROID_NDK_HOME: ${{ steps.ndk.outputs.ndk-path }}
         run: cargo ndk --target ${{ matrix.target }} --platform 26 -- build --release
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: geny-core-${{ matrix.abi }}
           path: core/target/${{ matrix.target }}/release/libgeny_core.so
