@@ -4,6 +4,69 @@ Todas as mudanças notáveis deste projeto são documentadas aqui.
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/),
 versionamento [Semântico](https://semver.org/lang/pt-BR/).
 
+## [0.3.0-alpha.1] — Fase 3: LLM local / Phase 3: Local LLM
+
+### Adicionado / Added
+
+- **LLM 100% no dispositivo**: llama.cpp pinado @ v0.4.0 compilado no app via
+  NDK, em módulo Gradle próprio (`:llama-native`, arm64-v8a/x86_64) — módulo
+  separado porque o ggml do llama v0.4.0 é incompatível com o ggml vendored
+  pelo whisper.cpp v1.7.4 (ambos usam a guarda `if (NOT TARGET ggml)`).
+  JNI próprio (`geny_llama_jni`): init/free/generate com o template de chat
+  do próprio modelo (GGUF), amostragem greedy (temperatura ≤ 0) ou
+  top-p + temperatura + seed.
+  *Fully on-device LLM: llama.cpp pinned @ v0.4.0 compiled into the app via
+  NDK inside its own Gradle module (`:llama-native`) — separate because
+  llama's ggml v0.4.0 is incompatible with the one vendored by whisper.cpp
+  v1.7.4. Own JNI with the model's own chat template, greedy or top-p +
+  temperature + seed sampling.*
+- **Catálogo de modelos GGUF** com SHA-256 pinado (LFS do HuggingFace,
+  verificado em 2026-09) e download sob demanda pelo ModelManager — nenhum
+  modelo embutido no APK: Qwen2.5 0.5B/1.5B Instruct (Apache-2.0), Llama 3.2
+  1B Instruct e Gemma 2 2B IT, todos Q4_K_M.
+  *GGUF model catalog with pinned SHA-256 (HuggingFace LFS) and on-demand
+  download — no model bundled in the APK: Qwen2.5 0.5B/1.5B Instruct
+  (Apache-2.0), Llama 3.2 1B Instruct and Gemma 2 2B IT, all Q4_K_M.*
+- **Guarda de RAM na carga**: o modelo só carrega se houver memória livre
+  suficiente (bytes × 1,35 + 128 MB); erros mapeados para a UI
+  (`low_memory`, `not_downloaded`, `jni_unavailable`, `load_failed`).
+  *RAM guard on load: the model only loads with enough free memory
+  (bytes × 1.35 + 128 MB); errors mapped for the UI.*
+- **Seção "Modelo local (LLM)" nas configurações** (TODO app-02): seletor com
+  estado de download (✓), download com progresso %, carregar/descarregar,
+  remoção e uso de disco; eventos no canal `genyLlm` (`llmProgress`,
+  `llmReady`, `llmStatus`, `llmError`).
+  *"Local model (LLM)" settings section: picker with download state, % progress
+  download, load/unload, delete and disk usage; events on the `genyLlm`
+  channel.*
+- **Chat com backend local**: no modo Local com modelo carregado, as
+  mensagens passam pelo GGUF (com suporte a tool calling pelo mesmo
+  contrato JSON do modo remoto); sem modelo ou sem JNI, cai para o roteador
+  de intenções offline. Mock web honesto (motor indisponível no navegador).
+  *Chat with the local backend: in Local mode with a loaded model, messages
+  go through the GGUF (tool calling via the same JSON contract as remote);
+  without a model or JNI it falls back to the offline intent router. Honest
+  web mock (engine unavailable in browsers).*
+- **ci-02**: job `cpp-android` no Build Native — matriz arm64-v8a/x86_64
+  compilando os dois wrappers JNI via CMake+NDK com artefatos por ABI;
+  caches nativos por módulo (whisper e llama) nos workflows Build APK e
+  Release.
+  *ci-02: `cpp-android` job in Build Native — arm64-v8a/x86_64 matrix
+  compiling both JNI wrappers via CMake+NDK with per-ABI artifacts;
+  per-module native caches in the Build APK and Release workflows.*
+- **Testes**: LlmTest.kt (catálogo + parser de mensagens + RAM/threads) e
+  llm.test.ts (contrato do mock LLM) — **26 testes web + 36 testes JVM**.
+  *LlmTest.kt (catalog + message parser + RAM/threads) and llm.test.ts
+  (LLM mock contract) — 26 web tests + 36 JVM tests.*
+
+### Documentação / Documentation
+
+- Guia bilíngue [`docs/user/models.md`](docs/user/models.md): requisitos de
+  RAM, instalação passo a passo, catálogo, espaço, privacidade e solução de
+  problemas. README/ROADMAP/TODO atualizados.
+  *Bilingual guide: RAM requirements, step-by-step install, catalog, storage,
+  privacy and troubleshooting. README/ROADMAP/TODO updated.*
+
 ## [0.2.0-alpha.1] — Fase 2: Voz / Phase 2: Voice
 
 ### Adicionado / Added

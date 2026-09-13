@@ -82,23 +82,30 @@ cd android && gradle :app:assembleDebug
 
 Guia completo: [`docs/build.md`](docs/build.md) · Modelos: [`scripts/download-model.sh`](scripts/download-model.sh)
 
-## Status — Fase 2 (Voz) 🚧 / Phase 2 (Voice) 🚧
+## Status — Fase 3 (LLM local) 🚧 / Phase 3 (Local LLM) 🚧
 
 - ✅ Fase 1: monorepo + CI/CD (5 workflows) + núcleo Rust (**43 testes**) + app web
   (**22 testes**) + Android (ponte com 18 ferramentas, confirmação fail-safe,
   Keystore, auditoria, serviços) — **15 testes JVM**
-- 🎙️ **Fase 2 em andamento (v0.2.0-alpha.1)**: conversa por voz com captura em
+- 🎙️ **Fase 2 (v0.2.0-alpha.1)**: conversa por voz com captura em
   contexto, STT dupla on-device (sistema + whisper.cpp via NDK com modelos
   GGML sob demanda SHA-256), VAD (energia + Silero ONNX) e TTS em serviço
   foreground — guia em [`docs/user/voice.md`](docs/user/voice.md)
-- ⏳ Próxima: whisper modelos maiores + Piper + wake word + **Fase 3 — LLM local** → ver [`ROADMAP.md`](ROADMAP.md)
+- 🦙 **Fase 3 em andamento (v0.3.0-alpha.1)**: **LLM 100% local** — llama.cpp
+  v0.4.0 compilado no app (`:llama-native`, arm64-v8a/x86_64), catálogo GGUF
+  (Qwen2.5 0.5B/1.5B, Llama 3.2 1B, Gemma 2 2B — Q4_K_M) com SHA-256 pinado e
+  download sob demanda, guarda de RAM, seção Modelo local nas configurações e
+  chat com backend local — guia em [`docs/user/models.md`](docs/user/models.md)
+- ⏳ Próxima: tela nativa de modelos + Piper + wake word + UniFFI → ver [`ROADMAP.md`](ROADMAP.md)
 
-> **Nota de build**: o APK agora compila whisper.cpp — o CI faz checkout de
-> submodules e instala NDK r27.2 + CMake 3.22.1. Local: `git submodule update
-> --init` + SDK com os mesmos componentes (docs/build.md).
+> **Nota de build**: o APK compila whisper.cpp **e** llama.cpp — o CI faz
+> checkout de submodules e instala NDK r27.2 + CMake 3.22.1. Local:
+> `git submodule update --init` + SDK com os mesmos componentes
+> (docs/build.md).
 >
-> *Build note: the APK now compiles whisper.cpp — CI checks out submodules
-> and installs NDK + CMake. Locally run `git submodule update --init`.*
+> *Build note: the APK compiles both whisper.cpp **and** llama.cpp — CI
+> checks out submodules and installs NDK + CMake. Locally run
+> `git submodule update --init` + the SDK with the same components.*
 
 ## Segurança e privacidade / Security & privacy
 

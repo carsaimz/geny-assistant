@@ -46,15 +46,26 @@
   lote de build nativo do llama.cpp; ver ROADMAP Fase 3)
 - [x] Métricas de latência voz→texto no log local (sttMs no evento de resultado)
 
-## Fase 3 — LLM local
+## 🚧 Fase 3 — LLM local *(v0.3.0-alpha.1 — núcleo entregue)*
 
-- [ ] Submodule llama.cpp pinado (whisper.cpp já pinado @ v1.7.4 na Fase 2)
+- [x] Submodule llama.cpp pinado @ v0.4.0 (módulo `:llama-native` com ggml
+  próprio — isolado do ggml do whisper.cpp v1.7.4)
+- [x] Inferência GGUF on-device (JNI `geny_llama_jni`: init/generate/free,
+  chat template do próprio modelo, greedy ou top-p + temp + dist,
+  arm64-v8a e x86_64)
+- [x] Catálogo de modelos GGUF com SHA-256 pinado (LFS do HuggingFace) e
+  download sob demanda com guarda de RAM (Qwen2.5 0.5B/1.5B, Llama 3.2 1B,
+  Gemma 2 2B — Q4_K_M)
+- [x] Seção Modelo local na UI (web/drawer): download com progresso,
+  carregar/descarregar, remoção, uso de disco; chat usa o backend local no
+  modo local com fallback para intenções offline
+- [x] ci-02: matriz de build C++ por ABI (arm64-v8a/x86_64) com artefatos
+  dos dois JNI no workflow Build Native
 - [ ] TTS neural via Piper (vozes pt-BR, pt-PT, en) — herdado da Fase 2
 - [ ] Wake word opcional (ONNX / openWakeWord), desligado por padrão — herdado da Fase 2
 - [ ] Bindings UniFFI Rust ↔ Kotlin do geny-core
-- [ ] Inferência GGUF on-device (arm64-v8a primeiro, depois armeabi-v7a/x86_64)
-- [ ] Gerenciador de modelos na UI: download, hash SHA-256, remoção, espaço
-- [ ] Prompt de sistema por idioma/cultura (do core i18n) + janela de contexto
+- [ ] Streaming de tokens + janela de contexto configurável na UI
+- [ ] Prompt de sistema por idioma/cultura (do core i18n)
 - [ ] Seleção automática local/remoto conforme bateria, rede e tarefa
 
 ## Fase 4 — Ferramentas avançadas / Advanced tools

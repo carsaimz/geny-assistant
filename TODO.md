@@ -27,16 +27,17 @@
 - [x] `docs-01` docs/user/voice.md (vozes, STT, VAD, TTS) (#31)
 - [ ] `core-03` TTS neural via Piper — movido para a Fase 3 (lote nativo junto com llama.cpp) (#3)
 
-## Fase 3 — LLM local (próximas)
+## 🚧 Fase 3 — LLM local (núcleo entregue em v0.3.0-alpha.1)
 
+- [x] `core-05` llama.cpp no app: submodule pinado @ v0.4.0, módulo `:llama-native` (CMake isolado), JNI geny_llama_jni, catálogo GGUF com SHA-256 pinado, guarda de RAM (#32)
+- [x] `app-02` Seção Modelo local nas configurações web: download com progresso, carregar/descarregar, remoção, disco; chat com backend local + fallback (#33)
+- [x] `ci-02` Matriz de build C++ por ABI (arm64-v8a/x86_64) com artefatos dos JNI (#34)
+- [ ] `android-03` Tela nativa de Modelos com progresso, hash, remoção, espaço (#35)
 - [ ] `core-03` TTS neural via Piper (vozes pt-BR, pt-PT, en) (#3, herdado da Fase 2)
 - [ ] `android-03b` Wake word opcional desligado por padrão (openWakeWord/ONNX)
 - [ ] `core-04` UniFFI: bindings geny-core ↔ Kotlin (`feature = "uniffi"`)
-- [ ] `core-05` Integração llama.cpp no core (sessão de inferência GGUF)
-- [ ] `android-03` Tela Modelos: download com progresso, hash, remoção, espaço
 - [ ] `android-04` Migração do GenyDb para Room + KSP
-- [ ] `app-02` Tela Modelos no web (espelha a nativa)
-- [ ] `ci-02` Job de matriz de build nativo com artefatos por ABI
+- [ ] `core-05b` Streaming de tokens na ponte + temperatura/seed na UI
 
 ## Fase 4 — Ferramentas avançadas
 
