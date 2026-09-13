@@ -12,10 +12,12 @@ on:
 
 jobs:
   apk:
-    name: assembleDebug
+    name: assembleDebug (NDK + whisper.cpp)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
+        with:
+          submodules: recursive
 
       - uses: actions/setup-node@v7
         with:
@@ -31,6 +33,22 @@ jobs:
       - uses: gradle/actions/setup-gradle@v6
         with:
           gradle-version: "8.9"
+
+      # NDK + CMake para o build nativo do whisper.cpp (docs §17.2).
+      - name: Instalar NDK e CMake
+        run: |
+          yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" \
+            "ndk;27.2.12479018" "cmake;3.22.1" > /dev/null
+
+      # ci-01: cache do build nativo — chave acoplada ao pin do submodule
+      # (8a9ad78 = whisper.cpp v1.7.4) e ao CMakeLists.
+      - name: Cache do build nativo (whisper.cpp)
+        uses: actions/cache@v4
+        with:
+          path: android/app/.cxx
+          key: cxx-${{ runner.os }}-whisper-8a9ad78-${{ hashFiles('android/app/src/main/cpp/CMakeLists.txt') }}
+          restore-keys: |
+            cxx-${{ runner.os }}-whisper-8a9ad78-
 
       # Web build -> assets do Capacitor
       - name: Build web
