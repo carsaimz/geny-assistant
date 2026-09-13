@@ -122,6 +122,8 @@
 - [ ] **Integração Termux:API** (Fase 4): automação avançada sem root para usuários avançados.
 - [ ] **Webhook/HTTP local** (Fase 8): a Geny expõe API local para integrações (localhost apenas por padrão).
 - [ ] **PT-POM (português de Moçambique/Angola)** (Fase 9): variante pt-PT com léxico local + voz.
+- [ ] **Smoke test visual no CI** (Fase 2/10): screenshots do app web em viewport móvel (escuro/claro/RTL) a cada PR para apanhar regressões de layout como o ecrã preto da alpha.1 antes de publicar APKs.
+- [ ] **Página de erro resiliente na WebView** (Fase 10): se um asset/falha impedir o carregamento, mostrar mensagem nativa acionável em vez de tela vazia.
 
 ---
 
