@@ -71,5 +71,11 @@
   "settings.llm.progress": "Descargando… {pct}%",
   "settings.llm.disk": "Modelos en el dispositivo: {mb}",
   "settings.llm.unavailable": "Motor local no disponible en esta build.",
-  "chat.local.error": "LLM local: falló ({code})"
+  "chat.local.error": "LLM local: falló ({code})",
+  "voice.screen.title": "Conversación por voz",
+  "voice.screen.close": "Cerrar",
+  "voice.screen.handsfree": "Manos libres",
+  "voice.state.thinking": "Pensando…",
+  "voice.state.speaking": "Hablando…",
+  "voice.err.busy": "Servicio de voz ocupado. Inténtalo de nuevo."
 }

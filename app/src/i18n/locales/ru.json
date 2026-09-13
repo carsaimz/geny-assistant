@@ -71,5 +71,11 @@
   "settings.llm.progress": "Скачивание… {pct}%",
   "settings.llm.disk": "Модели на устройстве: {mb}",
   "settings.llm.unavailable": "Локальный движок недоступен в этой сборке.",
-  "chat.local.error": "Локальная LLM: сбой ({code})"
+  "chat.local.error": "Локальная LLM: сбой ({code})",
+  "voice.screen.title": "Голосовой диалог",
+  "voice.screen.close": "Закрыть",
+  "voice.screen.handsfree": "Без рук",
+  "voice.state.thinking": "Думаю…",
+  "voice.state.speaking": "Говорю…",
+  "voice.err.busy": "Голосовой сервис занят. Попробуйте снова."
 }

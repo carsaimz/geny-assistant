@@ -23,6 +23,7 @@
 - [x] `core-02` Bindings whisper.cpp (JNI + CMake + submodule v1.7.4) — modelos tiny/base/small/medium sob demanda (#2)
 - [x] `android-02` TTS em segundo plano via serviço foreground (TextToSpeech on-device) (#30)
 - [x] `app-01` UI apertar-para-falar no chat + transcrição ao vivo + responder por voz (#4)
+- [x] `app-03` Tela de conversa por voz em tela cheia (orb animado, modo mãos-livres via `genyTts`) + correção do crash ao tocar no microfone (SpeechRecognizer protegido) (v0.3.0-alpha.3)
 - [x] `ci-01` Cache de build nativo no CI + NDK/CMake/submodules nos 4 workflows (#5)
 - [x] `docs-01` docs/user/voice.md (vozes, STT, VAD, TTS) (#31)
 - [ ] `core-03` TTS neural via Piper — movido para a Fase 3 (lote nativo junto com llama.cpp) (#3)

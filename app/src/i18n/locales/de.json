@@ -71,5 +71,11 @@
   "settings.llm.progress": "Lädt… {pct}%",
   "settings.llm.disk": "Modelle auf dem Gerät: {mb}",
   "settings.llm.unavailable": "Lokale Engine in diesem Build nicht verfügbar.",
-  "chat.local.error": "Lokales LLM: fehlgeschlagen ({code})"
+  "chat.local.error": "Lokales LLM: fehlgeschlagen ({code})",
+  "voice.screen.title": "Sprachgespräch",
+  "voice.screen.close": "Schließen",
+  "voice.screen.handsfree": "Freisprechen",
+  "voice.state.thinking": "Denkt nach…",
+  "voice.state.speaking": "Spricht…",
+  "voice.err.busy": "Sprachdienst beschäftigt. Bitte erneut versuchen."
 }

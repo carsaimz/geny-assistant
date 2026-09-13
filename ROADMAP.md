@@ -42,6 +42,10 @@
 - [x] TTS local em primeiro plano: motor TextToSpeech do sistema
   (pt-BR/pt-PT/en primeiro), notificação cancelável
 - [x] Modo conversa por voz no chat (microfone → transcrição → resposta)
+- [x] Tela de voz em tela cheia com modo mãos-livres: orb animado por estado
+  (ouvindo/pensando/falando), ciclo automático ouvir → responder → ouvir de
+  novo (eventos `genyTts`) — v0.3.0-alpha.3, junto com a correção do crash
+  no microfone (SpeechRecognizer protegido contra serviço ocupado)
 - [ ] TTS neural via Piper e wake word — **movidos para a Fase 3** (mesmo
   lote de build nativo do llama.cpp; ver ROADMAP Fase 3)
 - [x] Métricas de latência voz→texto no log local (sttMs no evento de resultado)

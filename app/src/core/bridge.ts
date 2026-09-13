@@ -8,7 +8,7 @@
  */
 import { Capacitor, registerPlugin } from '@capacitor/core';
 import type { ConfirmationLevel, DeviceContext, ToolDefinition, ToolOutcome } from '../types';
-import type { VoiceCapabilities, VoiceEvent } from './voice-types';
+import type { VoiceCapabilities, VoiceEvent, TtsEvent } from './voice-types';
 import type { LocalGenerateOptions, LlmEvent } from './llm-types';
 
 export interface GenyBridge {
@@ -39,12 +39,13 @@ export interface GenyBridge {
   speak(options: { text: string; language: string }): Promise<void>;
   stopSpeaking(): Promise<void>;
   /**
-   * Canal único de eventos com dois domínios: `genyVoice` (Fase 2) e
-   * `genyLlm` (Fase 3). O payload é discriminado pelo campo `type`.
+   * Canal único de eventos com três domínios: `genyVoice` (Fase 2),
+   * `genyLlm` (Fase 3) e `genyTts` (progresso da fala). O payload é
+   * discriminado pelo campo `type`.
    */
   addListener(
-    eventName: 'genyVoice' | 'genyLlm',
-    listenerFunc: (event: VoiceEvent | LlmEvent) => void,
+    eventName: 'genyVoice' | 'genyLlm' | 'genyTts',
+    listenerFunc: (event: VoiceEvent | LlmEvent | TtsEvent) => void,
   ): Promise<{ remove: () => void }> & { remove: () => void };
   // ---- LLM local (Fase 3, docs §6) ----
   getLlmCapabilities(): Promise<{ json: string }>;
@@ -188,9 +189,9 @@ function createWebMockBridge(): GenyBridge {
 
 // ----------------------------------------------------- mock de voz (web) --
 
-/** Registro COMPARTILHADO dos eventos dos dois canais no mock web. */
-const webMockListeners = new Set<(event: VoiceEvent | LlmEvent) => void>();
-const emitWebMockEvent = (event: VoiceEvent | LlmEvent): void => {
+/** Registro COMPARTILHADO dos eventos dos três canais no mock web. */
+const webMockListeners = new Set<(event: VoiceEvent | LlmEvent | TtsEvent) => void>();
+const emitWebMockEvent = (event: VoiceEvent | LlmEvent | TtsEvent): void => {
   webMockListeners.forEach((fn) => fn(event));
 };
 
@@ -345,6 +346,10 @@ function createWebVoiceMock(): Pick<
       if (typeof speechSynthesis === 'undefined') return;
       const utter = new SpeechSynthesisUtterance(text);
       utter.lang = language;
+      // Progresso da fala para a tela de voz (mãos-livres no navegador).
+      utter.onstart = () => emitWebMockEvent({ type: 'start' } as TtsEvent);
+      utter.onend = () => emitWebMockEvent({ type: 'done' } as TtsEvent);
+      utter.onerror = () => emitWebMockEvent({ type: 'error' } as TtsEvent);
       speechSynthesis.cancel();
       speechSynthesis.speak(utter);
     },

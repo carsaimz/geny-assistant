@@ -71,5 +71,11 @@
   "settings.llm.progress": "Downloading… {pct}%",
   "settings.llm.disk": "Models on device: {mb}",
   "settings.llm.unavailable": "Local engine unavailable in this build.",
-  "chat.local.error": "Local LLM: failed ({code})"
+  "chat.local.error": "Local LLM: failed ({code})",
+  "voice.screen.title": "Voice chat",
+  "voice.screen.close": "Close",
+  "voice.screen.handsfree": "Hands-free",
+  "voice.state.thinking": "Thinking…",
+  "voice.state.speaking": "Speaking…",
+  "voice.err.busy": "Voice service busy. Try again."
 }

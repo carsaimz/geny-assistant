@@ -20,8 +20,8 @@ android {
         applicationId = "com.carsaimz.genyassistant"
         minSdk = 26
         targetSdk = 35
-        versionCode = 6
-        versionName = "0.3.0-alpha.2"
+        versionCode = 7
+        versionName = "0.3.0-alpha.3"
 
         ndk {
             // APK universal multi-ABI: armeabi-v7a cobre telemóveis 32-bit

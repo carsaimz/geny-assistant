@@ -66,3 +66,6 @@ export interface CaptureOptions {
 }
 
 export type VoiceListener = (event: VoiceEvent) => void;
+
+/** Eventos do canal `genyTts` — progresso da fala (TTS) nativo/mock. */
+export type TtsEvent = { type: 'start' } | { type: 'done' } | { type: 'error' };

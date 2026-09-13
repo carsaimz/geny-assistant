@@ -106,6 +106,8 @@ async function boot(): Promise<void> {
       if (currentSettings.voiceReplies) {
         void bridge.speak({ text, language: currentSettings.language });
       }
+      // Tela de voz: registra a resposta e dispara o ciclo mãos-livres.
+      voice.notifyAssistantReply(text);
     },
   });
 
@@ -125,6 +127,7 @@ async function boot(): Promise<void> {
       getLanguage: () => currentSettings.language,
       getVadAutoStop: () => currentSettings.vadAutoStop,
       getWhisperModel: () => currentSettings.whisperModel,
+      getVoiceReplies: () => currentSettings.voiceReplies,
       onSend: (text) => {
         input.value = '';
         void chat.send(text);
@@ -132,6 +135,16 @@ async function boot(): Promise<void> {
       onModelEvent: (event) => {
         window.dispatchEvent(new CustomEvent('geny:model-event', { detail: event }));
       },
+    },
+    {
+      screen: $('voice-screen'),
+      orb: $('voice-orb'),
+      caption: $('voice-caption'),
+      log: $('voice-log'),
+      close: $('btn-voice-close') as HTMLButtonElement,
+      bigMic: $('btn-voice-big') as HTMLButtonElement,
+      handsFree: $('btn-voice-handsfree') as HTMLButtonElement,
+      stopAudio: $('btn-voice-stop-audio') as HTMLButtonElement,
     },
   );
 

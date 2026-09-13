@@ -71,5 +71,11 @@
   "settings.llm.progress": "Téléchargement… {pct}%",
   "settings.llm.disk": "Modèles sur l'appareil : {mb}",
   "settings.llm.unavailable": "Moteur local indisponible dans cette version.",
-  "chat.local.error": "LLM local : échec ({code})"
+  "chat.local.error": "LLM local : échec ({code})",
+  "voice.screen.title": "Conversation vocale",
+  "voice.screen.close": "Fermer",
+  "voice.screen.handsfree": "Mains libres",
+  "voice.state.thinking": "Réflexion…",
+  "voice.state.speaking": "En train de parler…",
+  "voice.err.busy": "Service vocal occupé. Réessayez."
 }

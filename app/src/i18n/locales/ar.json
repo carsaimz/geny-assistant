@@ -71,5 +71,11 @@
   "settings.llm.progress": "جارٍ التنزيل… {pct}%",
   "settings.llm.disk": "النماذج على الجهاز: {mb}",
   "settings.llm.unavailable": "المحرك المحلي غير متاح في هذا الإصدار.",
-  "chat.local.error": "النموذج المحلي: فشل ({code})"
+  "chat.local.error": "النموذج المحلي: فشل ({code})",
+  "voice.screen.title": "محادثة صوتية",
+  "voice.screen.close": "إغلاق",
+  "voice.screen.handsfree": "بدون يدين",
+  "voice.state.thinking": "يفكر…",
+  "voice.state.speaking": "يتحدث…",
+  "voice.err.busy": "خدمة الصوت مشغولة. حاول مرة أخرى."
 }

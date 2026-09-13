@@ -71,5 +71,11 @@
   "settings.llm.progress": "ダウンロード中… {pct}%",
   "settings.llm.disk": "端末内のモデル：{mb}",
   "settings.llm.unavailable": "このビルドではローカルエンジンを利用できません。",
-  "chat.local.error": "ローカルLLM：失敗（{code}）"
+  "chat.local.error": "ローカルLLM：失敗（{code}）",
+  "voice.screen.title": "音声会話",
+  "voice.screen.close": "閉じる",
+  "voice.screen.handsfree": "ハンズフリー",
+  "voice.state.thinking": "考えています…",
+  "voice.state.speaking": "話しています…",
+  "voice.err.busy": "音声サービスが混み合っています。もう一度お試しください。"
 }

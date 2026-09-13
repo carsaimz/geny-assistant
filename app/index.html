@@ -65,6 +65,53 @@
       </div>
     </section>
 
+    <!-- Tela de conversa por voz (estilo assistente de voz em tela cheia) -->
+    <section
+      id="voice-screen"
+      class="voice-screen"
+      hidden
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="voice-screen-title"
+    >
+      <header class="voice-top">
+        <span id="voice-screen-title" class="voice-top__title" data-i18n="voice.screen.title">Conversa por voz</span>
+        <button id="btn-voice-close" type="button" class="icon-btn" aria-label="Fechar">✕</button>
+      </header>
+      <div class="voice-stage">
+        <div id="voice-orb" class="voice-orb" data-state="idle" aria-hidden="true">
+          <span class="voice-orb__ring"></span>
+          <span class="voice-orb__ring"></span>
+          <span class="voice-orb__ring"></span>
+          <span class="voice-orb__core"></span>
+        </div>
+        <p id="voice-caption" class="voice-caption" aria-live="polite"></p>
+      </div>
+      <ol id="voice-log" class="voice-log" hidden></ol>
+      <footer class="voice-controls">
+        <button
+          id="btn-voice-handsfree"
+          type="button"
+          class="voice-chip"
+          aria-pressed="true"
+          data-i18n="voice.screen.handsfree"
+        >
+          Mãos livres
+        </button>
+        <button id="btn-voice-big" type="button" class="voice-big-mic" aria-label="Falar">
+          <svg viewBox="0 0 24 24" width="30" height="30" aria-hidden="true">
+            <path
+              fill="currentColor"
+              d="M12 14a3 3 0 0 0 3-3V6a3 3 0 1 0-6 0v5a3 3 0 0 0 3 3Zm5-3a5 5 0 0 1-10 0H5a7 7 0 0 0 6 6.92V21h2v-3.08A7 7 0 0 0 19 11h-2Z"
+            />
+          </svg>
+        </button>
+        <button id="btn-voice-stop-audio" type="button" class="voice-chip" hidden data-i18n="voice.stop">
+          Parar
+        </button>
+      </footer>
+    </section>
+
     <aside id="settings-drawer" hidden aria-label="Configurações">
       <!-- conteúdo montado por src/ui/settings.ts -->
     </aside>

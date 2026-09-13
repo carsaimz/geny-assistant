@@ -45,7 +45,15 @@ class SystemSpeechController(
 
     fun start(languageTag: String) {
         stop()
-        val rec = createRecognizer()
+        // createOnDeviceSpeechRecognizer lança em aparelhos sem o pacote
+        // offline mesmo com isRecognitionAvailable == true — protege o toque.
+        val rec = try {
+            createRecognizer()
+        } catch (e: Exception) {
+            recognizer = null
+            callback.onError("unavailable")
+            return
+        }
         recognizer = rec
         rec.setRecognitionListener(this)
 
@@ -57,7 +65,19 @@ class SystemSpeechController(
             // Local-first: prefere o pacote offline sempre que existir.
             putExtra(RecognizerIntent.EXTRA_PREFER_OFFLINE, true)
         }
-        rec.startListening(intent)
+        // SpeechRecognizer.startListening lança RejectedExecutionException
+        // quando o serviço de reconhecimento está ocupado (crash clássico
+        // "app parou" ao tocar no microfone) e SecurityException sem permissão.
+        try {
+            rec.startListening(intent)
+        } catch (e: Exception) {
+            recognizer = null
+            try {
+                rec.destroy()
+            } catch (_: Exception) {
+            }
+            callback.onError("busy")
+        }
     }
 
     private fun createRecognizer(): SpeechRecognizer =

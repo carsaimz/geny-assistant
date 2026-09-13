@@ -75,9 +75,20 @@ class VoiceManager(
         this.vadAutoStop = vadAutoStop
         isCapturing = true
         activeEngine = engine
-        return when (engine) {
-            Engine.SYSTEM -> startSystem(language)
-            Engine.WHISPER -> startWhisperCapture(language, modelId)
+        return try {
+            when (engine) {
+                Engine.SYSTEM -> startSystem(language)
+                Engine.WHISPER -> startWhisperCapture(language, modelId)
+            }
+        } catch (e: Exception) {
+            // Qualquer exceção aqui seria fatal na ponte — vira evento de erro.
+            isCapturing = false
+            activeEngine = null
+            emitEvent(
+                "error",
+                JSObject().put("code", "unavailable").put("message", e.message ?: "erro"),
+            )
+            false
         }
     }
 
@@ -143,13 +154,25 @@ class VoiceManager(
     private fun onAudioFrame(frame: ShortArray) {
         val engine = vad ?: return
         val decision = engine.process(frame)
-        emitEvent("level", JSObject().put("level", decision.level.toDouble()))
+        maybeEmitLevel(decision.level)
         if (decision.started) {
             emitEvent("speech", JSObject().put("active", true))
         }
         assembler?.push(frame, decision.speech)
         if (vadAutoStop && decision.ended) {
             autoStop("vad")
+        }
+    }
+
+    // Eventos `level` chegam a cada frame de 30 ms (~33/s): afoga a ponte
+    // em aparelhos lentos. Limita a ~10/s — imperceptível para a UI.
+    private var lastLevelEmitMs = 0L
+
+    private fun maybeEmitLevel(level: Float) {
+        val now = System.currentTimeMillis()
+        if (now - lastLevelEmitMs >= 90) {
+            lastLevelEmitMs = now
+            emitEvent("level", JSObject().put("level", level.toDouble()))
         }
     }
 
@@ -264,7 +287,7 @@ class VoiceManager(
         }
 
         override fun onLevel(level: Float) {
-            emitEvent("level", JSObject().put("level", level.toDouble()))
+            maybeEmitLevel(level)
         }
     }
 

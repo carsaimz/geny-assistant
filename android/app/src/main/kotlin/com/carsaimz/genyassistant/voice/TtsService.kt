@@ -53,6 +53,7 @@ class TtsService : Service() {
                 tts?.setOnUtteranceProgressListener(progressListener)
                 drainPending()
             } else {
+                eventSink?.invoke("error")
                 stopSelf()
             }
         }
@@ -123,17 +124,20 @@ class TtsService : Service() {
     private val progressListener = object : UtteranceProgressListener() {
         override fun onStart(utteranceId: String?) {
             speakingNow = true
+            eventSink?.invoke("start")
         }
 
         override fun onDone(utteranceId: String?) {
             speakingNow = false
+            eventSink?.invoke("done")
             // Fila vazia: encerra o serviço (remove a notificação).
-            if (!tts!!.isSpeaking) stopSelf()
+            if (tts?.isSpeaking != true) stopSelf()
         }
 
         @Deprecated("Deprecated in Java")
         override fun onError(utteranceId: String?) {
             speakingNow = false
+            eventSink?.invoke("error")
             stopSelf()
         }
     }
@@ -214,12 +218,27 @@ class TtsService : Service() {
                 .setAction(ACTION_SPEAK)
                 .putExtra(EXTRA_TEXT, text)
                 .putExtra(EXTRA_LANGUAGE, language)
-            context.startForegroundService(intent)
+            // Se a resposta chegar com o app em segundo plano, o Android 12+
+            // proíbe iniciar FGS — falha calada em vez de derrubar o app.
+            try {
+                context.startForegroundService(intent)
+            } catch (_: Exception) {
+            }
         }
 
         /** Para a fala em andamento. */
         fun stop(context: Context) {
-            context.startService(Intent(context, TtsService::class.java).setAction(ACTION_STOP))
+            try {
+                context.startService(Intent(context, TtsService::class.java).setAction(ACTION_STOP))
+            } catch (_: Exception) {
+            }
         }
+
+        /**
+         * Coletor de progresso da fala ("start" | "done" | "error") — a
+         * ponte (GenyPlugin) registra o repassador do canal `genyTts`.
+         */
+        @Volatile
+        var eventSink: ((String) -> Unit)? = null
     }
 }

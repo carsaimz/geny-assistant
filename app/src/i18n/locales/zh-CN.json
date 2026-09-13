@@ -71,5 +71,11 @@
   "settings.llm.progress": "下载中… {pct}%",
   "settings.llm.disk": "设备上的模型：{mb}",
   "settings.llm.unavailable": "此版本不支持本地引擎。",
-  "chat.local.error": "本地 LLM：失败（{code}）"
+  "chat.local.error": "本地 LLM：失败（{code}）",
+  "voice.screen.title": "语音对话",
+  "voice.screen.close": "关闭",
+  "voice.screen.handsfree": "免提",
+  "voice.state.thinking": "思考中…",
+  "voice.state.speaking": "正在说话…",
+  "voice.err.busy": "语音服务忙，请重试。"
 }

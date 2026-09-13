@@ -34,6 +34,7 @@ import com.carsaimz.genyassistant.tools.Tool
 import com.carsaimz.genyassistant.tools.ToolHost
 import com.carsaimz.genyassistant.tools.ToolRegistry
 import com.carsaimz.genyassistant.tools.WebSearchTool
+import com.carsaimz.genyassistant.voice.TtsService
 import com.carsaimz.genyassistant.voice.VoiceManager
 import com.getcapacitor.JSArray
 import com.getcapacitor.JSObject
@@ -113,6 +114,11 @@ class GenyPlugin : Plugin() {
             ),
         )
         audit.log("bridge", "GenyBridge carregada com ${registry.catalog().size} ferramentas")
+
+        // Progresso da fala (TTS) → canal `genyTts` para a UI (mãos-livres).
+        TtsService.eventSink = { state ->
+            notifyListeners(EVENT_TTS, JSObject().put("type", state))
+        }
     }
 
     // ------------------------------------------------------------ catálogo --
@@ -329,6 +335,22 @@ class GenyPlugin : Plugin() {
     private fun voiceManager(): VoiceManager =
         voice ?: VoiceManager(context, voiceEmit()).also { voice = it }
 
+    /** Captura com rede de proteção: exceção vira evento de erro, não crash. */
+    private fun startCaptureSafe(call: PluginCall, engine: VoiceManager.Engine, language: String, vadAutoStop: Boolean, modelId: String) {
+        val ok = try {
+            voiceManager().startCapture(engine, language, vadAutoStop, modelId)
+        } catch (e: Exception) {
+            voiceEmit()(
+                JSObject()
+                    .put("type", "error")
+                    .put("code", "unavailable")
+                    .put("message", e.message ?: "erro"),
+            )
+            false
+        }
+        call.resolve(JSObject().put("started", ok))
+    }
+
     @PluginMethod
     fun getVoiceCapabilities(call: PluginCall) {
         call.resolve(JSObject().put("json", voiceManager().capabilities().toString()))
@@ -347,13 +369,8 @@ class GenyPlugin : Plugin() {
             requestPermissionForAlias("microphone", call, "onMicPermission")
             return
         }
-        val ok = voiceManager().startCapture(engine, language, vadAutoStop, modelId)
-        audit.log("voice", "captura iniciada: engine=$engine lang=$language ok=$ok")
-        if (ok) {
-            call.resolve()
-        } else {
-            call.resolve(JSObject().put("started", false))
-        }
+        startCaptureSafe(call, engine, language, vadAutoStop, modelId)
+        audit.log("voice", "captura iniciada: engine=$engine lang=$language")
     }
 
     @PermissionCallback
@@ -365,13 +382,8 @@ class GenyPlugin : Plugin() {
             val language = call.getString("language") ?: java.util.Locale.getDefault().toLanguageTag()
             val vadAutoStop = call.getBoolean("vadAutoStop", true) ?: true
             val modelId = call.getString("modelId") ?: "whisper-tiny"
-            val ok = voiceManager().startCapture(engine, language, vadAutoStop, modelId)
-            audit.log("voice", "captura iniciada pós-permissão: ok=$ok")
-            if (ok) {
-                call.resolve()
-            } else {
-                call.resolve(JSObject().put("started", false))
-            }
+            startCaptureSafe(call, engine, language, vadAutoStop, modelId)
+            audit.log("voice", "captura iniciada pós-permissão: engine=$engine")
         } else {
             audit.log("voice", "permissão de microfone negada")
             voiceEmit()(JSObject().put("type", "error").put("code", "denied"))
@@ -528,6 +540,7 @@ class GenyPlugin : Plugin() {
 
     private companion object {
         const val EVENT_VOICE = "genyVoice"
+        const val EVENT_TTS = "genyTts"
         const val EVENT_LLM = "genyLlm"
     }
 }

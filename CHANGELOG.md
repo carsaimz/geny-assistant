@@ -4,6 +4,47 @@ Todas as mudanças notáveis deste projeto são documentadas aqui.
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/),
 versionamento [Semântico](https://semver.org/lang/pt-BR/).
 
+## [0.3.0-alpha.3] — Tela de voz + correção do microfone / Voice screen + mic fix
+
+### Corrigido / Fixed
+
+- **Crash ao tocar no microfone ("o app parou")**: `SpeechRecognizer.startListening`
+  e `createOnDeviceSpeechRecognizer` eram chamados sem proteção — em aparelhos
+  com o serviço de reconhecimento ocupado ou sem o pacote offline eles lançam
+  `RejectedExecutionException`/`SecurityException`/`UnsupportedOperationException`,
+  derrubando o app no primeiro toque. Agora qualquer falha vira evento de erro
+  (`busy`/`unavailable`) com mensagem amigável; a captura whisper (AudioRecord)
+  e a ponte também ganharam redes de proteção.
+  *Crash when tapping the microphone ("app keeps stopping"): `startListening`
+  and `createOnDeviceSpeechRecognizer` were unguarded — on devices with a busy
+  recognition service or missing offline package they throw
+  `RejectedExecutionException`/`SecurityException`/`UnsupportedOperationException`,
+  killing the app on first tap. Failures now become friendly error events
+  (`busy`/`unavailable`); the whisper (AudioRecord) capture and the bridge also
+  gained safety nets.*
+- Eventos `level` do microfone limitados a ~10/s (antes ~33/s afogava a ponte
+  em aparelhos lentos); `TtsService.onDone` sem NPE em shutdown e início de
+  serviço em segundo plano protegido (`ForegroundServiceStartNotAllowed`).
+  *Mic `level` events throttled to ~10/s (previously ~33/s flooded the bridge
+  on slow devices); `TtsService.onDone` NPE-free on shutdown and guarded
+  background service start (`ForegroundServiceStartNotAllowed`).*
+
+### Adicionado / Added
+
+- **Tela de conversa por voz em tela cheia** (estilo assistente de voz): orb
+  animado por estado (respirando → ouvindo → pensando → falando) que pulsa
+  com o nível do microfone, legenda ao vivo, histórico da conversa, botão
+  grande e modo **mãos-livres** — a Geny responde por voz e volta a ouvir
+  sozinha quando termina de falar (novo canal `genyTts` com eventos
+  start/done/error e rede de segurança por timeout). Strings nos 11 idiomas;
+  8 novos testes de UI.
+  *Full-screen voice conversation screen (voice-assistant style): state-driven
+  animated orb (breathing → listening → thinking → speaking) that pulses with
+  mic level, live caption, conversation log, big button and **hands-free**
+  mode — the assistant speaks its reply and starts listening again
+  automatically (new `genyTts` channel with start/done/error events plus a
+  safety timeout). Strings in all 11 languages; 8 new UI tests.*
+
 ## [0.3.0-alpha.2] — Correção de instalação / Install fix
 
 ### Corrigido / Fixed
