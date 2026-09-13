@@ -47,6 +47,14 @@ jobs:
           restore-keys: |
             cxx-${{ runner.os }}-whisper-8a9ad78-
 
+      - name: Cache do build nativo (llama.cpp)
+        uses: actions/cache@v4
+        with:
+          path: android/llama-native/.cxx
+          key: cxx-${{ runner.os }}-llama-5266f24-${{ hashFiles('android/llama-native/src/main/cpp/CMakeLists.txt') }}
+          restore-keys: |
+            cxx-${{ runner.os }}-llama-5266f24-
+
       - name: Build web
         working-directory: app
         run: |

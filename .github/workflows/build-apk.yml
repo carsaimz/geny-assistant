@@ -40,8 +40,8 @@ jobs:
           yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" \
             "ndk;27.2.12479018" "cmake;3.22.1" > /dev/null
 
-      # ci-01: cache do build nativo — chave acoplada ao pin do submodule
-      # (8a9ad78 = whisper.cpp v1.7.4) e ao CMakeLists.
+      # ci-01/ci-02: cache do build nativo — chaves acopladas aos pins dos
+      # submodules (whisper.cpp v1.7.4 / llama.cpp v0.4.0) e aos CMakeLists.
       - name: Cache do build nativo (whisper.cpp)
         uses: actions/cache@v4
         with:
@@ -49,6 +49,14 @@ jobs:
           key: cxx-${{ runner.os }}-whisper-8a9ad78-${{ hashFiles('android/app/src/main/cpp/CMakeLists.txt') }}
           restore-keys: |
             cxx-${{ runner.os }}-whisper-8a9ad78-
+
+      - name: Cache do build nativo (llama.cpp)
+        uses: actions/cache@v4
+        with:
+          path: android/llama-native/.cxx
+          key: cxx-${{ runner.os }}-llama-5266f24-${{ hashFiles('android/llama-native/src/main/cpp/CMakeLists.txt') }}
+          restore-keys: |
+            cxx-${{ runner.os }}-llama-5266f24-
 
       # Web build -> assets do Capacitor
       - name: Build web

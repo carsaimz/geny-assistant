@@ -7,6 +7,9 @@ on:
   pull_request:
     paths:
       - "core/**"
+      - "native/**"
+      - "android/app/src/main/cpp/**"
+      - "android/llama-native/**"
       - ".github/workflows/build-native.yml"
   workflow_dispatch:
 
@@ -49,3 +52,47 @@ jobs:
           name: geny-core-${{ matrix.abi }}
           path: core/target/${{ matrix.target }}/release/libgeny_core.so
           if-no-files-found: ignore
+
+  # ci-02 (Fase 3): matriz dos wrappers JNI C++ por ABI — whisper.cpp (STT)
+  # e llama.cpp (LLM local) — com artefatos por ABI para inspeção/reuso.
+  cpp-android:
+    name: cpp ${{ matrix.abi }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        abi: [arm64-v8a, x86_64]
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          submodules: recursive
+      - name: Instalar NDK r27 + CMake
+        run: |
+          yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" \
+            "ndk;27.2.12479018" "cmake;3.22.1" > /dev/null
+      - name: Build whisper JNI (${{ matrix.abi }})
+        run: |
+          cmake -S android/app/src/main/cpp -B build/whisper/${{ matrix.abi }} \
+            -GNinja \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_TOOLCHAIN_FILE="$ANDROID_HOME/ndk/27.2.12479018/build/cmake/android.toolchain.cmake" \
+            -DANDROID_ABI=${{ matrix.abi }} -DANDROID_PLATFORM=android-26 \
+            -DWHISPER_DIR="$GITHUB_WORKSPACE/native/whisper.cpp" \
+            -DLLAMA_DIR="$GITHUB_WORKSPACE/native/llama.cpp"
+          cmake --build build/whisper/${{ matrix.abi }} --parallel
+      - name: Build llama JNI (${{ matrix.abi }})
+        run: |
+          cmake -S android/llama-native/src/main/cpp -B build/llama/${{ matrix.abi }} \
+            -GNinja \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_TOOLCHAIN_FILE="$ANDROID_HOME/ndk/27.2.12479018/build/cmake/android.toolchain.cmake" \
+            -DANDROID_ABI=${{ matrix.abi }} -DANDROID_PLATFORM=android-26 \
+            -DLLAMA_DIR="$GITHUB_WORKSPACE/native/llama.cpp"
+          cmake --build build/llama/${{ matrix.abi }} --parallel
+      - uses: actions/upload-artifact@v7
+        with:
+          name: geny-jni-${{ matrix.abi }}
+          path: |
+            build/whisper/${{ matrix.abi }}/libgeny_whisper_jni.so
+            build/llama/${{ matrix.abi }}/libgeny_llama_jni.so
+          if-no-files-found: error
