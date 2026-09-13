@@ -9,6 +9,7 @@
 import { Capacitor, registerPlugin } from '@capacitor/core';
 import type { ConfirmationLevel, DeviceContext, ToolDefinition, ToolOutcome } from '../types';
 import type { VoiceCapabilities, VoiceEvent } from './voice-types';
+import type { LocalGenerateOptions, LlmEvent } from './llm-types';
 
 export interface GenyBridge {
   listTools(): Promise<{ tools: ToolDefinition[] }>;
@@ -37,10 +38,21 @@ export interface GenyBridge {
   deleteVoiceModel(options: { file: string }): Promise<{ deleted: boolean }>;
   speak(options: { text: string; language: string }): Promise<void>;
   stopSpeaking(): Promise<void>;
+  /**
+   * Canal único de eventos com dois domínios: `genyVoice` (Fase 2) e
+   * `genyLlm` (Fase 3). O payload é discriminado pelo campo `type`.
+   */
   addListener(
-    eventName: 'genyVoice',
-    listenerFunc: (event: VoiceEvent) => void,
+    eventName: 'genyVoice' | 'genyLlm',
+    listenerFunc: (event: VoiceEvent | LlmEvent) => void,
   ): Promise<{ remove: () => void }> & { remove: () => void };
+  // ---- LLM local (Fase 3, docs §6) ----
+  getLlmCapabilities(): Promise<{ json: string }>;
+  downloadLlmModel(options: { id: string }): Promise<void>;
+  deleteLlmModel(options: { file: string }): Promise<{ deleted: boolean }>;
+  loadLocalModel(options: { file: string }): Promise<void>;
+  unloadLocalModel(): Promise<void>;
+  generateLocal(options: LocalGenerateOptions): Promise<{ json: string }>;
 }
 
 /** Handler de confirmação registrado pela UI (modal). */
@@ -170,10 +182,17 @@ function createWebMockBridge(): GenyBridge {
       return { json: JSON.stringify(ctx) };
     },
     ...createWebVoiceMock(),
+    ...createWebLlmMock(),
   };
 }
 
 // ----------------------------------------------------- mock de voz (web) --
+
+/** Registro COMPARTILHADO dos eventos dos dois canais no mock web. */
+const webMockListeners = new Set<(event: VoiceEvent | LlmEvent) => void>();
+const emitWebMockEvent = (event: VoiceEvent | LlmEvent): void => {
+  webMockListeners.forEach((fn) => fn(event));
+};
 
 /**
  * **PT** Mock de voz para o navegador: Web Speech API para STT (quando o
@@ -193,7 +212,6 @@ function createWebVoiceMock(): Pick<
   | 'deleteVoiceModel'
   | 'speak'
   | 'stopSpeaking'
-  | 'addListener'
 > {
   interface SpeechRecognitionLike {
     lang: string;
@@ -213,10 +231,7 @@ function createWebVoiceMock(): Pick<
     return (w.SpeechRecognition ?? w.webkitSpeechRecognition ?? null) as SRConstructor | null;
   };
 
-  const listeners = new Set<(event: VoiceEvent) => void>();
-  const emit = (event: VoiceEvent): void => {
-    listeners.forEach((fn) => fn(event));
-  };
+  const emit = emitWebMockEvent;
 
   let recognition: SpeechRecognitionLike | null = null;
   let audioContext: AudioContext | null = null;
@@ -335,6 +350,65 @@ function createWebVoiceMock(): Pick<
     },
     async stopSpeaking() {
       if (typeof speechSynthesis !== 'undefined') speechSynthesis.cancel();
+    },
+  };
+}
+
+// ---------------------------------------------------- mock de LLM (web) --
+
+/**
+ * **PT** Mock de LLM local para o navegador: não existe llama.cpp aqui —
+ * o mock reporta o motor como indisponível (honesto). TTS do navegador não
+ * gera texto.
+ * **EN** Browser local-LLM mock: there is no llama.cpp here — the mock
+ * reports the engine as unavailable (honest). The browser TTS does not
+ * generate text.
+ */
+function createWebLlmMock(): Pick<
+  GenyBridge,
+  | 'getLlmCapabilities'
+  | 'downloadLlmModel'
+  | 'deleteLlmModel'
+  | 'loadLocalModel'
+  | 'unloadLocalModel'
+  | 'generateLocal'
+  | 'addListener'
+> {
+  const listeners = webMockListeners;
+  const emitUnavailable = (): void => {
+    window.setTimeout(() => {
+      listeners.forEach((fn) => fn({ type: 'llmError', id: '', code: 'unavailable' }));
+    }, 0);
+  };
+
+  return {
+    async getLlmCapabilities() {
+      return {
+        json: JSON.stringify({
+          jniAvailable: false,
+          state: 'idle',
+          loadedFile: null,
+          diskUsageBytes: 0,
+          totalRamBytes: 0,
+          models: [],
+        }),
+      };
+    },
+    async downloadLlmModel() {
+      emitUnavailable();
+    },
+    async deleteLlmModel() {
+      return { deleted: false };
+    },
+    async loadLocalModel() {
+      emitUnavailable();
+    },
+    async unloadLocalModel() {
+      // sem modelo carregado no navegador
+    },
+    async generateLocal() {
+      emitUnavailable();
+      throw new Error('llm_unavailable');
     },
     addListener(_eventName, listenerFunc) {
       listeners.add(listenerFunc);

@@ -4,7 +4,7 @@
  * com o fluxo do chat (transcrição final vira mensagem do usuário).
  */
 import { bridge } from '../core/bridge';
-import type { VoiceEvent, VoiceListener } from '../core/voice-types';
+import type { VoiceEvent } from '../core/voice-types';
 import { t } from '../i18n';
 
 export interface VoiceDeps {
@@ -65,7 +65,9 @@ export class VoiceController {
 
   /** Assina o canal de eventos da ponte (genyVoice). */
   async init(): Promise<void> {
-    const handle = bridge.addListener('genyVoice', this.onEvent as VoiceListener);
+    const handle = bridge.addListener('genyVoice', (event) => {
+      this.onEvent(event as VoiceEvent);
+    });
     this.removeListener = () => handle.remove();
   }
 

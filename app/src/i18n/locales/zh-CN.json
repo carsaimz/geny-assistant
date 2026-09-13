@@ -59,5 +59,17 @@
   "settings.voice.model.downloading": "下载中…",
   "settings.voice.model.delete": "删除模型",
   "settings.voice.model.hint": "按需下载，仅保存在本设备。",
-  "settings.voice.model.progress": "下载中… {pct}%"
+  "settings.voice.model.progress": "下载中… {pct}%",
+  "settings.llm.title": "本地模型 (LLM)",
+  "settings.llm.model": "GGUF 模型",
+  "settings.llm.model.none": "无",
+  "settings.llm.download": "下载",
+  "settings.llm.downloading": "下载中…",
+  "settings.llm.delete": "删除",
+  "settings.llm.load": "加载",
+  "settings.llm.unload": "卸载",
+  "settings.llm.progress": "下载中… {pct}%",
+  "settings.llm.disk": "设备上的模型：{mb}",
+  "settings.llm.unavailable": "此版本不支持本地引擎。",
+  "chat.local.error": "本地 LLM：失败（{code}）"
 }

@@ -59,5 +59,17 @@
   "settings.voice.model.downloading": "Downloading…",
   "settings.voice.model.delete": "Delete model",
   "settings.voice.model.hint": "Downloaded on demand and kept on this device only.",
-  "settings.voice.model.progress": "Downloading… {pct}%"
+  "settings.voice.model.progress": "Downloading… {pct}%",
+  "settings.llm.title": "Local model (LLM)",
+  "settings.llm.model": "GGUF model",
+  "settings.llm.model.none": "None",
+  "settings.llm.download": "Download",
+  "settings.llm.downloading": "Downloading…",
+  "settings.llm.delete": "Delete",
+  "settings.llm.load": "Load",
+  "settings.llm.unload": "Unload",
+  "settings.llm.progress": "Downloading… {pct}%",
+  "settings.llm.disk": "Models on device: {mb}",
+  "settings.llm.unavailable": "Local engine unavailable in this build.",
+  "chat.local.error": "Local LLM: failed ({code})"
 }

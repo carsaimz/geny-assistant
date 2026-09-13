@@ -59,5 +59,17 @@
   "settings.voice.model.downloading": "Wird geladen…",
   "settings.voice.model.delete": "Modell löschen",
   "settings.voice.model.hint": "Auf Anfrage geladen und nur auf dem Gerät gespeichert.",
-  "settings.voice.model.progress": "Wird geladen… {pct}%"
+  "settings.voice.model.progress": "Wird geladen… {pct}%",
+  "settings.llm.title": "Lokales Modell (LLM)",
+  "settings.llm.model": "GGUF-Modell",
+  "settings.llm.model.none": "Keine",
+  "settings.llm.download": "Herunterladen",
+  "settings.llm.downloading": "Wird geladen…",
+  "settings.llm.delete": "Löschen",
+  "settings.llm.load": "Laden",
+  "settings.llm.unload": "Entladen",
+  "settings.llm.progress": "Lädt… {pct}%",
+  "settings.llm.disk": "Modelle auf dem Gerät: {mb}",
+  "settings.llm.unavailable": "Lokale Engine in diesem Build nicht verfügbar.",
+  "chat.local.error": "Lokales LLM: fehlgeschlagen ({code})"
 }

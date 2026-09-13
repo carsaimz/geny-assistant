@@ -71,6 +71,8 @@ export interface Settings {
   vadAutoStop: boolean;
   /** Modelo whisper selecionado (whisper-tiny/base/small/medium). */
   whisperModel: string;
+  /** Nome do ficheiro GGUF carregado como backend local (Fase 3). */
+  localModel: string;
 }
 
 export interface ChatMessage {

@@ -7,6 +7,7 @@
 import { bridge } from '../core/bridge';
 import type { VoiceEvent } from '../core/voice-types';
 import type { VoiceCapabilities, WhisperModelStatus } from '../core/voice-types';
+import type { LlmCapabilities, LlmEvent, LlmModelStatus } from '../core/llm-types';
 import { LOCALES, t, tf } from '../i18n';
 import type { Settings } from '../types';
 
@@ -19,6 +20,13 @@ const MODEL_LABELS: Record<string, string> = {
   'whisper-base': 'Base (~141 MB)',
   'whisper-small': 'Small (~465 MB)',
   'whisper-medium': 'Medium (~1,4 GB)',
+};
+
+const LLM_FALLBACK_LABELS: Record<string, string> = {
+  'qwen2.5-0.5b-instruct': 'Qwen2.5 0.5B (~469 MB)',
+  'llama-3.2-1b-instruct': 'Llama 3.2 1B (~770 MB)',
+  'qwen2.5-1.5b-instruct': 'Qwen2.5 1.5B (~1,0 GB)',
+  'gemma-2-2b-it': 'Gemma 2 2B (~1,6 GB)',
 };
 
 export function renderSettingsDrawer(
@@ -89,6 +97,19 @@ export function renderSettingsDrawer(
       </label>
       <div id="voice-model-status" class="model-status" hidden></div>
 
+      <h3 class="drawer-section">${t('settings.llm.title')}</h3>
+      <label>
+        <span>${t('settings.llm.model')}</span>
+        <select id="set-llm-model">
+          <option value="">${t('settings.llm.model.none')}</option>
+        </select>
+        <small id="set-llm-hint" hidden>${t('settings.llm.unavailable')}</small>
+      </label>
+      <div class="check-row">
+        <small id="llm-disk-usage" hidden></small>
+      </div>
+      <div id="llm-model-status" class="model-status" hidden></div>
+
       <p class="privacy-note">${t('settings.privacy')}</p>
       <button type="submit" class="btn-primary">${t('settings.save')}</button>
     </form>`;
@@ -110,6 +131,10 @@ export function renderSettingsDrawer(
   const whisperModel = $<HTMLSelectElement>('set-whisper-model');
   const whisperHint = $<HTMLElement>('set-whisper-hint');
   const modelStatus = $<HTMLElement>('voice-model-status');
+  const llmModel = $<HTMLSelectElement>('set-llm-model');
+  const llmHint = $<HTMLElement>('set-llm-hint');
+  const llmDisk = $<HTMLElement>('llm-disk-usage');
+  const llmStatus = $<HTMLElement>('llm-model-status');
 
   mode.value = settings.mode;
   baseUrl.value = settings.baseUrl;
@@ -119,6 +144,7 @@ export function renderSettingsDrawer(
   sttEngine.value = settings.sttEngine;
   vadAutoStop.checked = settings.vadAutoStop;
   whisperModel.value = settings.whisperModel;
+  llmModel.value = settings.localModel;
   if (settings.apiKeySet) apiKey.placeholder = '••••••••';
 
   // Capacidades de voz: whisper nativo + estado dos modelos (async).
@@ -185,6 +211,134 @@ export function renderSettingsDrawer(
 
   whisperModel.addEventListener('change', refreshModelRow);
 
+  // ------------------------------------------------------------ LLM local --
+  // Fase 3 (TODO app-02): catálogo, download com progresso, carga e remoção.
+
+  let llmCaps: LlmCapabilities | null = null;
+  let llmStates = new Map<string, LlmModelStatus>();
+
+  const llmLabel = (m: LlmModelStatus): string =>
+    `${LLM_FALLBACK_LABELS[m.id] ?? m.label}${m.downloaded ? ' ✓' : ''}`;
+
+  const fillLlmSelect = (): void => {
+    const selected = llmModel.value;
+    for (let i = llmModel.options.length - 1; i >= 1; i -= 1) {
+      llmModel.options.remove(i);
+    }
+    for (const m of llmCaps?.models ?? []) {
+      const opt = document.createElement('option');
+      opt.value = m.fileName;
+      opt.textContent = llmLabel(m);
+      llmModel.appendChild(opt);
+    }
+    if (selected.length > 0) llmModel.value = selected;
+  };
+
+  const formatMb = (bytes: number): string => `${Math.round(bytes / 1e6)} MB`;
+
+  const refreshLlmRow = (): void => {
+    const file = llmModel.value;
+    llmStatus.hidden = true;
+    llmStatus.textContent = '';
+    if (llmDisk !== null && llmCaps !== null && llmCaps.diskUsageBytes > 0) {
+      llmDisk.hidden = false;
+      llmDisk.textContent = tf('settings.llm.disk', { mb: formatMb(llmCaps.diskUsageBytes) });
+    }
+    if (file.length === 0) return;
+    const state = (llmCaps?.models ?? []).find((m) => m.fileName === file);
+    if (!state || !llmCaps?.jniAvailable) return;
+    if (!state.downloaded) {
+      llmStatus.hidden = false;
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'btn-primary btn-small';
+      btn.textContent = `${t('settings.llm.download')} — ${llmLabel(state)}`;
+      btn.addEventListener('click', () => {
+        btn.disabled = true;
+        btn.textContent = `${t('settings.llm.downloading')} 0%`;
+        void bridge.downloadLlmModel({ id: state.id });
+      });
+      llmStatus.appendChild(btn);
+    } else {
+      llmStatus.hidden = false;
+      const row = document.createElement('div');
+      row.className = 'check-row';
+      const load = document.createElement('button');
+      load.type = 'button';
+      load.className = 'btn-primary btn-small';
+      load.textContent =
+        llmCaps.loadedFile === file && llmCaps.state === 'ready'
+          ? t('settings.llm.unload')
+          : t('settings.llm.load');
+      load.addEventListener('click', () => {
+        if (llmCaps?.loadedFile === file && llmCaps.state === 'ready') {
+          void bridge.unloadLocalModel();
+        } else {
+          void bridge.loadLocalModel({ file });
+        }
+      });
+      const del = document.createElement('button');
+      del.type = 'button';
+      del.className = 'btn-danger btn-small';
+      del.textContent = t('settings.llm.delete');
+      del.addEventListener('click', () => {
+        void bridge.deleteLlmModel({ file }).then(() => {
+          if (llmCaps) {
+            const m = llmCaps.models.find((x) => x.fileName === file);
+            if (m) m.downloaded = false;
+          }
+          refreshLlmRow();
+        });
+      });
+      row.appendChild(load);
+      row.appendChild(del);
+      llmStatus.appendChild(row);
+    }
+  };
+
+  void bridge
+    .getLlmCapabilities()
+    .then(({ json }) => {
+      llmCaps = JSON.parse(json) as LlmCapabilities;
+      llmStates = new Map((llmCaps.models ?? []).map((m) => [m.id, m]));
+      llmHint.hidden = llmCaps.jniAvailable;
+      fillLlmSelect();
+      refreshLlmRow();
+    })
+    .catch(() => {
+      // sem capacidades (web): mantém a seção mínima
+    });
+
+  llmModel.addEventListener('change', refreshLlmRow);
+
+  const onLlmEvent = (ev: Event): void => {
+    const event = (ev as CustomEvent<LlmEvent>).detail;
+    if (event.type === 'llmProgress') {
+      llmStatus.hidden = false;
+      llmStatus.textContent = tf('settings.llm.progress', {
+        pct: Math.min(100, Math.round((event.bytes / Math.max(1, event.total)) * 100)),
+      });
+    } else if (event.type === 'llmReady') {
+      const state = llmStates.get(event.id);
+      if (state) state.downloaded = true;
+      void bridge
+        .getLlmCapabilities()
+        .then(({ json }) => {
+          llmCaps = JSON.parse(json) as LlmCapabilities;
+          fillLlmSelect();
+          refreshLlmRow();
+        })
+        .catch(() => undefined);
+    } else if (event.type === 'llmStatus') {
+      if (llmCaps) llmCaps.state = event.state;
+      refreshLlmRow();
+    } else if (event.type === 'llmError') {
+      llmStatus.hidden = false;
+      llmStatus.textContent = event.code;
+    }
+  };
+  window.addEventListener('geny:llm-event', onLlmEvent);
+
   // Eventos de download de modelo vindos do VoiceController (via window).
   const onModelEvent = (ev: Event): void => {
     const event = (ev as CustomEvent<VoiceEvent>).detail;
@@ -205,6 +359,7 @@ export function renderSettingsDrawer(
   window.addEventListener('geny:model-event', onModelEvent);
   drawer.addEventListener('geny:drawer-closed', () => {
     window.removeEventListener('geny:model-event', onModelEvent);
+    window.removeEventListener('geny:llm-event', onLlmEvent);
   });
 
   $<HTMLButtonElement>('btn-close-settings').addEventListener('click', () => {
@@ -224,6 +379,7 @@ export function renderSettingsDrawer(
       sttEngine: sttEngine.value as Settings['sttEngine'],
       vadAutoStop: vadAutoStop.checked,
       whisperModel: whisperModel.value,
+      localModel: llmModel.value,
     });
     const key = apiKey.value.trim();
     if (key.length > 0) {

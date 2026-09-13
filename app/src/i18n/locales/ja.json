@@ -59,5 +59,17 @@
   "settings.voice.model.downloading": "ダウンロード中…",
   "settings.voice.model.delete": "モデルを削除",
   "settings.voice.model.hint": "必要に応じてダウンロードされ、端末内だけに保存されます。",
-  "settings.voice.model.progress": "ダウンロード中… {pct}%"
+  "settings.voice.model.progress": "ダウンロード中… {pct}%",
+  "settings.llm.title": "ローカルモデル（LLM）",
+  "settings.llm.model": "GGUFモデル",
+  "settings.llm.model.none": "なし",
+  "settings.llm.download": "ダウンロード",
+  "settings.llm.downloading": "ダウンロード中…",
+  "settings.llm.delete": "削除",
+  "settings.llm.load": "読み込む",
+  "settings.llm.unload": "解放",
+  "settings.llm.progress": "ダウンロード中… {pct}%",
+  "settings.llm.disk": "端末内のモデル：{mb}",
+  "settings.llm.unavailable": "このビルドではローカルエンジンを利用できません。",
+  "chat.local.error": "ローカルLLM：失敗（{code}）"
 }

@@ -59,5 +59,17 @@
   "settings.voice.model.downloading": "Скачивание…",
   "settings.voice.model.delete": "Удалить модель",
   "settings.voice.model.hint": "Скачивается по запросу и хранится только на устройстве.",
-  "settings.voice.model.progress": "Скачивание… {pct}%"
+  "settings.voice.model.progress": "Скачивание… {pct}%",
+  "settings.llm.title": "Локальная модель (LLM)",
+  "settings.llm.model": "GGUF-модель",
+  "settings.llm.model.none": "Нет",
+  "settings.llm.download": "Скачать",
+  "settings.llm.downloading": "Скачивание…",
+  "settings.llm.delete": "Удалить",
+  "settings.llm.load": "Загрузить",
+  "settings.llm.unload": "Выгрузить",
+  "settings.llm.progress": "Скачивание… {pct}%",
+  "settings.llm.disk": "Модели на устройстве: {mb}",
+  "settings.llm.unavailable": "Локальный движок недоступен в этой сборке.",
+  "chat.local.error": "Локальная LLM: сбой ({code})"
 }

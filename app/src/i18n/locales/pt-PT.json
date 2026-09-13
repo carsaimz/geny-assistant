@@ -59,5 +59,17 @@
   "settings.voice.model.downloading": "A descarregar…",
   "settings.voice.model.delete": "Eliminar modelo",
   "settings.voice.model.hint": "Descarregado a pedido e guardado só no dispositivo.",
-  "settings.voice.model.progress": "A descarregar… {pct}%"
+  "settings.voice.model.progress": "A descarregar… {pct}%",
+  "settings.llm.title": "Modelo local (LLM)",
+  "settings.llm.model": "Modelo GGUF",
+  "settings.llm.model.none": "Nenhum",
+  "settings.llm.download": "Descarregar",
+  "settings.llm.downloading": "A descarregar…",
+  "settings.llm.delete": "Eliminar",
+  "settings.llm.load": "Carregar",
+  "settings.llm.unload": "Libertar",
+  "settings.llm.progress": "A descarregar… {pct}%",
+  "settings.llm.disk": "Modelos no aparelho: {mb}",
+  "settings.llm.unavailable": "Motor local indisponível nesta build.",
+  "chat.local.error": "LLM local: falhou ({code})"
 }

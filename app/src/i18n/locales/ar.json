@@ -59,5 +59,17 @@
   "settings.voice.model.downloading": "جارٍ التنزيل…",
   "settings.voice.model.delete": "حذف النموذج",
   "settings.voice.model.hint": "يُنزَّل عند الطلب ويُحفظ على هذا الجهاز فقط.",
-  "settings.voice.model.progress": "جارٍ التنزيل… {pct}%"
+  "settings.voice.model.progress": "جارٍ التنزيل… {pct}%",
+  "settings.llm.title": "نموذج محلي (LLM)",
+  "settings.llm.model": "نموذج GGUF",
+  "settings.llm.model.none": "لا شيء",
+  "settings.llm.download": "تنزيل",
+  "settings.llm.downloading": "جارٍ التنزيل…",
+  "settings.llm.delete": "حذف",
+  "settings.llm.load": "تحميل",
+  "settings.llm.unload": "إلغاء التحميل",
+  "settings.llm.progress": "جارٍ التنزيل… {pct}%",
+  "settings.llm.disk": "النماذج على الجهاز: {mb}",
+  "settings.llm.unavailable": "المحرك المحلي غير متاح في هذا الإصدار.",
+  "chat.local.error": "النموذج المحلي: فشل ({code})"
 }

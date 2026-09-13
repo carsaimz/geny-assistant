@@ -4,8 +4,8 @@
  */
 import { bridge, setConfirmationHandler } from '../core/bridge';
 import { matchIntent } from '../core/intent';
-import { remoteComplete, remoteConfigured, type RemoteConfig } from '../core/remote';
-import { t } from '../i18n';
+import { remoteComplete, remoteConfigured, tryParseToolCall, type RemoteConfig } from '../core/remote';
+import { t, tf } from '../i18n';
 import type { ChatMessage, Settings, ToolDefinition, ToolOutcome } from '../types';
 
 const WELCOME_KEY = 'chat.welcome';
@@ -163,8 +163,14 @@ export class ChatUI {
 
     try {
       const cfg = this.deps.getRemoteConfig();
-      if (this.deps.getSettings().mode !== 'local' && remoteConfigured(cfg)) {
+      const settings = this.deps.getSettings();
+      if (settings.mode !== 'local' && remoteConfigured(cfg)) {
         await this.sendViaRemote(cfg);
+      } else if (settings.mode === 'local' && settings.localModel.length > 0) {
+        // Fase 3 (TODO app-02): backend local GGUF; sem modelo carregado
+        // (ou sem JNI), cai para o roteador de intenções offline.
+        const viaLocal = await this.sendViaLocalLlm();
+        if (!viaLocal) await this.sendOffline(text);
       } else {
         await this.sendOffline(text);
       }
@@ -234,6 +240,67 @@ export class ChatUI {
       content: result.text,
       at: Date.now(),
     });
+  }
+
+  /**
+   * Gera a resposta com o LLM local (llama.cpp via ponte). Devolve `false`
+   * quando o motor não está disponível — o fluxo cai para intenções offline.
+   */
+  private async sendViaLocalLlm(): Promise<boolean> {
+    const history = this.messages
+      .filter((m) => m.role !== 'tool')
+      .slice(-10)
+      .map((m) => ({ role: m.role === 'assistant' ? 'assistant' as const : 'user' as const, content: m.content }));
+    try {
+      const { json } = await bridge.generateLocal({
+        messages: history,
+        maxTokens: 256,
+        temperature: 0.7,
+        topP: 0.9,
+      });
+      const result = JSON.parse(json) as { text?: string; error?: string };
+      if (result.error !== undefined || typeof result.text !== 'string') {
+        // Erro explícito do motor (ex.: modelo_nao_carregado): informa e
+        // NÃO cai no fluxo offline — evita resposta duplicada.
+        this.push({
+          id: this.nextId(),
+          role: 'assistant',
+          content: tf('chat.local.error', { code: result.error ?? 'unknown' }),
+          at: Date.now(),
+        });
+        return true;
+      }
+      const intent = tryParseToolCall(result.text);
+      if (intent !== null) {
+        const outcome = await this.runTool(intent.toolId, intent.params);
+        this.push({
+          id: this.nextId(),
+          role: 'tool',
+          content: '',
+          at: Date.now(),
+          tool: outcome,
+        });
+        if (outcome.status === 'ok') {
+          this.push({
+            id: this.nextId(),
+            role: 'assistant',
+            content: t('chat.tool.ok'),
+            at: Date.now(),
+          });
+        }
+        return true;
+      }
+      this.push({
+        id: this.nextId(),
+        role: 'assistant',
+        content: result.text.trim().length > 0 ? result.text : t('chat.welcome'),
+        at: Date.now(),
+      });
+      return true;
+    } catch {
+      // mock web/erro de ponte: segue no fluxo offline
+      return false;
+    }
   }
 
   private systemPrompt(): string {

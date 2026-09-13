@@ -59,5 +59,17 @@
   "settings.voice.model.downloading": "Téléchargement…",
   "settings.voice.model.delete": "Supprimer le modèle",
   "settings.voice.model.hint": "Téléchargé à la demande et conservé sur l’appareil uniquement.",
-  "settings.voice.model.progress": "Téléchargement… {pct}%"
+  "settings.voice.model.progress": "Téléchargement… {pct}%",
+  "settings.llm.title": "Modèle local (LLM)",
+  "settings.llm.model": "Modèle GGUF",
+  "settings.llm.model.none": "Aucun",
+  "settings.llm.download": "Télécharger",
+  "settings.llm.downloading": "Téléchargement…",
+  "settings.llm.delete": "Supprimer",
+  "settings.llm.load": "Charger",
+  "settings.llm.unload": "Décharger",
+  "settings.llm.progress": "Téléchargement… {pct}%",
+  "settings.llm.disk": "Modèles sur l'appareil : {mb}",
+  "settings.llm.unavailable": "Moteur local indisponible dans cette version.",
+  "chat.local.error": "LLM local : échec ({code})"
 }

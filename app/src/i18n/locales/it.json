@@ -59,5 +59,17 @@
   "settings.voice.model.downloading": "Scaricamento…",
   "settings.voice.model.delete": "Elimina modello",
   "settings.voice.model.hint": "Scaricato su richiesta e conservato solo sul dispositivo.",
-  "settings.voice.model.progress": "Scaricamento… {pct}%"
+  "settings.voice.model.progress": "Scaricamento… {pct}%",
+  "settings.llm.title": "Modello locale (LLM)",
+  "settings.llm.model": "Modello GGUF",
+  "settings.llm.model.none": "Nessuno",
+  "settings.llm.download": "Scarica",
+  "settings.llm.downloading": "Scaricamento…",
+  "settings.llm.delete": "Elimina",
+  "settings.llm.load": "Carica",
+  "settings.llm.unload": "Rilascia",
+  "settings.llm.progress": "Scaricamento… {pct}%",
+  "settings.llm.disk": "Modelli sul dispositivo: {mb}",
+  "settings.llm.unavailable": "Motore locale non disponibile in questa build.",
+  "chat.local.error": "LLM locale: non riuscito ({code})"
 }

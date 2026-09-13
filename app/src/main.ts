@@ -24,6 +24,7 @@ function defaultSettings(): Settings {
     sttEngine: 'system',
     vadAutoStop: true,
     whisperModel: 'whisper-tiny',
+    localModel: '',
   };
 }
 
@@ -158,6 +159,11 @@ async function boot(): Promise<void> {
 
   window.addEventListener('online', () => void refreshStatus());
   window.addEventListener('offline', () => void refreshStatus());
+
+  // Eventos do LLM local (Fase 3): re-difunde para a UI de configurações.
+  void bridge.addListener('genyLlm', (event) => {
+    window.dispatchEvent(new CustomEvent('geny:llm-event', { detail: event }));
+  });
 
   await chat.init();
   await voice.init();
