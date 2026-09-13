@@ -34,6 +34,21 @@
   box-sizing: border-box;
 }
 
+/*
+ * Correção do ecrã preto (v0.1.0-alpha.2): o stylesheet do navegador aplica
+ * [hidden] { display: none }, mas qualquer `display` de autor (ex.:
+ * #settings-drawer { display: flex }) SOBREPÕE essa regra — o painel ficava
+ * visível e tapava o app inteiro. Esta regra garante que `hidden` sempre
+ * vence, independente da especificidade das regras de componentes.
+ *
+ * Black-screen fix (v0.1.0-alpha.2): the UA stylesheet hides [hidden]
+ * elements, but any author `display` (e.g. #settings-drawer) overrides it.
+ * This rule makes the `hidden` attribute always win.
+ */
+[hidden] {
+  display: none !important;
+}
+
 html,
 body {
   margin: 0;
