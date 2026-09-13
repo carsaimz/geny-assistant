@@ -11,6 +11,7 @@ import android.os.Build
 import android.os.VibrationEffect
 import android.os.Vibrator
 import android.os.VibratorManager
+import com.carsaimz.genyassistant.ai.LocalLlmManager
 import com.carsaimz.genyassistant.data.GenyDb
 import com.carsaimz.genyassistant.security.AuditLog
 import com.carsaimz.genyassistant.security.ConfirmationManager
@@ -71,6 +72,7 @@ class GenyPlugin : Plugin() {
     private lateinit var db: GenyDb
     private lateinit var toolExecutor: java.util.concurrent.ExecutorService
     private var voice: VoiceManager? = null
+    private var llm: LocalLlmManager? = null
 
     private val host = object : ToolHost {
         override fun appContext(): Context = context
@@ -432,9 +434,93 @@ class GenyPlugin : Plugin() {
         call.resolve()
     }
 
+    // ----------------------------------------------------------------- LLM --
+    // Fase 3 (docs §6): modelo GGUF local — download, carga e geração.
+
+    /** Canal de eventos do LLM: notifyListeners(EVENT_LLM, {type, ...}). */
+    private fun llmManager(): LocalLlmManager =
+        llm ?: LocalLlmManager(context) { payload ->
+            notifyListeners(EVENT_LLM, JSObject.fromJSONObject(payload))
+        }.also { llm = it }
+
+    @PluginMethod
+    fun getLlmCapabilities(call: PluginCall) {
+        call.resolve(JSObject().put("json", llmManager().capabilities().toString()))
+    }
+
+    @PluginMethod
+    fun downloadLlmModel(call: PluginCall) {
+        val id = call.getString("id").orEmpty()
+        if (id.isEmpty()) {
+            call.reject("id obrigatorio")
+            return
+        }
+        audit.log("llm", "download do modelo: $id")
+        llmManager().downloadModel(id)
+        call.resolve()
+    }
+
+    @PluginMethod
+    fun deleteLlmModel(call: PluginCall) {
+        val file = call.getString("file").orEmpty()
+        if (file.isEmpty()) {
+            call.reject("file obrigatorio")
+            return
+        }
+        val ok = llmManager().deleteModel(file)
+        audit.log("llm", "modelo removido: $file ok=$ok")
+        call.resolve(JSObject().put("deleted", ok))
+    }
+
+    @PluginMethod
+    fun loadLocalModel(call: PluginCall) {
+        val file = call.getString("file").orEmpty()
+        if (file.isEmpty()) {
+            call.reject("file obrigatorio")
+            return
+        }
+        audit.log("llm", "carga do modelo: $file")
+        llmManager().load(file)
+        call.resolve()
+    }
+
+    @PluginMethod
+    fun unloadLocalModel(call: PluginCall) {
+        audit.log("llm", "descarga do modelo")
+        llmManager().unload()
+        call.resolve()
+    }
+
+    @PluginMethod
+    fun generateLocal(call: PluginCall) {
+        val messagesJson = call.getString("messagesJson") ?: "[]"
+        val maxTokens = call.getInt("maxTokens", 256) ?: 256
+        val temperature = call.getFloat("temperature", 0.7f) ?: 0.7f
+        val topP = call.getFloat("topP", 0.9f) ?: 0.9f
+        val seed = call.getInt("seed", -1) ?: -1
+        val started = System.currentTimeMillis()
+        llmManager().generateAsync(messagesJson, maxTokens, temperature, topP, seed) { result ->
+            if (result.has("error")) {
+                audit.log("llm", "geracao falhou: ${result.optString("error")}")
+            } else {
+                db.recordToolCall(
+                    "llm-$started",
+                    "llm.generate",
+                    messagesJson.take(512),
+                    "ok",
+                    started,
+                )
+                audit.log("llm", "geracao ok em ${System.currentTimeMillis() - started}ms")
+            }
+            call.resolve(JSObject().put("json", result.toString()))
+        }
+    }
+
     override fun handleOnDestroy() {
         voice?.release()
         voice = null
+        llm?.release()
+        llm = null
         toolExecutor.shutdown()
         toolExecutor.awaitTermination(2, TimeUnit.SECONDS)
         super.handleOnDestroy()
@@ -442,5 +528,6 @@ class GenyPlugin : Plugin() {
 
     private companion object {
         const val EVENT_VOICE = "genyVoice"
+        const val EVENT_LLM = "genyLlm"
     }
 }

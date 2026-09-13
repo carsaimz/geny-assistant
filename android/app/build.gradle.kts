@@ -20,8 +20,8 @@ android {
         applicationId = "com.carsaimz.genyassistant"
         minSdk = 26
         targetSdk = 35
-        versionCode = 4
-        versionName = "0.2.0-alpha.1"
+        versionCode = 5
+        versionName = "0.3.0-alpha.1"
 
         ndk {
             // arm64-v8a: aparelhos modernos; x86_64: emulador/dev.
@@ -30,7 +30,8 @@ android {
 
         externalNativeBuild {
             cmake {
-                // Submodule pinado (native/whisper.cpp @ v1.7.4).
+                // Submodule pinado (native/whisper.cpp @ v1.7.4). O LLM local
+                // fica no módulo :llama-native (ggml próprio, ver CMakeLists).
                 arguments += listOf(
                     "-DWHISPER_DIR=${File(rootDir.parentFile, "native/whisper.cpp").absolutePath}",
                     "-DCMAKE_BUILD_TYPE=Release",
@@ -99,6 +100,8 @@ dependencies {
     // Runtime Capacitor: projeto local vindo de app/node_modules
     // (@capacitor/android via npm) — ver settings.gradle.kts.
     implementation(project(":capacitor-android"))
+    // LLM local (Fase 3, TODO core-05): .so do llama.cpp empacotado via módulo.
+    implementation(project(":llama-native"))
 
     testImplementation(libs.junit)
     // org.json real para testes JVM (o stub do android.jar lanca excecao)

@@ -25,6 +25,11 @@ dependencyResolutionManagement {
 rootProject.name = "GenyAssistant"
 include(":app")
 
+// LLM local (Fase 3, TODO core-05): wrapper JNI do llama.cpp em módulo
+// próprio — o ggml v0.4.0 dele colide com o ggml do whisper.cpp v1.7.4
+// num único configure do CMake.
+include(":llama-native")
+
 // O runtime do Capacitor distribui-se via npm (@capacitor/android) e liga-se
 // como projeto local do Gradle. Requer `npm ci` em app/ antes do build Android.
 include(":capacitor-android")
