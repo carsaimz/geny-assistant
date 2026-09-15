@@ -39,3 +39,42 @@ add_library(geny_whisper_jni SHARED geny_whisper_jni.cpp)
 
 target_include_directories(geny_whisper_jni PRIVATE ${WHISPER_DIR}/include)
 target_link_libraries(geny_whisper_jni PRIVATE whisper log)
+
+# --------------------------------------------------------------------------
+# geny_espeak_jni — fonemização IPA do Piper (TODO core-03).
+#
+# PT: compila o wrapper JNI + o espeak-ng do submodule pinado
+# (native/espeak-ng @ ed530aa — fork com CMake usado pelo sherpa-onnx).
+# Biblioteca estática ligada dentro do geny_espeak_jni.so; sem async,
+# mbrola, sonic, pcaudio, klatt e speechPlayer — build determinístico e
+# leve. Os espeak-ng-data NÃO entram no APK: são baixados sob demanda
+# (PiperVoiceCatalog.ESPEAK_DATA) e extraídos em filesDir.
+# EN: builds the JNI wrapper + the pinned espeak-ng submodule
+# (native/espeak-ng @ ed530aa — CMake fork used by sherpa-onnx). Static
+# library linked into geny_espeak_jni.so; no async, mbrola, sonic, pcaudio,
+# klatt or speechPlayer — deterministic light build. The espeak-ng-data is
+# NOT bundled in the APK: it is downloaded on demand
+# (PiperVoiceCatalog.ESPEAK_DATA) and extracted into filesDir.
+
+if(NOT EXISTS "${ESPEAK_DIR}/CMakeLists.txt")
+    message(FATAL_ERROR "ESPEAK_DIR inválido: rode scripts/setup-submodules.sh (${ESPEAK_DIR})")
+endif()
+
+set(BUILD_ESPEAK_NG_TESTS OFF CACHE BOOL "" FORCE)
+set(BUILD_ESPEAK_NG_EXE OFF CACHE BOOL "" FORCE)
+set(USE_ASYNC OFF CACHE BOOL "" FORCE)
+set(USE_MBROLA OFF CACHE BOOL "" FORCE)
+set(USE_LIBSONIC OFF CACHE BOOL "" FORCE)
+set(USE_LIBPCAUDIO OFF CACHE BOOL "" FORCE)
+set(USE_KLATT OFF CACHE BOOL "" FORCE)
+set(USE_SPEECHPLAYER OFF CACHE BOOL "" FORCE)
+
+add_subdirectory(${ESPEAK_DIR} espeak-build EXCLUDE_FROM_ALL)
+
+add_library(geny_espeak_jni SHARED geny_espeak_jni.cpp)
+
+target_include_directories(geny_espeak_jni PRIVATE
+    ${ESPEAK_DIR}/src/include
+    ${ESPEAK_DIR}/src/libespeak-ng
+    ${CMAKE_CURRENT_BINARY_DIR}/espeak-build)
+target_link_libraries(geny_espeak_jni PRIVATE espeak-ng log)

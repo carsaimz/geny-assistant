@@ -48,6 +48,16 @@ export interface WhisperModelStatus {
   downloaded: boolean;
 }
 
+/** Voz Piper (TODO core-03): estado do download na UI. */
+export interface PiperVoiceStatus {
+  id: string;
+  file: string;
+  label: string;
+  language: string;
+  bytes: number;
+  downloaded: boolean;
+}
+
 export interface VoiceCapabilities {
   mic: boolean;
   systemStt: boolean;
@@ -56,6 +66,10 @@ export interface VoiceCapabilities {
   vadEngine: string;
   tts: boolean;
   whisperModels: WhisperModelStatus[];
+  /** Motor neural Piper (Fase 3): disponibilidade + vozes. */
+  piperJni: boolean;
+  piperEspeakData: boolean;
+  piperVoices: PiperVoiceStatus[];
 }
 
 export interface CaptureOptions {

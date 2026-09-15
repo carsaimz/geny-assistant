@@ -65,6 +65,23 @@ class VoiceManager(
             )
         }
         caps.put("whisperModels", models)
+
+        // Piper (TODO core-03): motor neural com vozes sob demanda.
+        val piperVoices = com.getcapacitor.JSArray()
+        for (v in PiperVoiceCatalog.VOICES) {
+            piperVoices.put(
+                JSObject()
+                    .put("id", v.id)
+                    .put("file", v.fileName)
+                    .put("label", v.label)
+                    .put("language", v.languageTag)
+                    .put("bytes", v.bytes)
+                    .put("downloaded", PiperTts.downloadedVoiceFile(context, v) != null),
+            )
+        }
+        caps.put("piperJni", EspeakPhonemizer.available)
+        caps.put("piperEspeakData", PiperTts.isEspeakDataReady(context))
+        caps.put("piperVoices", piperVoices)
         return caps
     }
 
@@ -305,6 +322,22 @@ class VoiceManager(
 
     /** Modelo de download/progresso por evento (UI mostra barra). */
     fun downloadModel(kind: String, id: String) {
+        val manager = com.carsaimz.genyassistant.ai.ModelManager(context)
+        if (kind == "tts" && id == PiperVoiceCatalog.ESPEAK_DATA.id) {
+            downloadEspeakData()
+            return
+        }
+        if (kind == "tts") {
+            val voice = PiperVoiceCatalog.voiceById(id)
+            if (voice == null) {
+                emitEvent("modelError", JSObject().put("kind", kind).put("id", id).put("message", "modelo desconhecido"))
+                return
+            }
+            downloadWith(
+                manager, voice.url, voice.fileName, "tts", voice.sha256, voice.bytes, kind, id,
+            )
+            return
+        }
         val model = when (kind) {
             "stt" -> VoiceCatalog.sttById(id)
             "vad" -> if (id == VoiceCatalog.VAD_SILERO.id) VoiceCatalog.VAD_SILERO else null
@@ -314,14 +347,29 @@ class VoiceManager(
             emitEvent("modelError", JSObject().put("kind", kind).put("id", id).put("message", "modelo desconhecido"))
             return
         }
-        val manager = com.carsaimz.genyassistant.ai.ModelManager(context)
+        downloadWith(
+            manager, model.url, model.fileName, model.kind, model.sha256, model.bytes, kind, id,
+        )
+    }
+
+    /** Corpo compartilhado do download com eventos de progresso/resultado. */
+    private fun downloadWith(
+        manager: com.carsaimz.genyassistant.ai.ModelManager,
+        url: String,
+        fileName: String,
+        dbKind: String,
+        sha256: String,
+        fallbackBytes: Long,
+        kind: String,
+        id: String,
+    ) {
         manager.download(
-            url = model.url,
-            name = model.fileName,
-            kind = model.kind,
-            expectedSha256 = model.sha256,
+            url = url,
+            name = fileName,
+            kind = dbKind,
+            expectedSha256 = sha256,
             onProgress = { bytes, total ->
-                val totalSafe = if (total > 0) total else model.bytes
+                val totalSafe = if (total > 0) total else fallbackBytes
                 emitEvent(
                     "modelProgress",
                     JSObject()
@@ -347,8 +395,62 @@ class VoiceManager(
         )
     }
 
+    /**
+     * Download do espeak-ng-data.zip (TODO core-03): depois de baixado com
+     * hash verificado, extrai para filesDir/espeak-ng-data e emite o mesmo
+     * ciclo de eventos da UI.
+     */
+    private fun downloadEspeakData() {
+        val data = PiperVoiceCatalog.ESPEAK_DATA
+        val manager = com.carsaimz.genyassistant.ai.ModelManager(context)
+        manager.download(
+            url = data.url,
+            name = data.fileName,
+            kind = data.kind,
+            expectedSha256 = data.sha256,
+            onProgress = { bytes, total ->
+                emitEvent(
+                    "modelProgress",
+                    JSObject()
+                        .put("kind", "tts")
+                        .put("id", data.id)
+                        .put("bytes", bytes)
+                        .put("total", if (total > 0) total else data.bytes),
+                )
+            },
+            onDone = { result ->
+                result.fold(
+                    onSuccess = { file ->
+                        val ok = PiperTts.extractEspeakData(context, file)
+                        if (ok) {
+                            emitEvent("modelReady", JSObject().put("kind", "tts").put("id", data.id))
+                        } else {
+                            emitEvent(
+                                "modelError",
+                                JSObject().put("kind", "tts").put("id", data.id)
+                                    .put("message", "extracao falhou"),
+                            )
+                        }
+                    },
+                    onFailure = { e ->
+                        emitEvent(
+                            "modelError",
+                            JSObject().put("kind", "tts").put("id", data.id)
+                                .put("message", e.message ?: "erro"),
+                        )
+                    },
+                )
+            },
+        )
+    }
+
     fun deleteModel(fileName: String): Boolean {
-        return com.carsaimz.genyassistant.ai.ModelManager(context).delete(fileName)
+        val manager = com.carsaimz.genyassistant.ai.ModelManager(context)
+        // Apagar o ZIP do espeak também remove os dados extraídos.
+        if (fileName.equals(PiperVoiceCatalog.ESPEAK_DATA.fileName, ignoreCase = true)) {
+            PiperTts.deleteEspeakData(context)
+        }
+        return manager.delete(fileName)
     }
 
     companion object {

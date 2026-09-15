@@ -77,5 +77,14 @@
   "voice.screen.handsfree": "Без рук",
   "voice.state.thinking": "Думаю…",
   "voice.state.speaking": "Говорю…",
-  "voice.err.busy": "Голосовой сервис занят. Попробуйте снова."
+  "voice.err.busy": "Голосовой сервис занят. Попробуйте снова.",
+  "chat.stop": "Стоп",
+  "settings.llm.temperature": "Температура",
+  "settings.llm.seed": "Seed",
+  "settings.tts.title": "Голос ответа (TTS)",
+  "settings.tts.engine": "Движок речи",
+  "settings.tts.engine.system": "Системный",
+  "settings.tts.engine.piper": "Piper (нейронный)",
+  "settings.tts.piper.unavailable": "Движок Piper недоступен в этой установке — используется системный голос.",
+  "settings.tts.espeak": "Фонемные данные (espeak, ~9 МБ)"
 }

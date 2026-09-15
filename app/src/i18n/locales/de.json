@@ -77,5 +77,14 @@
   "voice.screen.handsfree": "Freisprechen",
   "voice.state.thinking": "Denkt nach…",
   "voice.state.speaking": "Spricht…",
-  "voice.err.busy": "Sprachdienst beschäftigt. Bitte erneut versuchen."
+  "voice.err.busy": "Sprachdienst beschäftigt. Bitte erneut versuchen.",
+  "chat.stop": "Stopp",
+  "settings.llm.temperature": "Temperatur",
+  "settings.llm.seed": "Seed",
+  "settings.tts.title": "Antwortstimme (TTS)",
+  "settings.tts.engine": "Sprach-Engine",
+  "settings.tts.engine.system": "System",
+  "settings.tts.engine.piper": "Piper (neural)",
+  "settings.tts.piper.unavailable": "Piper-Engine in dieser Installation nicht verfügbar — Systemstimme wird genutzt.",
+  "settings.tts.espeak": "Phonemdaten (espeak, ~9 MB)"
 }

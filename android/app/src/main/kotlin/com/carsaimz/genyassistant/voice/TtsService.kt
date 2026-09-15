@@ -19,20 +19,19 @@ import java.util.Locale
 /**
  * TTS local em segundo plano (docs §7.3, TODO core-03/android-02).
  *
- * **PT** Serviço em primeiro plano (tipo mediaPlayback) com o motor
- * TextToSpeech do sistema — vozes on-device, instaladas junto com o
- * Android. Primeiro idioma da Fase 2: pt-BR, pt-PT e en; demais idiomas
- * usam a voz disponível mais próxima. Enquanto fala, mostra notificação
- * com ação de parar — a fala sobrevive à troca de app e é cancelável.
- * Piper (neural) entra na Fase 3 como segundo provider atrás da mesma
- * interface.
- * **EN** Foreground service (mediaPlayback type) running the system
- * TextToSpeech engine — on-device voices shipped with Android. Phase-2
- * languages first: pt-BR, pt-PT and en; other languages fall back to the
- * closest available voice. While speaking it shows a notification with a
- * stop action — speech survives app switches and is cancellable. Piper
- * (neural) lands in Phase 3 as a second provider behind this same
- * interface.
+ * **PT** Serviço em primeiro plano (tipo mediaPlayback) com dois motores: o
+ * TextToSpeech do sistema (vozes instaladas no Android) e, desde a Fase 3,
+ * o Piper neural (TODO core-03) — vozes VITS baixadas sob demanda tocadas
+ * por AudioTrack. A escolha vem da UI no request (`engine`: system|piper);
+ * se o piper não está pronto, cai para o sistema sem falhar. Enquanto fala,
+ * mostra notificação com ação de parar — a fala sobrevive à troca de app.
+ * **EN** Foreground service (mediaPlayback type) with two engines: the
+ * system TextToSpeech (voices installed with Android) and, since Phase 3,
+ * the Piper neural TTS (TODO core-03) — VITS voices downloaded on demand,
+ * played through AudioTrack. The choice comes from the UI in the request
+ * (`engine`: system|piper); if piper is not ready it falls back to system
+ * without failing. While speaking it shows a notification with a stop
+ * action — speech survives app switches and is cancellable.
  */
 class TtsService : Service() {
 
@@ -40,7 +39,7 @@ class TtsService : Service() {
     private var ready = false
     private var pending: MutableList<SpeakReq> = mutableListOf()
 
-    data class SpeakReq(val text: String, val language: String)
+    data class SpeakReq(val text: String, val language: String, val engine: String = "system")
 
     override fun onBind(intent: Intent?): IBinder? = null
 
@@ -69,19 +68,44 @@ class TtsService : Service() {
             ACTION_SPEAK -> {
                 val text = intent.getStringExtra(EXTRA_TEXT).orEmpty()
                 val language = intent.getStringExtra(EXTRA_LANGUAGE).orEmpty()
+                val engine = intent.getStringExtra(EXTRA_ENGINE) ?: "system"
                 startForeground(NOTIF_ID, buildNotification())
-                if (text.isNotBlank()) speak(SpeakReq(text, language))
+                if (text.isNotBlank()) speak(SpeakReq(text, language, engine))
             }
         }
         return START_NOT_STICKY
     }
 
     private fun speak(req: SpeakReq) {
+        // Piper neural (TODO core-03): quando o motor foi pedido e está
+        // pronto; qualquer falha vira evento de erro — sem crash.
+        if (req.engine == "piper") {
+            val ok = PiperTts.speak(this, req.text, req.language) { event ->
+                when (event) {
+                    "start" -> {
+                        speakingNow = true
+                        eventSink?.invoke("start")
+                    }
+                    "done" -> {
+                        speakingNow = false
+                        eventSink?.invoke("done")
+                        stopSelf()
+                    }
+                    else -> {
+                        speakingNow = false
+                        eventSink?.invoke("error")
+                        stopSelf()
+                    }
+                }
+            }
+            if (ok) return
+            // não pronto (dados/voz ausentes): cai para o sistema abaixo
+        }
+        val engine = tts ?: return
         if (!ready) {
             pending.add(req)
             return
         }
-        val engine = tts ?: return
         val resolved = resolveLocale(req.language)
         val result = engine.setLanguage(resolved)
         val usable = result != TextToSpeech.LANG_MISSING_DATA &&
@@ -147,6 +171,7 @@ class TtsService : Service() {
 
     private fun stopSpeaking() {
         tts?.stop()
+        PiperTts.stop()
         speakingNow = false
     }
 
@@ -211,13 +236,15 @@ class TtsService : Service() {
         const val ACTION_STOP = "com.carsaimz.genyassistant.voice.STOP"
         const val EXTRA_TEXT = "text"
         const val EXTRA_LANGUAGE = "language"
+        const val EXTRA_ENGINE = "engine"
 
         /** Fala um texto; chamada pela ponte (sempre com app visível). */
-        fun speak(context: Context, text: String, language: String) {
+        fun speak(context: Context, text: String, language: String, engine: String = "system") {
             val intent = Intent(context, TtsService::class.java)
                 .setAction(ACTION_SPEAK)
                 .putExtra(EXTRA_TEXT, text)
                 .putExtra(EXTRA_LANGUAGE, language)
+                .putExtra(EXTRA_ENGINE, engine)
             // Se a resposta chegar com o app em segundo plano, o Android 12+
             // proíbe iniciar FGS — falha calada em vez de derrubar o app.
             try {

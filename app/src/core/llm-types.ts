@@ -32,7 +32,8 @@ export type LlmEvent =
   | { type: 'llmProgress'; id: string; bytes: number; total: number }
   | { type: 'llmReady'; id: string }
   | { type: 'llmError'; id: string; code: string; message?: string }
-  | { type: 'llmStatus'; state: 'idle' | 'loading' | 'ready'; file: string };
+  | { type: 'llmStatus'; state: 'idle' | 'loading' | 'ready'; file: string }
+  | { type: 'llmToken'; text: string };
 
 export type LlmListener = (event: LlmEvent) => void;
 
@@ -42,10 +43,14 @@ export interface LocalGenerateOptions {
   temperature?: number;
   topP?: number;
   seed?: number;
+  /** Streaming token a token (eventos `llmToken` no canal `genyLlm`). */
+  stream?: boolean;
 }
 
 export interface LocalGenerateResult {
   text: string;
   tokens: number;
   ms: number;
+  /** true quando a geração foi interrompida pelo usuário (stop). */
+  stopped?: boolean;
 }

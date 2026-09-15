@@ -251,6 +251,53 @@ body {
   cursor: wait;
 }
 
+/* Streaming do LLM local (TODO core-05b): bolha provisória com cursor
+   pulsante e botão de parar a geração. */
+#btn-stop-gen {
+  background: var(--danger);
+  border: none;
+  border-radius: 999px;
+  color: #fff;
+  height: 46px;
+  padding: 0 16px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+#btn-stop-gen[hidden] {
+  display: none;
+}
+
+.msg-streaming .msg-text {
+  color: var(--fg-dim);
+}
+
+.stream-cursor {
+  display: inline-block;
+  width: 0.5em;
+  height: 1em;
+  margin-inline-start: 2px;
+  background: currentColor;
+  vertical-align: text-bottom;
+  animation: geny-blink 1s steps(2, start) infinite;
+}
+
+@keyframes geny-blink {
+  to {
+    visibility: hidden;
+  }
+}
+
+.llm-param {
+  flex: 1 1 40%;
+  min-width: 120px;
+}
+
+.llm-param input {
+  width: 100%;
+}
+
 /* ------------------------------------------------------------ settings -- */
 
 #settings-drawer {

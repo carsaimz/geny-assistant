@@ -77,5 +77,14 @@
   "voice.screen.handsfree": "ハンズフリー",
   "voice.state.thinking": "考えています…",
   "voice.state.speaking": "話しています…",
-  "voice.err.busy": "音声サービスが混み合っています。もう一度お試しください。"
+  "voice.err.busy": "音声サービスが混み合っています。もう一度お試しください。",
+  "chat.stop": "停止",
+  "settings.llm.temperature": "温度",
+  "settings.llm.seed": "シード",
+  "settings.tts.title": "返信の音声（TTS）",
+  "settings.tts.engine": "音声エンジン",
+  "settings.tts.engine.system": "システム",
+  "settings.tts.engine.piper": "Piper（ニューラル）",
+  "settings.tts.piper.unavailable": "このインストールでは Piper エンジンを利用できません — システム音声を使用します。",
+  "settings.tts.espeak": "音素データ（espeak、約 9 MB）"
 }

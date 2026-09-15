@@ -70,4 +70,30 @@ object LlmJni {
         topP: Float,
         seed: Int,
     ): String
+
+    /**
+     * Igual a [nativeGenerate], mas invoca `callback.onToken(piece)` a cada
+     * peça gerada (TODO core-05b). O callback roda na mesma thread da
+     * geração — o consumidor (LocalLlmManager) só emite eventos. O JSON
+     * final inclui `"stopped":true` quando [nativeCancel] interrompeu.
+     */
+    external fun nativeGenerateStream(
+        ptr: Long,
+        system: String,
+        roles: Array<String>,
+        contents: Array<String>,
+        maxTokens: Int,
+        temperature: Float,
+        topP: Float,
+        seed: Int,
+        callback: TokenCallback,
+    ): String
+
+    /** Pede a parada da geração em andamento (flag atômica no handle). */
+    external fun nativeCancel(ptr: Long)
+}
+
+/** Callback por token do streaming (TODO core-05b). */
+fun interface TokenCallback {
+    fun onToken(token: String)
 }

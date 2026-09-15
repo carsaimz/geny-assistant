@@ -436,7 +436,11 @@ class GenyPlugin : Plugin() {
             return
         }
         val language = call.getString("language") ?: java.util.Locale.getDefault().toLanguageTag()
-        com.carsaimz.genyassistant.voice.TtsService.speak(context, text, language)
+        // engine: "system" (padrão) ou "piper" (TODO core-03) — o serviço
+        // cai para o sistema sozinho se o piper não estiver pronto.
+        val engine = call.getString("engine") ?: "system"
+        audit.log("voice", "tts: engine=$engine lang=$language chars=${text.length}")
+        com.carsaimz.genyassistant.voice.TtsService.speak(context, text, language, engine)
         call.resolve()
     }
 
@@ -510,8 +514,9 @@ class GenyPlugin : Plugin() {
         val temperature = call.getFloat("temperature", 0.7f) ?: 0.7f
         val topP = call.getFloat("topP", 0.9f) ?: 0.9f
         val seed = call.getInt("seed", -1) ?: -1
+        val stream = call.getBoolean("stream", false) ?: false
         val started = System.currentTimeMillis()
-        llmManager().generateAsync(messagesJson, maxTokens, temperature, topP, seed) { result ->
+        val finish: (JSONObject) -> Unit = { result ->
             if (result.has("error")) {
                 audit.log("llm", "geracao falhou: ${result.optString("error")}")
             } else {
@@ -522,10 +527,41 @@ class GenyPlugin : Plugin() {
                     "ok",
                     started,
                 )
-                audit.log("llm", "geracao ok em ${System.currentTimeMillis() - started}ms")
+                audit.log(
+                    "llm",
+                    "geracao ok em ${System.currentTimeMillis() - started}ms" +
+                        if (result.optBoolean("stopped", false)) " (parada pelo usuario)" else "",
+                )
             }
             call.resolve(JSObject().put("json", result.toString()))
         }
+        if (stream) {
+            // Streaming (TODO core-05b): cada peça sai pelo canal `genyLlm`
+            // (evento llmToken) — a UI desenha progressivo e resolve no fim.
+            llmManager().generateStreamAsync(
+                messagesJson, maxTokens, temperature, topP, seed,
+                onToken = { piece ->
+                    try {
+                        notifyListeners(
+                            EVENT_LLM,
+                            JSObject().put("type", "llmToken").put("text", piece),
+                        )
+                    } catch (_: Exception) {
+                        // evento nunca derruba a geração
+                    }
+                },
+                onDone = finish,
+            )
+        } else {
+            llmManager().generateAsync(messagesJson, maxTokens, temperature, topP, seed, finish)
+        }
+    }
+
+    @PluginMethod
+    fun stopLocalGenerate(call: PluginCall) {
+        audit.log("llm", "parada de geracao pedida pela UI")
+        llmManager().stopGeneration()
+        call.resolve()
     }
 
     override fun handleOnDestroy() {

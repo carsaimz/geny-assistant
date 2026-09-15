@@ -32,6 +32,7 @@ core/target/
 native/*/
 !native/whisper.cpp
 !native/llama.cpp
+!native/espeak-ng
 !native/README.md
 !native/.gitignore
 *.o

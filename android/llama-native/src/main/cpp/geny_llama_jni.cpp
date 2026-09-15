@@ -1,21 +1,32 @@
-// geny_llama_jni.cpp — JNI bindings do llama.cpp (docs §6, TODO core-05).
+// geny_llama_jni.cpp — JNI bindings do llama.cpp (docs §6, TODO core-05/05b).
 //
 // PT: expõe init/free/generate para LlmJni.kt. O modelo GGUF é baixado sob
-// demanda (nunca embutido no APK). Geração sem streaming na alpha: o prompt
-// é montado com o template de chat do próprio modelo (llama_chat_apply_template
-// com tmpl=nullptr lê o template do GGUF), decodificado em blocos e amostrado
-// (greedy quando temperature <= 0; top-p + temp + dist caso contrário).
+// demanda (nunca embutido no APK). O prompt é montado com o template de chat
+// do próprio modelo (llama_chat_apply_template com tmpl=nullptr lê o template
+// do GGUF), decodificado em blocos e amostrado (greedy quando temperature
+// <= 0; top-p + temp + dist caso contrário). Duas variantes de geração
+// compartilham o mesmo núcleo: `nativeGenerate` (resposta completa) e
+// `nativeGenerateStream` (chama `TokenCallback.onToken` a cada peça gerada,
+// TODO core-05b). `nativeCancel` aborta a geração em andamento — o loop
+// consulta a flag atômica do handle entre tokens e o JSON devolvido traz
+// "stopped":true quando a parada foi pedida.
 // EN: exposes init/free/generate to LlmJni.kt. The GGUF model is downloaded
-// on demand (never bundled in the APK). Non-streaming generation in alpha:
-// the prompt is formatted with the model's own chat template
-// (llama_chat_apply_template with tmpl=nullptr reads the GGUF template),
-// decoded in chunks and sampled (greedy when temperature <= 0; otherwise
-// top-p + temp + dist).
+// on demand (never bundled in the APK). The prompt is formatted with the
+// model's own chat template (llama_chat_apply_template with tmpl=nullptr
+// reads the GGUF template), decoded in chunks and sampled (greedy when
+// temperature <= 0; otherwise top-p + temp + dist). Two generation variants
+// share the same core: `nativeGenerate` (full reply) and
+// `nativeGenerateStream` (invokes `TokenCallback.onToken` per generated
+// piece, TODO core-05b). `nativeCancel` aborts the running generation — the
+// loop checks the handle's atomic flag between tokens and the returned JSON
+// carries "stopped":true when a stop was requested.
 
 #include <jni.h>
+#include <atomic>
 #include <chrono>
 #include <cstdlib>
 #include <cstring>
+#include <functional>
 #include <string>
 #include <vector>
 #include <android/log.h>
@@ -30,6 +41,8 @@ namespace {
 struct LlamaHandle {
     llama_model *model = nullptr;
     llama_context *ctx = nullptr;
+    // Flag de cancelamento consultada entre tokens (nativeCancel).
+    std::atomic<bool> cancelled{false};
 };
 
 std::string jstringToStd(JNIEnv *env, jstring s) {
@@ -145,16 +158,19 @@ Java_com_carsaimz_genyassistant_ai_LlmJni_nativeFree(
     delete handle;
 }
 
-extern "C" JNIEXPORT jstring JNICALL
-Java_com_carsaimz_genyassistant_ai_LlmJni_nativeGenerate(
-        JNIEnv *env, jobject /*thiz*/, jlong ptr, jstring system,
-        jobjectArray roles, jobjectArray contents, jint max_tokens,
-        jfloat temperature, jfloat top_p, jint seed) {
-    if (ptr == 0) return env->NewStringUTF("{\"error\":\"nao_carregado\"}");
-    auto *handle = reinterpret_cast<LlamaHandle *>(ptr);
-
+// Núcleo compartilhado de geração: monta o template, tokeniza, amostra e
+// decodifica. `onToken` (pode ser null) recebe cada peça gerada — usado pelo
+// streaming (TODO core-05b). Devolve o JSON de resultado (ou {"error":…}).
+// Shared generation core: formats the template, tokenizes, samples and
+// decodes. `onToken` (nullable) receives each generated piece — used by the
+// streaming path (TODO core-05b). Returns the result JSON (or {"error":…}).
+std::string runGeneration(JNIEnv *env, LlamaHandle *handle, jstring system,
+                          jobjectArray roles, jobjectArray contents,
+                          jint max_tokens, jfloat temperature, jfloat top_p,
+                          jint seed,
+                          const std::function<void(const std::string &)> &onToken) {
     std::vector<llama_chat_message> msgs = buildMessages(env, system, roles, contents);
-    if (msgs.empty()) return env->NewStringUTF("{\"error\":\"sem_mensagens\"}");
+    if (msgs.empty()) return "{\"error\":\"sem_mensagens\"}";
 
     // 1) Template de chat do próprio modelo (tmpl=nullptr → lê do GGUF).
     size_t total_chars = 0;
@@ -170,7 +186,7 @@ Java_com_carsaimz_genyassistant_ai_LlmJni_nativeGenerate(
     }
     if (n_formatted < 0) {
         GENY_LOGE("chat template falhou");
-        return env->NewStringUTF("{\"error\":\"template\"}");
+        return "{\"error\":\"template\"}";
     }
     std::string prompt(fmt.data(), static_cast<size_t>(n_formatted));
 
@@ -184,7 +200,7 @@ Java_com_carsaimz_genyassistant_ai_LlmJni_nativeGenerate(
                                   tokens.data(), n_prompt_max, false, true);
     if (n_prompt <= 0) {
         GENY_LOGE("tokenizacao falhou ou contexto cheio (n=%d)", n_prompt);
-        return env->NewStringUTF("{\"error\":\"tokenizacao\"}");
+        return "{\"error\":\"tokenizacao\"}";
     }
     tokens.resize(static_cast<size_t>(n_prompt));
 
@@ -201,43 +217,123 @@ Java_com_carsaimz_genyassistant_ai_LlmJni_nativeGenerate(
 
     // 4) Decodificação do prompt em blocos + geração autoregressiva.
     llama_memory_clear(llama_get_memory(handle->ctx), true);
+    handle->cancelled.store(false);
     const auto started = std::chrono::steady_clock::now();
 
     std::string text;
+    bool stopped = false;
     int n_generated = 0;
     const size_t n_batch = 512;
 
     for (size_t i = 0; i < tokens.size(); i += n_batch) {
+        if (handle->cancelled.load()) { stopped = true; break; }
         const size_t chunk = std::min(n_batch, tokens.size() - i);
         if (llama_decode(handle->ctx,
                          llama_batch_get_one(&tokens[i], static_cast<int32_t>(chunk))) != 0) {
             llama_sampler_free(smpl);
             GENY_LOGE("decode do prompt falhou");
-            return env->NewStringUTF("{\"error\":\"decode\"}");
+            return "{\"error\":\"decode\"}";
         }
     }
 
-    const int max_new = max_tokens > 0 ? max_tokens : 256;
-    char piece[64];
-    while (n_generated < max_new) {
-        llama_token tok = llama_sampler_sample(smpl, handle->ctx, -1);
-        if (llama_vocab_is_eog(vocab, tok)) break;
-        llama_sampler_accept(smpl, tok);
+    if (!stopped) {
+        const int max_new = max_tokens > 0 ? max_tokens : 256;
+        char piece[64];
+        while (n_generated < max_new) {
+            if (handle->cancelled.load()) { stopped = true; break; }
+            llama_token tok = llama_sampler_sample(smpl, handle->ctx, -1);
+            if (llama_vocab_is_eog(vocab, tok)) break;
+            llama_sampler_accept(smpl, tok);
 
-        const int n_piece = llama_token_to_piece(vocab, tok, piece, sizeof(piece), 0, false);
-        if (n_piece > 0) text.append(piece, static_cast<size_t>(n_piece));
+            const int n_piece = llama_token_to_piece(vocab, tok, piece, sizeof(piece), 0, false);
+            if (n_piece > 0) {
+                text.append(piece, static_cast<size_t>(n_piece));
+                if (onToken) onToken(std::string(piece, static_cast<size_t>(n_piece)));
+            }
 
-        if (llama_decode(handle->ctx, llama_batch_get_one(&tok, 1)) != 0) break;
-        n_generated++;
+            if (llama_decode(handle->ctx, llama_batch_get_one(&tok, 1)) != 0) break;
+            n_generated++;
+        }
     }
     llama_sampler_free(smpl);
 
     const long ms = std::chrono::duration_cast<std::chrono::milliseconds>(
                             std::chrono::steady_clock::now() - started)
                             .count();
-    GENY_LOGI("geracao ok: %d tokens em %ld ms", n_generated, ms);
+    GENY_LOGI("geracao ok: %d tokens em %ld ms (stopped=%d)", n_generated, ms,
+              stopped ? 1 : 0);
 
     std::string json = "{\"text\":\"" + jsonEscape(text) + "\",\"tokens\":" +
-                       std::to_string(n_generated) + ",\"ms\":" + std::to_string(ms) + "}";
+                       std::to_string(n_generated) + ",\"ms\":" + std::to_string(ms) +
+                       ",\"stopped\":" + (stopped ? "true" : "false") + "}";
+    return json;
+}
+
+extern "C" JNIEXPORT jstring JNICALL
+Java_com_carsaimz_genyassistant_ai_LlmJni_nativeGenerate(
+        JNIEnv *env, jobject /*thiz*/, jlong ptr, jstring system,
+        jobjectArray roles, jobjectArray contents, jint max_tokens,
+        jfloat temperature, jfloat top_p, jint seed) {
+    if (ptr == 0) return env->NewStringUTF("{\"error\":\"nao_carregado\"}");
+    auto *handle = reinterpret_cast<LlamaHandle *>(ptr);
+    const std::string json = runGeneration(env, handle, system, roles, contents,
+                                           max_tokens, temperature, top_p, seed,
+                                           nullptr);
     return env->NewStringUTF(json.c_str());
+}
+
+// TokenCallback.onToken(String) — resolvido uma vez por chamada de streaming.
+extern "C" JNIEXPORT jstring JNICALL
+Java_com_carsaimz_genyassistant_ai_LlmJni_nativeGenerateStream(
+        JNIEnv *env, jobject /*thiz*/, jlong ptr, jstring system,
+        jobjectArray roles, jobjectArray contents, jint max_tokens,
+        jfloat temperature, jfloat top_p, jint seed, jobject callback) {
+    if (ptr == 0) return env->NewStringUTF("{\"error\":\"nao_carregado\"}");
+    auto *handle = reinterpret_cast<LlamaHandle *>(ptr);
+    if (callback == nullptr) {
+        const std::string json = runGeneration(env, handle, system, roles, contents,
+                                               max_tokens, temperature, top_p, seed,
+                                               nullptr);
+        return env->NewStringUTF(json.c_str());
+    }
+
+    jclass cbClass = env->GetObjectClass(callback);
+    if (cbClass == nullptr) return env->NewStringUTF("{\"error\":\"callback\"}");
+    jmethodID onTokenMethod = env->GetMethodID(cbClass, "onToken", "(Ljava/lang/String;)V");
+    env->DeleteLocalRef(cbClass);
+    if (onTokenMethod == nullptr) {
+        GENY_LOGE("TokenCallback.onToken nao encontrado");
+        return env->NewStringUTF("{\"error\":\"callback\"}");
+    }
+
+    // O callback roda na MESMA thread da geração (executor dedicado do
+    // Kotlin) — a JNIEnv passada é válida durante toda a chamada. Cada
+    // jstring criada é liberada na hora: gerações longas estourariam a
+    // tabela de local refs.
+    // The callback runs on the SAME thread as generation (Kotlin's dedicated
+    // executor) — the JNIEnv passed in stays valid for the whole call. Each
+    // created jstring is released immediately: long generations would blow
+    // the local-ref table.
+    auto onToken = [&](const std::string &piece) {
+        jstring jpiece = env->NewStringUTF(piece.c_str());
+        if (jpiece == nullptr) return; // OOM: segue sem streaming deste token
+        env->CallVoidMethod(callback, onTokenMethod, jpiece);
+        env->DeleteLocalRef(jpiece);
+        if (env->ExceptionCheck()) {
+            env->ExceptionClear(); // a UI nunca derruba a geração
+        }
+    };
+
+    const std::string json = runGeneration(env, handle, system, roles, contents,
+                                           max_tokens, temperature, top_p, seed,
+                                           onToken);
+    return env->NewStringUTF(json.c_str());
+}
+
+extern "C" JNIEXPORT void JNICALL
+Java_com_carsaimz_genyassistant_ai_LlmJni_nativeCancel(
+        JNIEnv * /*env*/, jobject /*thiz*/, jlong ptr) {
+    if (ptr == 0) return;
+    auto *handle = reinterpret_cast<LlamaHandle *>(ptr);
+    handle->cancelled.store(true);
 }

@@ -67,12 +67,18 @@ export interface Settings {
   voiceReplies: boolean;
   /** Motor de reconhecimento: sistema on-device ou whisper.cpp local. */
   sttEngine: 'system' | 'whisper';
+  /** Motor de fala (TTS): sistema ou Piper neural (TODO core-03). */
+  ttsEngine: 'system' | 'piper';
   /** Encerra a captura sozinho quando o VAD detecta fim da fala. */
   vadAutoStop: boolean;
   /** Modelo whisper selecionado (whisper-tiny/base/small/medium). */
   whisperModel: string;
   /** Nome do ficheiro GGUF carregado como backend local (Fase 3). */
   localModel: string;
+  /** Temperatura de amostragem do LLM local (0 = greedy; TODO core-05b). */
+  localTemperature: number;
+  /** Seed do LLM local (-1 = aleatório; TODO core-05b). */
+  localSeed: number;
 }
 
 export interface ChatMessage {

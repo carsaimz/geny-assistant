@@ -27,6 +27,9 @@ add_submodule() {
 # Pin de versões (build determinista — atualize com intenção e changelog)
 add_submodule native/llama.cpp   https://github.com/ggml-org/llama.cpp.git
 add_submodule native/whisper.cpp https://github.com/ggml-org/whisper.cpp.git
+# Fork do espeak-ng com CMake (mesmo pin do sherpa-onnx) — fonemização do
+# Piper TTS (TODO core-03).
+add_submodule native/espeak-ng   https://github.com/csukuangfj/espeak-ng.git
 
 echo "[ok] submodules prontos. Para construir:"
 echo "  ./scripts/build-rust-android.sh   (core Rust)"

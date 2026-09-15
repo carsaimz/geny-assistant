@@ -92,12 +92,16 @@ Guia completo: [`docs/build.md`](docs/build.md) · Modelos: [`scripts/download-m
   GGML sob demanda SHA-256), VAD (energia + Silero ONNX) e TTS em serviço
   foreground — guia em [`docs/user/voice.md`](docs/user/voice.md); desde
   v0.3.0-alpha.3 com **tela de voz em tela cheia e modo mãos-livres**
-- 🦙 **Fase 3 em andamento (v0.3.0-alpha.3)**: **LLM 100% local** — llama.cpp
+- 🦙 **Fase 3 em andamento (v0.3.0-alpha.4)**: **LLM 100% local** — llama.cpp
   v0.4.0 compilado no app (`:llama-native`, armeabi-v7a/arm64-v8a/x86_64), catálogo GGUF
   (Qwen2.5 0.5B/1.5B, Llama 3.2 1B, Gemma 2 2B — Q4_K_M) com SHA-256 pinado e
   download sob demanda, guarda de RAM, seção Modelo local nas configurações e
   chat com backend local — guia em [`docs/user/models.md`](docs/user/models.md)
-- ⏳ Próxima: tela nativa de modelos + Piper + wake word + UniFFI → ver [`ROADMAP.md`](ROADMAP.md)
+- ✨ **Novo em v0.3.0-alpha.4**: **streaming de tokens** (resposta palavra
+  por palavra + botão Parar + temperatura/seed) e **TTS neural Piper**
+  (pt-BR/pt-PT/en-US, vozes ~63 MB sob demanda, fallback para o TTS do
+  sistema)
+- ⏳ Próxima: wake word + UniFFI + Room → ver [`ROADMAP.md`](ROADMAP.md)
 
 > **Nota de build**: o APK compila whisper.cpp **e** llama.cpp — o CI faz
 > checkout de submodules e instala NDK r27.2 + CMake 3.22.1. Local:

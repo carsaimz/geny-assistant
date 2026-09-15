@@ -20,8 +20,8 @@ android {
         applicationId = "com.carsaimz.genyassistant"
         minSdk = 26
         targetSdk = 35
-        versionCode = 7
-        versionName = "0.3.0-alpha.3"
+        versionCode = 8
+        versionName = "0.3.0-alpha.4"
 
         ndk {
             // APK universal multi-ABI: armeabi-v7a cobre telemóveis 32-bit
@@ -34,8 +34,11 @@ android {
             cmake {
                 // Submodule pinado (native/whisper.cpp @ v1.7.4). O LLM local
                 // fica no módulo :llama-native (ggml próprio, ver CMakeLists).
+                // O espeak-ng do Piper também vem de submodule pinado
+                // (native/espeak-ng @ ed530aa, TODO core-03).
                 arguments += listOf(
                     "-DWHISPER_DIR=${File(rootDir.parentFile, "native/whisper.cpp").absolutePath}",
+                    "-DESPEAK_DIR=${File(rootDir.parentFile, "native/espeak-ng").absolutePath}",
                     "-DCMAKE_BUILD_TYPE=Release",
                 )
             }

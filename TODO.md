@@ -26,19 +26,19 @@
 - [x] `app-03` Tela de conversa por voz em tela cheia (orb animado, modo mãos-livres via `genyTts`) + correção do crash ao tocar no microfone (SpeechRecognizer protegido) (v0.3.0-alpha.3)
 - [x] `ci-01` Cache de build nativo no CI + NDK/CMake/submodules nos 4 workflows (#5)
 - [x] `docs-01` docs/user/voice.md (vozes, STT, VAD, TTS) (#31)
-- [ ] `core-03` TTS neural via Piper — movido para a Fase 3 (lote nativo junto com llama.cpp) (#3)
 
 ## 🚧 Fase 3 — LLM local (núcleo entregue em v0.3.0-alpha.1)
 
 - [x] `core-05` llama.cpp no app: submodule pinado @ v0.4.0, módulo `:llama-native` (CMake isolado), JNI geny_llama_jni, catálogo GGUF com SHA-256 pinado, guarda de RAM (#32)
 - [x] `app-02` Seção Modelo local nas configurações web: download com progresso, carregar/descarregar, remoção, disco; chat com backend local + fallback (#33)
 - [x] `ci-02` Matriz de build C++ por ABI (arm64-v8a/x86_64) com artefatos dos JNI (#34)
-- [ ] `android-03` Tela nativa de Modelos com progresso, hash, remoção, espaço (#35)
-- [ ] `core-03` TTS neural via Piper (vozes pt-BR, pt-PT, en) (#3, herdado da Fase 2)
+- [x] `core-03` TTS neural via Piper (pt-BR Faber, pt-PT Tugão, en-US Amy): espeak-ng submodule pinado + VITS via ONNX Runtime existente, download sob demanda com SHA-256, fallback para TTS do sistema (#3, v0.3.0-alpha.4)
+- [x] `core-05b` Streaming de tokens na ponte (`llmToken` + botão Parar) + temperatura/seed na UI (v0.3.0-alpha.4)
 - [ ] `android-03b` Wake word opcional desligado por padrão (openWakeWord/ONNX)
 - [ ] `core-04` UniFFI: bindings geny-core ↔ Kotlin (`feature = "uniffi"`)
 - [ ] `android-04` Migração do GenyDb para Room + KSP
-- [ ] `core-05b` Streaming de tokens na ponte + temperatura/seed na UI
+- [ ] Prompt de sistema por idioma/cultura (do core i18n)
+- [ ] Seleção automática local/remoto conforme bateria, rede e tarefa
 
 ## Fase 4 — Ferramentas avançadas
 

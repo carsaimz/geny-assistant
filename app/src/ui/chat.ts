@@ -3,6 +3,7 @@
  * de tool calling (intenção offline ou LLM remoto/self-hosted).
  */
 import { bridge, setConfirmationHandler } from '../core/bridge';
+import type { LlmEvent } from '../core/llm-types';
 import { matchIntent } from '../core/intent';
 import { remoteComplete, remoteConfigured, tryParseToolCall, type RemoteConfig } from '../core/remote';
 import { t, tf } from '../i18n';
@@ -16,6 +17,11 @@ export interface ChatDeps {
   onStatusChange: (busy: boolean) => void;
   /** Chamada para cada resposta final da Geny (usada pelo TTS — docs §7.4). */
   onAssistantReply?: (text: string) => void;
+  /**
+   * Streaming do LLM local (TODO core-05b): ligado quando a geração em
+   * stream começa e desligado quando ela termina (com sucesso ou erro).
+   */
+  onLocalStream?: (active: boolean) => void;
 }
 
 export class ChatUI {
@@ -24,6 +30,14 @@ export class ChatUI {
   private catalog: ToolDefinition[] = [];
   private messages: ChatMessage[] = [];
   private seq = 0;
+
+  /** Estado do streaming do LLM local (TODO core-05b). */
+  private stream: {
+    active: boolean;
+    buffer: string;
+    el: HTMLElement | null;
+    raf: number | null;
+  } | null = null;
 
   constructor(container: HTMLElement, deps: ChatDeps) {
     this.container = container;
@@ -37,6 +51,11 @@ export class ChatUI {
       this.catalog = tools;
     } catch {
       this.catalog = [];
+    }
+    try {
+      await bridge.addListener('genyLlm', (event) => this.onLlmEvent(event as LlmEvent));
+    } catch {
+      // ponte sem canal de eventos (testes/web): streaming fica inativo
     }
     this.render();
   }
@@ -96,7 +115,11 @@ export class ChatUI {
       replay.title = t('voice.speak.replay');
       replay.textContent = '🔊';
       replay.addEventListener('click', () => {
-        void bridge.speak({ text: m.content, language: this.deps.getSettings().language });
+        void bridge.speak({
+          text: m.content,
+          language: this.deps.getSettings().language,
+          engine: this.deps.getSettings().ttsEngine ?? 'system',
+        });
       });
       el.appendChild(replay);
     }
@@ -109,6 +132,55 @@ export class ChatUI {
       this.deps.onAssistantReply?.(m.content);
     }
     this.render();
+  }
+
+  // --------------------------------------------------- streaming (core-05b) --
+
+  private onLlmEvent(event: LlmEvent): void {
+    if (event.type !== 'llmToken') return;
+    const s = this.stream;
+    if (s === null || !s.active) return; // token fora de streaming: ignora
+    s.buffer += event.text;
+    if (s.raf === null) {
+      s.raf = window.requestAnimationFrame(() => {
+        if (s === null) return;
+        s.raf = null;
+        if (s.el !== null) {
+          const textEl = s.el.querySelector('.msg-text');
+          if (textEl !== null) textEl.textContent = s.buffer;
+          this.container.scrollTop = this.container.scrollHeight;
+        }
+      });
+    }
+  }
+
+  /** Cria a bolha provisória que recebe os tokens do streaming. */
+  private beginStreaming(): void {
+    this.endStreaming();
+    const el = document.createElement('div');
+    el.className = 'msg msg-assistant msg-streaming';
+    const text = document.createElement('span');
+    text.className = 'msg-text';
+    const cursor = document.createElement('span');
+    cursor.className = 'stream-cursor';
+    cursor.setAttribute('aria-hidden', 'true');
+    el.appendChild(text);
+    el.appendChild(cursor);
+    this.container.appendChild(el);
+    this.container.scrollTop = this.container.scrollHeight;
+    this.stream = { active: true, buffer: '', el, raf: null };
+    this.deps.onLocalStream?.(true);
+  }
+
+  /** Remove a bolha provisória (a mensagem final entra por `push`). */
+  private endStreaming(): void {
+    const s = this.stream;
+    if (s === null) return;
+    s.active = false;
+    if (s.raf !== null) window.cancelAnimationFrame(s.raf);
+    s.el?.remove();
+    this.stream = null;
+    this.deps.onLocalStream?.(false);
   }
 
   // ------------------------------------------------------- confirmation UI --
@@ -243,7 +315,9 @@ export class ChatUI {
   }
 
   /**
-   * Gera a resposta com o LLM local (llama.cpp via ponte). Devolve `false`
+   * Gera a resposta com o LLM local (llama.cpp via ponte) com streaming
+   * (TODO core-05b): os tokens chegam pelo canal `genyLlm` e são desenhados
+   * progressivamente enquanto a promessa não resolve. Devolve `false`
    * quando o motor não está disponível — o fluxo cai para intenções offline.
    */
   private async sendViaLocalLlm(): Promise<boolean> {
@@ -251,14 +325,19 @@ export class ChatUI {
       .filter((m) => m.role !== 'tool')
       .slice(-10)
       .map((m) => ({ role: m.role === 'assistant' ? 'assistant' as const : 'user' as const, content: m.content }));
+    const settings = this.deps.getSettings();
+    this.beginStreaming();
     try {
       const { json } = await bridge.generateLocal({
         messages: history,
         maxTokens: 256,
-        temperature: 0.7,
+        temperature: settings.localTemperature ?? 0.7,
         topP: 0.9,
+        seed: settings.localSeed ?? -1,
+        stream: true,
       });
       const result = JSON.parse(json) as { text?: string; error?: string };
+      this.endStreaming();
       if (result.error !== undefined || typeof result.text !== 'string') {
         // Erro explícito do motor (ex.: modelo_nao_carregado): informa e
         // NÃO cai no fluxo offline — evita resposta duplicada.
@@ -299,6 +378,7 @@ export class ChatUI {
       return true;
     } catch {
       // mock web/erro de ponte: segue no fluxo offline
+      this.endStreaming();
       return false;
     }
   }

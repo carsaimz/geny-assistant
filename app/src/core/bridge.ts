@@ -36,7 +36,7 @@ export interface GenyBridge {
   cancelVoiceCapture(): Promise<void>;
   downloadVoiceModel(options: { kind: string; id: string }): Promise<void>;
   deleteVoiceModel(options: { file: string }): Promise<{ deleted: boolean }>;
-  speak(options: { text: string; language: string }): Promise<void>;
+  speak(options: { text: string; language: string; engine?: string }): Promise<void>;
   stopSpeaking(): Promise<void>;
   /**
    * Canal único de eventos com três domínios: `genyVoice` (Fase 2),
@@ -54,6 +54,8 @@ export interface GenyBridge {
   loadLocalModel(options: { file: string }): Promise<void>;
   unloadLocalModel(): Promise<void>;
   generateLocal(options: LocalGenerateOptions): Promise<{ json: string }>;
+  /** Pede a parada da geração local em andamento (TODO core-05b). */
+  stopLocalGenerate(): Promise<void>;
 }
 
 /** Handler de confirmação registrado pela UI (modal). */
@@ -285,6 +287,9 @@ function createWebVoiceMock(): Pick<
         vadEngine: 'energy',
         tts: typeof speechSynthesis !== 'undefined',
         whisperModels: [],
+        piperJni: false,
+        piperEspeakData: false,
+        piperVoices: [],
       };
       return { json: JSON.stringify(caps) };
     },
@@ -343,6 +348,7 @@ function createWebVoiceMock(): Pick<
       return { deleted: false };
     },
     async speak({ text, language }) {
+      // Mock web: o motor é sempre o do navegador (piper só existe no app).
       if (typeof speechSynthesis === 'undefined') return;
       const utter = new SpeechSynthesisUtterance(text);
       utter.lang = language;
@@ -377,6 +383,7 @@ function createWebLlmMock(): Pick<
   | 'loadLocalModel'
   | 'unloadLocalModel'
   | 'generateLocal'
+  | 'stopLocalGenerate'
   | 'addListener'
 > {
   const listeners = webMockListeners;
@@ -414,6 +421,9 @@ function createWebLlmMock(): Pick<
     async generateLocal() {
       emitUnavailable();
       throw new Error('llm_unavailable');
+    },
+    async stopLocalGenerate() {
+      // sem geração em andamento no navegador
     },
     addListener(_eventName, listenerFunc) {
       listeners.add(listenerFunc);

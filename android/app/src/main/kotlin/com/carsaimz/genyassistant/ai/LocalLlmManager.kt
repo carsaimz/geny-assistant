@@ -19,11 +19,13 @@ import java.util.concurrent.Executors
  * - `llmReady`    — download concluído (`id`)
  * - `llmError`    — falha com código (`id`, `code`)
  * - `llmStatus`   — mudança de estado do motor (`state`: loading/ready/idle)
+ * - `llmToken`    — peça gerada no streaming (`text`) — TODO core-05b
  *
  * **EN** GGUF model lifecycle behind the bridge: download (ModelManager with
  * pinned SHA-256), load with a RAM guard, generate and unload. A single
  * dedicated executor serializes heavy work. Events on the `genyLlm` channel:
- * `llmProgress`, `llmReady`, `llmError` and `llmStatus` (see PT list).
+ * `llmProgress`, `llmReady`, `llmError`, `llmStatus` and `llmToken` (see PT
+ * list).
  */
 class LocalLlmManager(
     private val context: Context,
@@ -212,6 +214,39 @@ class LocalLlmManager(
     }
 
     /**
+     * Igual a [generateAsync], mas com streaming (TODO core-05b): cada peça
+     * gerada chega à UI pelo evento `llmToken` do canal `genyLlm` e ao
+     * callback [onToken] (mesma thread do executor — emita, não bloqueie).
+     * O JSON final traz `stopped=true` quando [stopGeneration] foi chamado.
+     */
+    fun generateStreamAsync(
+        messagesJson: String,
+        maxTokens: Int,
+        temperature: Float,
+        topP: Float,
+        seed: Int,
+        onToken: (String) -> Unit,
+        onDone: (JSONObject) -> Unit,
+    ) {
+        executor.execute {
+            onDone(generateStream(messagesJson, maxTokens, temperature, topP, seed, onToken))
+        }
+    }
+
+    /**
+     * Pede a parada da geração em andamento. Não entra na fila do executor
+     * (que está ocupado gerando): marca a flag atômica no handle nativo
+     * direto da thread chamadora — o loop entre tokens observa e encerra,
+     * devolvendo o texto parcial com `stopped=true`.
+     */
+    fun stopGeneration() {
+        val ptr = handle
+        if (ptr != 0L && LlmJni.available) {
+            runCatching { LlmJni.nativeCancel(ptr) }
+        }
+    }
+
+    /**
      * Gera uma resposta. Bloqueia a thread chamante — usar apenas dentro do
      * executor dedicado. `messagesJson`: `[{role, content}, ...]`.
      */
@@ -229,6 +264,46 @@ class LocalLlmManager(
             handle, systemPrompt(), roles, contents,
             maxTokens.coerceIn(1, 1024), temperature, topP, seed,
         )
+        return parseResult(raw)
+    }
+
+    /**
+     * Igual a [generate] com streaming (TODO core-05b): invoca [onToken] por
+     * peça e emite o evento `llmToken`. Bloqueia a thread chamante — usar
+     * apenas dentro do executor dedicado.
+     */
+    fun generateStream(
+        messagesJson: String,
+        maxTokens: Int,
+        temperature: Float,
+        topP: Float,
+        seed: Int,
+        onToken: (String) -> Unit,
+    ): JSONObject {
+        if (handle == 0L || state != "ready") {
+            return JSONObject().put("error", "modelo_nao_carregado")
+        }
+        val pairs = extractPairs(messagesJson)
+        if (pairs.first.isEmpty()) {
+            return JSONObject().put("error", "sem_mensagens")
+        }
+        val roles = pairs.first.toTypedArray()
+        val contents = pairs.second.toTypedArray()
+        val raw = LlmJni.nativeGenerateStream(
+            handle, systemPrompt(), roles, contents,
+            maxTokens.coerceIn(1, 1024), temperature, topP, seed,
+        ) { piece ->
+            try {
+                emitEvent("llmToken", JSONObject().put("text", piece))
+            } catch (_: Exception) {
+                // evento nunca derruba a geração
+            }
+            onToken(piece)
+        }
+        return parseResult(raw)
+    }
+
+    private fun parseResult(raw: String): JSONObject {
         return try {
             JSONObject(raw)
         } catch (e: Exception) {

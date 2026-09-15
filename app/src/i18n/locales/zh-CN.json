@@ -77,5 +77,14 @@
   "voice.screen.handsfree": "免提",
   "voice.state.thinking": "思考中…",
   "voice.state.speaking": "正在说话…",
-  "voice.err.busy": "语音服务忙，请重试。"
+  "voice.err.busy": "语音服务忙，请重试。",
+  "chat.stop": "停止",
+  "settings.llm.temperature": "温度",
+  "settings.llm.seed": "随机种子",
+  "settings.tts.title": "回复语音（TTS）",
+  "settings.tts.engine": "语音引擎",
+  "settings.tts.engine.system": "系统",
+  "settings.tts.engine.piper": "Piper（神经）",
+  "settings.tts.piper.unavailable": "此安装中 Piper 引擎不可用 — 使用系统语音。",
+  "settings.tts.espeak": "音素数据（espeak，约 9 MB）"
 }

@@ -97,6 +97,17 @@ export function renderSettingsDrawer(
       </label>
       <div id="voice-model-status" class="model-status" hidden></div>
 
+      <h3 class="drawer-section">${t('settings.tts.title')}</h3>
+      <label>
+        <span>${t('settings.tts.engine')}</span>
+        <select id="set-tts-engine">
+          <option value="system">${t('settings.tts.engine.system')}</option>
+          <option value="piper">${t('settings.tts.engine.piper')}</option>
+        </select>
+        <small id="set-piper-hint" hidden>${t('settings.tts.piper.unavailable')}</small>
+      </label>
+      <div id="piper-voices" class="model-status" hidden></div>
+
       <h3 class="drawer-section">${t('settings.llm.title')}</h3>
       <label>
         <span>${t('settings.llm.model')}</span>
@@ -105,6 +116,16 @@ export function renderSettingsDrawer(
         </select>
         <small id="set-llm-hint" hidden>${t('settings.llm.unavailable')}</small>
       </label>
+      <div class="check-row">
+        <label class="llm-param">
+          <span>${t('settings.llm.temperature')}</span>
+          <input id="set-llm-temp" type="number" min="0" max="2" step="0.1" inputmode="decimal" />
+        </label>
+        <label class="llm-param">
+          <span>${t('settings.llm.seed')}</span>
+          <input id="set-llm-seed" type="number" step="1" inputmode="numeric" />
+        </label>
+      </div>
       <div class="check-row">
         <small id="llm-disk-usage" hidden></small>
       </div>
@@ -132,6 +153,8 @@ export function renderSettingsDrawer(
   const whisperHint = $<HTMLElement>('set-whisper-hint');
   const modelStatus = $<HTMLElement>('voice-model-status');
   const llmModel = $<HTMLSelectElement>('set-llm-model');
+  const llmTemp = $<HTMLInputElement>('set-llm-temp');
+  const llmSeed = $<HTMLInputElement>('set-llm-seed');
   const llmHint = $<HTMLElement>('set-llm-hint');
   const llmDisk = $<HTMLElement>('llm-disk-usage');
   const llmStatus = $<HTMLElement>('llm-model-status');
@@ -145,6 +168,8 @@ export function renderSettingsDrawer(
   vadAutoStop.checked = settings.vadAutoStop;
   whisperModel.value = settings.whisperModel;
   llmModel.value = settings.localModel;
+  llmTemp.value = String(settings.localTemperature ?? 0.7);
+  llmSeed.value = String(settings.localSeed ?? -1);
   if (settings.apiKeySet) apiKey.placeholder = '••••••••';
 
   // Capacidades de voz: whisper nativo + estado dos modelos (async).
@@ -210,6 +235,85 @@ export function renderSettingsDrawer(
   };
 
   whisperModel.addEventListener('change', refreshModelRow);
+
+  // ------------------------------------------------------------- TTS piper --
+  // TODO core-03: motor neural Piper — motor, dados espeak e vozes.
+
+  const ttsEngine = $<HTMLSelectElement>('set-tts-engine');
+  const piperHint = $<HTMLElement>('set-piper-hint');
+  const piperVoicesEl = $<HTMLElement>('piper-voices');
+
+  ttsEngine.value = settings.ttsEngine ?? 'system';
+
+  let piperCaps: VoiceCapabilities | null = null;
+
+  const refreshPiper = (refetch = false): void => {
+    if (refetch) {
+      // o estado mudou no nativo: repede as capacidades e redesenha
+      void bridge
+        .getVoiceCapabilities()
+        .then(({ json }) => {
+          piperCaps = JSON.parse(json) as VoiceCapabilities;
+          refreshPiper();
+        })
+        .catch(() => undefined);
+      return;
+    }
+    if (piperCaps === null) return;
+    piperHint.hidden = piperCaps.piperJni;
+    piperVoicesEl.hidden = !piperCaps.piperJni;
+    piperVoicesEl.textContent = '';
+    if (!piperCaps.piperJni) return;
+
+    // Dados de fonemização compartilhados (obrigatórios para o piper).
+    const dataRow = document.createElement('div');
+    dataRow.className = 'check-row';
+    const dataBtn = document.createElement('button');
+    dataBtn.type = 'button';
+    if (piperCaps.piperEspeakData) {
+      dataBtn.className = 'btn-danger btn-small';
+      dataBtn.textContent = `${t('settings.voice.model.delete')} — ${t('settings.tts.espeak')}`;
+      dataBtn.addEventListener('click', () => {
+        void bridge.deleteVoiceModel({ file: 'espeak-ng-data.zip' }).then(() => refreshPiper(true));
+      });
+    } else {
+      dataBtn.className = 'btn-primary btn-small';
+      dataBtn.textContent = `${t('settings.voice.model.download')} — ${t('settings.tts.espeak')}`;
+      dataBtn.addEventListener('click', () => {
+        dataBtn.disabled = true;
+        dataBtn.textContent = `${t('settings.voice.model.downloading')} 0%`;
+        void bridge.downloadVoiceModel({ kind: 'tts', id: 'espeak-data' });
+      });
+    }
+    dataRow.appendChild(dataBtn);
+    piperVoicesEl.appendChild(dataRow);
+
+    for (const v of piperCaps.piperVoices ?? []) {
+      const row = document.createElement('div');
+      row.className = 'check-row';
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      if (v.downloaded) {
+        btn.className = 'btn-danger btn-small';
+        btn.textContent = `${t('settings.voice.model.delete')} — ${v.label}`;
+        btn.addEventListener('click', () => {
+          void bridge.deleteVoiceModel({ file: v.file }).then(() => refreshPiper(true));
+        });
+      } else {
+        btn.className = 'btn-primary btn-small';
+        btn.textContent = `${t('settings.voice.model.download')} — ${v.label}`;
+        btn.addEventListener('click', () => {
+          btn.disabled = true;
+          btn.textContent = `${t('settings.voice.model.downloading')} 0%`;
+          void bridge.downloadVoiceModel({ kind: 'tts', id: v.id });
+        });
+      }
+      row.appendChild(btn);
+      piperVoicesEl.appendChild(row);
+    }
+  };
+
+  refreshPiper(true);
 
   // ------------------------------------------------------------ LLM local --
   // Fase 3 (TODO app-02): catálogo, download com progresso, carga e remoção.
@@ -342,6 +446,17 @@ export function renderSettingsDrawer(
   // Eventos de download de modelo vindos do VoiceController (via window).
   const onModelEvent = (ev: Event): void => {
     const event = (ev as CustomEvent<VoiceEvent>).detail;
+    if (event.type.startsWith('model') && (event as { kind?: string }).kind === 'tts') {
+      // Piper (TODO core-03): progresso/redesenho da seção TTS.
+      if (event.type === 'modelReady' || event.type === 'modelError') {
+        refreshPiper(true);
+      } else if (event.type === 'modelProgress') {
+        piperVoicesEl.hidden = false;
+        const pct = Math.min(100, Math.round((event.bytes / Math.max(1, event.total)) * 100));
+        piperVoicesEl.textContent = tf('settings.voice.model.progress', { pct });
+      }
+      return;
+    }
     if (event.type === 'modelProgress') {
       modelStatus.hidden = false;
       modelStatus.textContent = tf('settings.voice.model.progress', {
@@ -369,6 +484,8 @@ export function renderSettingsDrawer(
 
   $<HTMLFormElement>('settings-form').addEventListener('submit', (ev) => {
     ev.preventDefault();
+    const temp = Number.parseFloat(llmTemp.value.replace(',', '.'));
+    const seed = Number.parseInt(llmSeed.value, 10);
     cb.onSave({
       mode: mode.value as Settings['mode'],
       language: lang.value,
@@ -380,6 +497,9 @@ export function renderSettingsDrawer(
       vadAutoStop: vadAutoStop.checked,
       whisperModel: whisperModel.value,
       localModel: llmModel.value,
+      localTemperature: Number.isFinite(temp) ? Math.min(2, Math.max(0, temp)) : 0.7,
+      localSeed: Number.isFinite(seed) ? seed : -1,
+      ttsEngine: ttsEngine.value as Settings['ttsEngine'],
     });
     const key = apiKey.value.trim();
     if (key.length > 0) {

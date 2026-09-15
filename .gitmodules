@@ -4,3 +4,6 @@
 [submodule "native/llama.cpp"]
 	path = native/llama.cpp
 	url = https://github.com/ggml-org/llama.cpp.git
+[submodule "native/espeak-ng"]
+	path = native/espeak-ng
+	url = https://github.com/csukuangfj/espeak-ng.git

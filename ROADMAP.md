@@ -46,8 +46,8 @@
   (ouvindo/pensando/falando), ciclo automático ouvir → responder → ouvir de
   novo (eventos `genyTts`) — v0.3.0-alpha.3, junto com a correção do crash
   no microfone (SpeechRecognizer protegido contra serviço ocupado)
-- [ ] TTS neural via Piper e wake word — **movidos para a Fase 3** (mesmo
-  lote de build nativo do llama.cpp; ver ROADMAP Fase 3)
+- [x] TTS neural via Piper — entregue na Fase 3 (v0.3.0-alpha.4, ver abaixo);
+  wake word permanece na Fase 3
 - [x] Métricas de latência voz→texto no log local (sttMs no evento de resultado)
 
 ## 🚧 Fase 3 — LLM local *(v0.3.0-alpha.1 — núcleo entregue)*
@@ -65,10 +65,15 @@
   modo local com fallback para intenções offline
 - [x] ci-02: matriz de build C++ por ABI (arm64-v8a/x86_64) com artefatos
   dos dois JNI no workflow Build Native
-- [ ] TTS neural via Piper (vozes pt-BR, pt-PT, en) — herdado da Fase 2
+- [x] TTS neural via Piper (vozes pt-BR Faber, pt-PT Tugão, en-US Amy):
+  fonemização espeak-ng (submodule pinado) + VITS via ONNX Runtime já
+  presente; vozes sob demanda com SHA-256 pinado; fallback para o TTS do
+  sistema — v0.3.0-alpha.4
+- [x] Streaming de tokens + janela de contexto configurável na UI:
+  resposta palavra por palavra, botão Parar e temperatura/seed —
+  v0.3.0-alpha.4 (janela de contexto vem na próxima alpha)
 - [ ] Wake word opcional (ONNX / openWakeWord), desligado por padrão — herdado da Fase 2
 - [ ] Bindings UniFFI Rust ↔ Kotlin do geny-core
-- [ ] Streaming de tokens + janela de contexto configurável na UI
 - [ ] Prompt de sistema por idioma/cultura (do core i18n)
 - [ ] Seleção automática local/remoto conforme bateria, rede e tarefa
 

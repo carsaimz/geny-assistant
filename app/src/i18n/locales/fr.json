@@ -77,5 +77,14 @@
   "voice.screen.handsfree": "Mains libres",
   "voice.state.thinking": "Réflexion…",
   "voice.state.speaking": "En train de parler…",
-  "voice.err.busy": "Service vocal occupé. Réessayez."
+  "voice.err.busy": "Service vocal occupé. Réessayez.",
+  "chat.stop": "Arrêter",
+  "settings.llm.temperature": "Température",
+  "settings.llm.seed": "Seed",
+  "settings.tts.title": "Voix de réponse (TTS)",
+  "settings.tts.engine": "Moteur de synthèse",
+  "settings.tts.engine.system": "Système",
+  "settings.tts.engine.piper": "Piper (neural)",
+  "settings.tts.piper.unavailable": "Moteur Piper indisponible sur cette installation — voix système utilisée.",
+  "settings.tts.espeak": "Données de phonèmes (espeak, ~9 Mo)"
 }

@@ -77,5 +77,14 @@
   "voice.screen.handsfree": "Hands-free",
   "voice.state.thinking": "Thinking…",
   "voice.state.speaking": "Speaking…",
-  "voice.err.busy": "Voice service busy. Try again."
+  "voice.err.busy": "Voice service busy. Try again.",
+  "chat.stop": "Stop",
+  "settings.llm.temperature": "Temperature",
+  "settings.llm.seed": "Seed",
+  "settings.tts.title": "Speech voice (TTS)",
+  "settings.tts.engine": "Speech engine",
+  "settings.tts.engine.system": "System",
+  "settings.tts.engine.piper": "Piper (neural)",
+  "settings.tts.piper.unavailable": "Piper engine not available in this installation — using system voice.",
+  "settings.tts.espeak": "Phoneme data (espeak, ~9 MB)"
 }

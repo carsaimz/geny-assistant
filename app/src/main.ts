@@ -25,6 +25,9 @@ function defaultSettings(): Settings {
     vadAutoStop: true,
     whisperModel: 'whisper-tiny',
     localModel: '',
+    localTemperature: 0.7,
+    localSeed: -1,
+    ttsEngine: 'system' as const,
   };
 }
 
@@ -83,12 +86,14 @@ async function boot(): Promise<void> {
   const btnSend = $('btn-send');
   const btnSettings = $('btn-settings');
   const drawer = $('settings-drawer');
+  const btnStopGen = $('btn-stop-gen');
   if (
     !(chatEl instanceof HTMLElement) ||
     !(composer instanceof HTMLFormElement) ||
     !(input instanceof HTMLInputElement) ||
     !(btnSend instanceof HTMLButtonElement) ||
     !(btnSettings instanceof HTMLButtonElement) ||
+    !(btnStopGen instanceof HTMLButtonElement) ||
     !(drawer instanceof HTMLElement)
   ) {
     throw new Error('DOM incompleto');
@@ -104,10 +109,18 @@ async function boot(): Promise<void> {
     onAssistantReply: (text) => {
       // Responder por voz (docs §7.4): TTS local do texto da Geny.
       if (currentSettings.voiceReplies) {
-        void bridge.speak({ text, language: currentSettings.language });
+        void bridge.speak({
+          text,
+          language: currentSettings.language,
+          engine: currentSettings.ttsEngine ?? 'system',
+        });
       }
       // Tela de voz: registra a resposta e dispara o ciclo mãos-livres.
       voice.notifyAssistantReply(text);
+    },
+    onLocalStream: (active) => {
+      // Streaming do LLM local (TODO core-05b): mostra o botão de parar.
+      btnStopGen.hidden = !active;
     },
   });
 
@@ -162,6 +175,11 @@ async function boot(): Promise<void> {
   };
 
   btnSettings.addEventListener('click', openDrawer);
+
+  btnStopGen.addEventListener('click', () => {
+    // Parada do streaming (TODO core-05b): o motor devolve o texto parcial.
+    void bridge.stopLocalGenerate();
+  });
 
   composer.addEventListener('submit', (ev) => {
     ev.preventDefault();

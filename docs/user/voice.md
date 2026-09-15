@@ -54,7 +54,21 @@ para reproduzir de novo.
 Idiomas priorizados na Fase 2: **pt-BR, pt-PT e en**. Outros idiomas usam a
 voz instalada mais próxima.
 
-### 5. Privacidade
+### 5. TTS neural (Piper) — novo desde v0.3.0-alpha.4
+
+Configurações → **Voz da resposta (TTS)** → motor **Piper (neural)**: vozes
+de qualidade neural tocadas 100% no aparelho.
+
+1. Baixe os **dados de fonemas** (espeak, ~9 MB — um download único).
+2. Baixe uma voz (~63 MB): Faber (pt-BR), Tugão (pt-PT) ou Amy (en-US).
+3. Pronto — a Geny usa a voz do idioma da conversa automaticamente
+   (pt sem região usa a voz de pt-PT).
+
+Se o Piper não estiver pronto (dados ou voz ausentes), a Geny volta
+silenciosamente para o TTS do sistema — nada quebra. As vozes têm SHA-256
+verificado no download e nunca saem do aparelho.
+
+### 6. Privacidade
 
 - Áudio processado só no aparelho; nunca enviado para servidores.
 - Modelos ficam no armazenamento privado do app (`filesDir/models`).
@@ -106,7 +120,21 @@ switches. Every reply also has a 🔊 button to play it again.
 Phase-2 languages first: **pt-BR, pt-PT and en**. Other languages fall back
 to the closest installed voice.
 
-### 5. Privacy
+### 5. Neural TTS (Piper) — new since v0.3.0-alpha.4
+
+Settings → **Speech voice (TTS)** → **Piper (neural)** engine: neural-quality
+voices played 100% on-device.
+
+1. Download the **phoneme data** (espeak, ~9 MB — a single download).
+2. Download a voice (~63 MB): Faber (pt-BR), Tugão (pt-PT) or Amy (en-US).
+3. Done — Geny uses the voice matching the conversation language
+   automatically (region-less pt uses the pt-PT voice).
+
+If Piper isn't ready (missing data or voice), Geny silently falls back to
+the system TTS engine — nothing breaks. Voices are verified with pinned
+SHA-256 and never leave the device.
+
+### 6. Privacy
 
 - Audio is processed on the device only; never uploaded.
 - Models live in the app’s private storage (`filesDir/models`).

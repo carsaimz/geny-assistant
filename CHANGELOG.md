@@ -4,6 +4,56 @@ Todas as mudanças notáveis deste projeto são documentadas aqui.
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/),
 versionamento [Semântico](https://semver.org/lang/pt-BR/).
 
+## [0.3.0-alpha.4] — Streaming do LLM + TTS neural Piper / LLM streaming + Piper neural TTS
+
+### Adicionado / Added
+
+- **Streaming de tokens do LLM local** (`core-05b`): a resposta da Geny agora
+  aparece palavra por palavra no chat — novo `nativeGenerateStream` no JNI do
+  llama.cpp (callback por token, mesma thread do executor), eventos `llmToken`
+  no canal `genyLlm`, bolha provisória com cursor pulsante, botão **Parar**
+  que interrompe a geração e mantém o texto parcial (`stopped: true`, flag
+  atômica no handle nativo), e novos controles de **temperatura** e **seed**
+  na seção Modelo local.
+  *Local LLM token streaming (`core-05b`): the assistant's reply now appears
+  word by word in the chat — new `nativeGenerateStream` in the llama.cpp JNI
+  (per-token callback on the executor thread), `llmToken` events on the
+  `genyLlm` channel, a provisional bubble with a blinking cursor, a **Stop**
+  button that cancels generation and keeps the partial text (`stopped: true`,
+  atomic flag on the native handle), plus new **temperature** and **seed**
+  controls in the Local model section.*
+- **TTS neural via Piper** (`core-03`): vozes VITS do projeto Piper tocadas
+  100% on-device — pt-BR (Faber), pt-PT (Tugão) e en-US (Amy), ~63 MB por voz,
+  baixadas sob demanda com SHA-256 pinado. Fonemização IPA via espeak-ng
+  compilado no app (submodule pinado @ ed530aa, mesmo pin do sherpa-onnx —
+  núcleo `geny_espeak_*` espelha o piper-phonemize: IPA por oração com
+  pontuação e filtro de marcadores de idioma) + inferência VITS com o ONNX
+  Runtime já presente (Silero VAD) — nenhum nativo extra no APK além do
+  wrapper. Os dados de fonemas do espeak (~9 MB) são um download único
+  compartilhado entre as vozes. Seleção automática de voz por idioma da
+  conversa (pt sem região → pt-PT); fallback silencioso para o TTS do sistema
+  quando o Piper não está pronto; seção nova nas configurações com motor,
+  dados de fonemas e vozes. Testes JVM do catálogo; strings nos 11 idiomas.
+  *Neural TTS via Piper (`core-03`): Piper's VITS voices played 100%
+  on-device — pt-BR (Faber), pt-PT (Tugão) and en-US (Amy), ~63 MB each,
+  downloaded on demand with pinned SHA-256. IPA phonemization via espeak-ng
+  compiled into the app (pinned submodule @ ed530aa, same pin as
+  sherpa-onnx — the `geny_espeak_*` core mirrors piper-phonemize: per-clause
+  IPA with punctuation and language-flag filtering) + VITS inference with the
+  ONNX Runtime already bundled (Silero VAD) — no extra native code beyond
+  the wrapper. The espeak phoneme data (~9 MB) is a single download shared
+  across voices. Automatic voice selection by conversation language
+  (region-less pt → pt-PT); silent fallback to system TTS when Piper isn't
+  ready; new settings section with engine, phoneme data and voices. JVM
+  catalog tests; strings in all 11 languages.*
+
+### Alterado / Changed
+
+- `LlmJni`/`WhisperJni`/`EspeakPhonemizer` e `TokenCallback` ficam protegidos
+  de ofuscação R8 (JNI resolve símbolos por nome exato).
+  *`LlmJni`/`WhisperJni`/`EspeakPhonemizer` and `TokenCallback` are kept from
+  R8 obfuscation (JNI resolves symbols by exact name).*
+
 ## [0.3.0-alpha.3] — Tela de voz + correção do microfone / Voice screen + mic fix
 
 ### Corrigido / Fixed

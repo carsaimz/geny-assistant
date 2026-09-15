@@ -77,5 +77,14 @@
   "voice.screen.handsfree": "بدون يدين",
   "voice.state.thinking": "يفكر…",
   "voice.state.speaking": "يتحدث…",
-  "voice.err.busy": "خدمة الصوت مشغولة. حاول مرة أخرى."
+  "voice.err.busy": "خدمة الصوت مشغولة. حاول مرة أخرى.",
+  "chat.stop": "توقف",
+  "settings.llm.temperature": "درجة الحرارة",
+  "settings.llm.seed": "البذرة",
+  "settings.tts.title": "صوت الرد (TTS)",
+  "settings.tts.engine": "محرك الكلام",
+  "settings.tts.engine.system": "النظام",
+  "settings.tts.engine.piper": "Piper (عصبي)",
+  "settings.tts.piper.unavailable": "محرك Piper غير متوفر في هذا التثبيت — سيُستخدم صوت النظام.",
+  "settings.tts.espeak": "بيانات الأصوات (espeak، ~9 MB)"
 }

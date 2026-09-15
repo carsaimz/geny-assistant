@@ -77,5 +77,14 @@
   "voice.screen.handsfree": "Mãos livres",
   "voice.state.thinking": "Pensando…",
   "voice.state.speaking": "Falando…",
-  "voice.err.busy": "Serviço de voz ocupado. Tente de novo."
+  "voice.err.busy": "Serviço de voz ocupado. Tente de novo.",
+  "chat.stop": "Parar",
+  "settings.llm.temperature": "Temperatura",
+  "settings.llm.seed": "Semente",
+  "settings.tts.title": "Voz da resposta (TTS)",
+  "settings.tts.engine": "Motor de fala",
+  "settings.tts.engine.system": "Sistema",
+  "settings.tts.engine.piper": "Piper (neural)",
+  "settings.tts.piper.unavailable": "Motor Piper não disponível nesta instalação — use o do sistema.",
+  "settings.tts.espeak": "Dados de fonemas (espeak, ~9 MB)"
 }
