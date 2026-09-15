@@ -6,6 +6,7 @@ import { bridge, setConfirmationHandler } from '../core/bridge';
 import type { LlmEvent } from '../core/llm-types';
 import { matchIntent } from '../core/intent';
 import { remoteComplete, remoteConfigured, tryParseToolCall, type RemoteConfig } from '../core/remote';
+import { buildSystemPrompt } from '../core/system-prompt';
 import { t, tf } from '../i18n';
 import type { ChatMessage, Settings, ToolDefinition, ToolOutcome } from '../types';
 
@@ -329,7 +330,12 @@ export class ChatUI {
     this.beginStreaming();
     try {
       const { json } = await bridge.generateLocal({
-        messages: history,
+        // Contrato da ponte (corrigido): histórico serializado em
+        // `messagesJson` + prompt de sistema por idioma/cultura em `system`.
+        // Antes enviávamos `messages` (array) e o plugin lia `messagesJson`
+        // — todo pedido caía em `sem_mensagens`.
+        messagesJson: JSON.stringify(history),
+        system: this.systemPrompt(),
         maxTokens: 256,
         temperature: settings.localTemperature ?? 0.7,
         topP: 0.9,
@@ -383,13 +389,18 @@ export class ChatUI {
     }
   }
 
+  /**
+   * Prompt de sistema por idioma/cultura (TODO Fase 3) — fonte única
+   * (`buildSystemPrompt`, espelho do `i18n.rs` do core) para os backends
+   * remoto e local; o catálogo entra como JSON para o modelo só selecionar
+   * ferramentas registradas.
+   */
   private systemPrompt(): string {
     const lang = this.deps.getSettings().language;
-    return [
-      `Voce e o Geny Assistant, assistente local-first. Idioma do usuario: ${lang}.`,
-      'Para agir, devolva APENAS um JSON: {"tool": "<id>", "params": {...}} usando o catalogo abaixo. Nao invente ferramentas.',
-      `Catalogo: ${JSON.stringify(this.catalog)}`,
-    ].join('\n');
+    return buildSystemPrompt({
+      language: lang,
+      toolCatalogJson: JSON.stringify(this.catalog),
+    });
   }
 
   // -------------------------------------------------------------- tool run --

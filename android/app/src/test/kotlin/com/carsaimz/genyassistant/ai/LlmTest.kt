@@ -99,4 +99,23 @@ class LocalLlmManagerTest {
         assertEquals(3, LocalLlmManager.estimateThreads(6))
         assertFalse(LocalLlmManager.estimateThreads(8) > 6)
     }
+
+    @Test
+    fun resolveSystemPromptExplicitoDoAppVence() {
+        // TODO Fase 3: prompt por idioma/cultura construído no app
+        // (buildSystemPrompt) viaja pela ponte e vence o fallback.
+        val explicit = "Voce e o Geny Assistant...\n4. Responda SEMPRE no idioma do usuario " +
+            "(idioma padrao: pt-BR). Use portugues do Brasil, tom acolhedor e direto."
+        assertEquals(explicit, LocalLlmManager.resolveSystemPrompt(explicit, "pt-BR"))
+    }
+
+    @Test
+    fun resolveSystemPromptEmBrancoCaiParaLocaleDoDispositivo() {
+        val fallback = LocalLlmManager.resolveSystemPrompt(null, "pt-BR")
+        assertTrue(fallback.contains("Geny Assistant"))
+        assertTrue(fallback.contains("pt-BR"))
+        // whitespace/explicit vazio também cai no fallback
+        assertEquals(fallback, LocalLlmManager.resolveSystemPrompt("   ", "pt-BR"))
+        assertEquals(fallback, LocalLlmManager.resolveSystemPrompt("", "pt-BR"))
+    }
 }

@@ -509,7 +509,15 @@ class GenyPlugin : Plugin() {
 
     @PluginMethod
     fun generateLocal(call: PluginCall) {
-        val messagesJson = call.getString("messagesJson") ?: "[]"
+        // Contrato corrigido (TODO Fase 3): o app envia `messagesJson`
+        // (string). Por robustez, aceita também `messages` (array JS) —
+        // antes o app mandava a chave errada e todo pedido caía em
+        // `sem_mensagens`. `system` traz o prompt de sistema por
+        // idioma/cultura construído no app (buildSystemPrompt).
+        val messagesJson = call.getString("messagesJson")
+            ?: call.getArray("messages")?.toString()
+            ?: "[]"
+        val system = call.getString("system").orEmpty()
         val maxTokens = call.getInt("maxTokens", 256) ?: 256
         val temperature = call.getFloat("temperature", 0.7f) ?: 0.7f
         val topP = call.getFloat("topP", 0.9f) ?: 0.9f
@@ -539,7 +547,7 @@ class GenyPlugin : Plugin() {
             // Streaming (TODO core-05b): cada peça sai pelo canal `genyLlm`
             // (evento llmToken) — a UI desenha progressivo e resolve no fim.
             llmManager().generateStreamAsync(
-                messagesJson, maxTokens, temperature, topP, seed,
+                messagesJson, system, maxTokens, temperature, topP, seed,
                 onToken = { piece ->
                     try {
                         notifyListeners(
@@ -553,7 +561,7 @@ class GenyPlugin : Plugin() {
                 onDone = finish,
             )
         } else {
-            llmManager().generateAsync(messagesJson, maxTokens, temperature, topP, seed, finish)
+            llmManager().generateAsync(messagesJson, system, maxTokens, temperature, topP, seed, finish)
         }
     }
 

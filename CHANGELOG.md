@@ -54,6 +54,40 @@ versionamento [Semântico](https://semver.org/lang/pt-BR/).
   *`LlmJni`/`WhisperJni`/`EspeakPhonemizer` and `TokenCallback` are kept from
   R8 obfuscation (JNI resolves symbols by exact name).*
 
+### Corrigido / Fixed
+
+- **Contrato da ponte do LLM local** (`core-05b`): o app enviava `messages`
+  (array) e o plugin lia `messagesJson` (string) — todo pedido do LLM local
+  falhava com `sem_mensagens` e o streaming nunca engatava. O histórico
+  agora viaja serializado em `messagesJson` (convenção `*Json` da ponte,
+  como `invokeTool`), o plugin aceita também `messages` (array) por
+  robustez, e testes de regressão travam o contrato dos dois lados.
+  *Local LLM bridge contract (`core-05b`): the app sent `messages` (array)
+  while the plugin read `messagesJson` (string) — every local LLM request
+  failed with `sem_mensagens` and streaming never engaged. History now
+  travels serialized in `messagesJson` (the bridge's `*Json` convention,
+  like `invokeTool`), the plugin also accepts `messages` (array) for
+  robustness, and regression tests lock the contract on both sides.*
+
+### Adicionado / Added
+
+- **Prompt de sistema por idioma/cultura** (Fase 3): fonte única
+  `buildSystemPrompt` no app — espelho do `i18n.rs` do core (mesmas regras,
+  privacidade local-first e notas de cultura por idioma, ex.: pt-BR
+  acolhedor, pt-PT formal, ja 丁寧) — para os backends **remoto e local**.
+  Antes cada camada tinha um prompt artesanal divergente e o LLM local usava
+  o locale do *dispositivo*, não o idioma escolhido no app; o prompt agora
+  viaja pela ponte (`system`) com fallback pelo dispositivo, e o catálogo de
+  ferramentas entra como JSON.
+  *System prompt per language/culture (Phase 3): single source
+  `buildSystemPrompt` in the app — mirror of the core `i18n.rs` (same rules,
+  local-first privacy and per-language culture notes, e.g. pt-BR welcoming,
+  pt-PT formal, ja 丁寧) — for **both** remote and local backends. Previously
+  each layer had a divergent hand-rolled prompt and the local LLM used the
+  *device* locale instead of the app language; the prompt now travels the
+  bridge (`system`) with a device fallback, and the tool catalog ships as
+  JSON.*
+
 ## [0.3.0-alpha.3] — Tela de voz + correção do microfone / Voice screen + mic fix
 
 ### Corrigido / Fixed

@@ -135,6 +135,36 @@ describe('chat — streaming do LLM local (core-05b)', () => {
     expect(call?.['seed']).toBe(-1);
   });
 
+  it('generateLocal recebe o contrato corrigido: messagesJson (string) + system (idioma/cultura)', async () => {
+    // **PT** Regressão do contrato da ponte: antes o app enviava `messages`
+    // (array) e o plugin lia `messagesJson` — todo pedido do LLM local
+    // falhava com `sem_mensagens`. O histórico agora chega serializado e o
+    // prompt de sistema por idioma/cultura acompanha o pedido.
+    // **EN** Bridge contract regression: the app used to send `messages`
+    // (array) while the plugin read `messagesJson` — every local LLM request
+    // failed with `sem_mensagens`. History is now serialized and the
+    // language/culture system prompt travels with the request.
+    const chat = makeChat();
+    await chat.init();
+
+    await chat.send('ola');
+
+    const call = mocks.fakeBridge.generateLocal.mock.calls[0]?.[0] as
+      | Record<string, unknown>
+      | undefined;
+    expect(typeof call?.['messagesJson']).toBe('string');
+    const history = JSON.parse(call?.['messagesJson'] as string) as Array<{ role: string; content: string }>;
+    expect(history.at(-1)).toMatchObject({ role: 'user', content: 'ola' });
+
+    const system = call?.['system'] as string;
+    expect(system).toContain('Geny Assistant');
+    // prompt por idioma/cultura (pt-BR nas configurações de teste)
+    expect(system).toContain('idioma padrao: pt-BR');
+    expect(system).toContain('portugues do Brasil');
+    // regra de privacidade local-first
+    expect(system).toContain('nada sai do dispositivo');
+  });
+
   it('token fora de streaming é ignorado (não cria bolha)', async () => {
     const chat = makeChat();
     await chat.init();

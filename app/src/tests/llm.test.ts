@@ -27,7 +27,7 @@ describe('contrato da ponte — LLM local', () => {
       events.push(event as LlmEvent);
     });
 
-    await expect(bridge.generateLocal({ messages: [{ role: 'user', content: 'oi' }] }))
+    await expect(bridge.generateLocal({ messagesJson: JSON.stringify([{ role: 'user', content: 'oi' }]) }))
       .rejects.toThrow();
     // o evento chega assíncrono (setTimeout 0)
     await new Promise((r) => setTimeout(r, 10));

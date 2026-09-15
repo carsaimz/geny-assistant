@@ -38,7 +38,19 @@ export type LlmEvent =
 export type LlmListener = (event: LlmEvent) => void;
 
 export interface LocalGenerateOptions {
-  messages: Array<{ role: 'user' | 'assistant'; content: string }>;
+  /**
+   * Histórico serializado `[{role, content}, ...]` (contrato da ponte segue
+   * a convenção `*Json` de `invokeTool`/`getDeviceContext`). Antes era
+   * `messages` (array) — o plugin lia `messagesJson` e todo pedido do LLM
+   * local falhava com `sem_mensagens`.
+   */
+  messagesJson: string;
+  /**
+   * Prompt de sistema por idioma/cultura (TODO Fase 3) construído em
+   * `buildSystemPrompt` — fonte única para os backends remoto e local.
+   * Vazio/ausente → nativo usa o fallback pelo locale do dispositivo.
+   */
+  system?: string;
   maxTokens?: number;
   temperature?: number;
   topP?: number;

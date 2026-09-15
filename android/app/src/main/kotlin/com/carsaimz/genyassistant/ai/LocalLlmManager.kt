@@ -202,6 +202,7 @@ class LocalLlmManager(
      */
     fun generateAsync(
         messagesJson: String,
+        system: String,
         maxTokens: Int,
         temperature: Float,
         topP: Float,
@@ -209,7 +210,7 @@ class LocalLlmManager(
         onDone: (JSONObject) -> Unit,
     ) {
         executor.execute {
-            onDone(generate(messagesJson, maxTokens, temperature, topP, seed))
+            onDone(generate(messagesJson, system, maxTokens, temperature, topP, seed))
         }
     }
 
@@ -221,6 +222,7 @@ class LocalLlmManager(
      */
     fun generateStreamAsync(
         messagesJson: String,
+        system: String,
         maxTokens: Int,
         temperature: Float,
         topP: Float,
@@ -229,7 +231,7 @@ class LocalLlmManager(
         onDone: (JSONObject) -> Unit,
     ) {
         executor.execute {
-            onDone(generateStream(messagesJson, maxTokens, temperature, topP, seed, onToken))
+            onDone(generateStream(messagesJson, system, maxTokens, temperature, topP, seed, onToken))
         }
     }
 
@@ -249,8 +251,17 @@ class LocalLlmManager(
     /**
      * Gera uma resposta. Bloqueia a thread chamante — usar apenas dentro do
      * executor dedicado. `messagesJson`: `[{role, content}, ...]`.
+     * `system`: prompt de sistema por idioma/cultura vindo do app
+     * (`buildSystemPrompt`); em branco cai para o fallback do dispositivo.
      */
-    fun generate(messagesJson: String, maxTokens: Int, temperature: Float, topP: Float, seed: Int): JSONObject {
+    fun generate(
+        messagesJson: String,
+        system: String,
+        maxTokens: Int,
+        temperature: Float,
+        topP: Float,
+        seed: Int,
+    ): JSONObject {
         if (handle == 0L || state != "ready") {
             return JSONObject().put("error", "modelo_nao_carregado")
         }
@@ -261,7 +272,7 @@ class LocalLlmManager(
         val roles = pairs.first.toTypedArray()
         val contents = pairs.second.toTypedArray()
         val raw = LlmJni.nativeGenerate(
-            handle, systemPrompt(), roles, contents,
+            handle, resolveSystemPrompt(system), roles, contents,
             maxTokens.coerceIn(1, 1024), temperature, topP, seed,
         )
         return parseResult(raw)
@@ -274,6 +285,7 @@ class LocalLlmManager(
      */
     fun generateStream(
         messagesJson: String,
+        system: String,
         maxTokens: Int,
         temperature: Float,
         topP: Float,
@@ -290,7 +302,7 @@ class LocalLlmManager(
         val roles = pairs.first.toTypedArray()
         val contents = pairs.second.toTypedArray()
         val raw = LlmJni.nativeGenerateStream(
-            handle, systemPrompt(), roles, contents,
+            handle, resolveSystemPrompt(system), roles, contents,
             maxTokens.coerceIn(1, 1024), temperature, topP, seed,
         ) { piece ->
             try {
@@ -330,13 +342,18 @@ class LocalLlmManager(
         emit(payload)
     }
 
-    private fun systemPrompt(): String {
-        val lang = java.util.Locale.getDefault().toLanguageTag()
-        return "Voce e o Geny Assistant, uma assistente local-first. " +
-            "Responda no idioma do usuario ($lang) de forma curta e util."
-    }
-
     companion object {
+        /**
+         * Prompt de sistema efetivo: o explicito do app (idioma/cultura,
+         * TODO Fase 3) vence; em branco, fallback pelo locale do dispositivo.
+         * Puro e testável (JVM) — não depende de JNI.
+         */
+        fun resolveSystemPrompt(explicit: String?, localeTag: String = java.util.Locale.getDefault().toLanguageTag()): String {
+            val trimmed = explicit?.trim().orEmpty()
+            if (trimmed.isNotEmpty()) return trimmed
+            return "Voce e o Geny Assistant, uma assistente local-first. " +
+                "Responda no idioma do usuario ($localeTag) de forma curta e util."
+        }
         /** RAM estimada para o modelo + runtime (pesos × 1,35 + 128 MB). */
         fun requiredRamBytes(modelBytes: Long): Long = (modelBytes * 1.35).toLong() + 128L * 1024 * 1024
 

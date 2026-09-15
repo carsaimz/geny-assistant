@@ -37,7 +37,7 @@
 - [ ] `android-03b` Wake word opcional desligado por padrão (openWakeWord/ONNX)
 - [ ] `core-04` UniFFI: bindings geny-core ↔ Kotlin (`feature = "uniffi"`)
 - [ ] `android-04` Migração do GenyDb para Room + KSP
-- [ ] Prompt de sistema por idioma/cultura (do core i18n)
+- [x] Prompt de sistema por idioma/cultura (do core i18n) — `buildSystemPrompt` no app espelha `i18n.rs` e serve os backends remoto e local (v0.3.0-alpha.4)
 - [ ] Seleção automática local/remoto conforme bateria, rede e tarefa
 
 ## Fase 4 — Ferramentas avançadas
