@@ -53,19 +53,21 @@ jobs:
           path: core/target/${{ matrix.target }}/release/libgeny_core.so
           if-no-files-found: ignore
 
-  # ci-02 (Fase 3): matriz dos wrappers JNI C++ por ABI — whisper.cpp (STT)
-  # e llama.cpp (LLM local) — com artefatos por ABI para inspeção/reuso.
+  # ci-02 (Fase 3): matriz dos wrappers JNI C++ por ABI — whisper.cpp (STT),
+  # espeak-ng (fonemização do Piper) e llama.cpp (LLM local) — com artefatos
+  # por ABI para inspeção/reuso. Os 3 ABIs espelham o APK universal
+  # (armeabi-v7a cobre telemóveis 32-bit).
   cpp-android:
     name: cpp ${{ matrix.abi }}
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        abi: [arm64-v8a, x86_64]
+        abi: [armeabi-v7a, arm64-v8a, x86_64]
     steps:
       - uses: actions/checkout@v7
         with:
-          submodules: recursive
+          submodules: recursive  # whisper.cpp, llama.cpp e espeak-ng pinados
       - name: Instalar NDK r27 + CMake
         run: |
           yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" \
@@ -78,6 +80,7 @@ jobs:
             -DCMAKE_TOOLCHAIN_FILE="$ANDROID_HOME/ndk/27.2.12479018/build/cmake/android.toolchain.cmake" \
             -DANDROID_ABI=${{ matrix.abi }} -DANDROID_PLATFORM=android-26 \
             -DWHISPER_DIR="$GITHUB_WORKSPACE/native/whisper.cpp" \
+            -DESPEAK_DIR="$GITHUB_WORKSPACE/native/espeak-ng" \
             -DLLAMA_DIR="$GITHUB_WORKSPACE/native/llama.cpp"
           cmake --build build/whisper/${{ matrix.abi }} --parallel
       - name: Build llama JNI (${{ matrix.abi }})
