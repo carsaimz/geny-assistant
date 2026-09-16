@@ -5,16 +5,14 @@ import android.app.PendingIntent
 import android.app.RemoteInput
 import android.content.Context
 import android.content.Intent
-import android.os.Build
 import android.os.Bundle
 
 /**
  * Envio de resposta a uma notificação via RemoteInput (TODO android-07, #43).
  *
- * Localiza a ação de resposta da notificação (remoteInputs, e
- * remoteInputSources no API 30+), preenche o texto e dispara o
- * PendingIntent do app de origem. Nenhum conteúdo sai do dispositivo:
- * quem entrega é o próprio app que postou a notificação.
+ * Localiza a ação de resposta da notificação (remoteInputs), preenche o
+ * texto e dispara o PendingIntent do app de origem. Nenhum conteúdo sai do
+ * dispositivo: quem entrega é o próprio app que postou a notificação.
  *
  * Os códigos de resultado são curtos e estáveis: viram o contrato do tool
  * `notifications.reply` e do log de auditoria.
@@ -47,17 +45,8 @@ object NotificationReplier {
         val actions = notification.actions ?: return NO_REPLY_ACTION
         for (action in actions) {
             val inputs = action.remoteInputs
-            if (inputs != null && inputs.isNotEmpty()) {
-                if (trySend(context, action, inputs[0], text)) return SENT
-                continue
-            }
-            // API 30+: fontes remotas alternativas (ex. escolha de dispositivo).
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                val sources = action.remoteInputSources
-                if (!sources.isNullOrEmpty() && trySend(context, action, sources[0], text)) {
-                    return SENT
-                }
-            }
+            if (inputs.isNullOrEmpty()) continue
+            if (trySend(context, action, inputs[0], text)) return SENT
         }
         return NO_REPLY_ACTION
     }
@@ -71,9 +60,11 @@ object NotificationReplier {
         val pending = action.actionIntent ?: return false
         return try {
             val intent = Intent().addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-            val bundle = Bundle()
-            bundle.putCharSequence(remoteInput.resultKey, text)
-            RemoteInput.addResultsTo(arrayOf(remoteInput), intent)
+            val results = Bundle()
+            results.putCharSequence(remoteInput.resultKey, text)
+            // Equivalente ao contrato de RemoteInput.addResultsTo: o app de
+            // origem lê EXTRA_RESULTS com RemoteInput.getResultsFromIntent.
+            intent.putExtra(RemoteInput.EXTRA_RESULTS, results)
             pending.send(context, 0, intent)
             true
         } catch (_: PendingIntent.CanceledException) {
