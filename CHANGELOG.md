@@ -4,6 +4,67 @@ Todas as mudanças notáveis deste projeto são documentadas aqui.
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/),
 versionamento [Semântico](https://semver.org/lang/pt-BR/).
 
+## [0.3.0-alpha.7] — Fase 3 completa: wake word + Room + UniFFI / Phase 3 complete
+
+### Adicionado / Added
+
+- **Wake word opcional** (`android-03b`, Fase 3, #37): openWakeWord
+  (Apache-2.0) com pipeline ONNX fiel ao openwakeword 0.6, validado
+  numericamente contra o original — melspectrogram (1280+480 amostras,
+  transformação `spec/10+2`), janela de 76 frames → embeddings 96-d do
+  speech_embedding do Google, últimos 16 embeddings → score da frase.
+  Catálogo da release v0.5.1 com SHA-256 pinado: 2 modelos de
+  características compartilhados + 4 frases ("Hey Jarvis", "Hey Mycroft",
+  "Alexa", "Hey Rhasspy"). `WakeWordService` em primeiro plano (microfone)
+  DESLIGADO por padrão: ao disparar, emite `genyWake {type:'triggered'}` e
+  notificação de toque; a UI abre a tela de voz. Gatilho puro (aquecimento
+  de 5 frames, limiar 0,5, refratário de 2,5 s) coberto por testes JVM.
+  *Optional wake word* (`android-03b`, Phase 3, #37): openWakeWord
+  (Apache-2.0) with an ONNX pipeline faithful to openwakeword 0.6,
+  numerically validated against the original — melspectrogram (1280+480
+  samples, `spec/10+2` transform), 76-frame window → Google speech_embedding
+  96-d, last 16 embeddings → phrase score. v0.5.1 release catalog with
+  pinned SHA-256: 2 shared feature models + 4 phrases. The microphone
+  foreground `WakeWordService` is OFF by default: on trigger it emits
+  `genyWake {type:'triggered'}` plus a tap notification; the web UI opens
+  the voice screen. Pure trigger logic (5-frame warm-up, 0.5 threshold,
+  2.5 s refractory) covered by JVM tests.
+
+- **Persistência com Room** (`android-04`, Fase 3, #36): `GenyDb` migra de
+  SQLiteOpenHelper para Room 2.6.1 via KSP, com a MESMA API síncrona
+  (chamadores intactos). Migração 1→2 recria `tool_calls`/`models`/`facts`
+  no formato Room preservando dados; `ModelManager.delete` passa a remover
+  também o registro. Testes JVM do Room via Robolectric (SQLite real).
+  *Room persistence* (`android-04`, Phase 3, #36): `GenyDb` moves from
+  SQLiteOpenHelper to Room 2.6.1 via KSP with the SAME synchronous API
+  (callers untouched). Migration 1→2 rebuilds `tool_calls`/`models`/`facts`
+  in Room's format preserving data; `ModelManager.delete` now also removes
+  the DB row. Room JVM tests via Robolectric (real SQLite).
+
+- **UniFFI — núcleo Rust no app** (`core-04`, Fase 3, #38): nova superfície
+  `uniffi_api` no geny-core (`core_version`, `resolve_language`, `is_rtl`,
+  `build_system_prompt` — i18n.rs direto com o catálogo REAL de ferramentas)
+  exposta ao Kotlin via `libgeny_core.so` (cdylib, 3 ABIs) + JNA. Bindings
+  Kotlin gerados versionados; o CI regenera e compara (drift check).
+  `CoreBridge` degrada graciosamente sem a lib (dev/JVM); `GenyPlugin` usa
+  o core no fallback do prompt de sistema quando o app não envia um.
+  *UniFFI — Rust core in the app* (`core-04`, Phase 3, #38): new
+  `uniffi_api` surface in geny-core exposed to Kotlin through
+  `libgeny_core.so` (cdylib, 3 ABIs) + JNA. Generated Kotlin bindings
+  committed; CI regenerates and diffs (drift check). `CoreBridge` degrades
+  gracefully without the lib (dev/JVM); `GenyPlugin` uses the core for the
+  system-prompt fallback when the app sends none.
+
+### Alterado / Changed
+
+- Catálogo unificado da tela nativa de Modelos cresce de 13 para 19
+  entradas (seção `wakeword` depois de `llm`); seção "Palavra de ativação"
+  nas configurações web com downloads `kind='wakeword'` e paridade i18n nos
+  11 locales.
+  *The native Models screen unified catalog grows from 13 to 19 entries
+  (`wakeword` section after `llm`); "Wake word" section in the web settings
+  with `kind='wakeword'` downloads and i18n parity across all 11 locales.*
+
 ## [0.3.0-alpha.6] — Tela nativa de Modelos / Native Models screen
 
 ### Adicionado / Added
