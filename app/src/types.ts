@@ -7,7 +7,7 @@ export type ConfirmationLevel = 'none' | 'simple' | 'explicit' | 'authenticated'
 
 export type ToolContext = 'app' | 'service' | 'root';
 
-export type BackendMode = 'local' | 'remote' | 'selfhosted';
+export type BackendMode = 'auto' | 'local' | 'remote' | 'selfhosted';
 
 export type ParamTypeName =
   | 'string'

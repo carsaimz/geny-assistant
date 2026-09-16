@@ -17,6 +17,7 @@
   "chat.confirm.deny": "رفض",
   "settings.title": "الإعدادات",
   "settings.mode": "وضع التشغيل",
+  "settings.mode.auto": "تلقائي (البطارية والشبكة)",
   "settings.mode.local": "محلي (دون اتصال)",
   "settings.mode.remote": "عن بُعد (API)",
   "settings.mode.selfhosted": "استضافة ذاتية",

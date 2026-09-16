@@ -15,7 +15,9 @@ const SETTINGS_KEY = 'geny.settings';
 
 function defaultSettings(): Settings {
   return {
-    mode: 'local',
+    // Modo auto (Fase 3): remoto quando há rede/chave e bateria saudável;
+    // modelo local quando offline; intenções como último recurso.
+    mode: 'auto',
     language: navigator.language.startsWith('pt') ? navigator.language : 'pt-BR',
     model: '',
     baseUrl: '',

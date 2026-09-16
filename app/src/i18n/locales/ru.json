@@ -17,6 +17,7 @@
   "chat.confirm.deny": "Отклонить",
   "settings.title": "Настройки",
   "settings.mode": "Режим работы",
+  "settings.mode.auto": "Автоматически (батарея и сеть)",
   "settings.mode.local": "Локальный (офлайн)",
   "settings.mode.remote": "Удалённый (API)",
   "settings.mode.selfhosted": "Свой сервер (self-hosted)",

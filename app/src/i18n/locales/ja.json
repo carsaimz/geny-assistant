@@ -17,6 +17,7 @@
   "chat.confirm.deny": "拒否",
   "settings.title": "設定",
   "settings.mode": "動作モード",
+  "settings.mode.auto": "自動（バッテリーとネットワーク）",
   "settings.mode.local": "ローカル（オフライン）",
   "settings.mode.remote": "リモート（API）",
   "settings.mode.selfhosted": "セルフホスト",

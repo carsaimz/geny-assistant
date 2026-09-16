@@ -43,6 +43,7 @@ export function renderSettingsDrawer(
       <label>
         <span>${t('settings.mode')}</span>
         <select id="set-mode">
+          <option value="auto">${t('settings.mode.auto')}</option>
           <option value="local">${t('settings.mode.local')}</option>
           <option value="remote">${t('settings.mode.remote')}</option>
           <option value="selfhosted">${t('settings.mode.selfhosted')}</option>

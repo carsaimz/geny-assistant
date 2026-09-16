@@ -17,7 +17,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 const mocks = vi.hoisted(() => {
   const listeners = new Map<string, Set<(event: unknown) => void>>();
   const fakeBridge = {
-    listTools: vi.fn(async () => ({ tools: [] })),
+    listTools: vi.fn(async (): Promise<{ tools: ToolDefinition[] }> => ({ tools: [] })),
     addListener: vi.fn((name: string, fn: (event: unknown) => void) => {
       let set = listeners.get(name);
       if (!set) {
@@ -28,6 +28,9 @@ const mocks = vi.hoisted(() => {
       const handle = { remove: (): void => void set?.delete(fn) };
       return Object.assign(Promise.resolve(handle), handle);
     }),
+    getDeviceContext: vi.fn(async () => ({
+      json: JSON.stringify({ online: true, batteryPct: 80, batterySaver: false, thermalHigh: false }),
+    })),
     generateLocal: vi.fn(async (_opts?: unknown) => ({ json: JSON.stringify({ text: 'ok' }) })),
     stopLocalGenerate: vi.fn(async () => undefined),
     requestConfirmation: vi.fn(async () => ({ approved: true })),
@@ -43,7 +46,8 @@ vi.mock('../core/bridge', () => ({
 }));
 
 import { ChatUI } from '../ui/chat';
-import type { Settings } from '../types';
+import { t } from '../i18n';
+import type { Settings, ToolDefinition } from '../types';
 
 function makeSettings(): Settings {
   return {
@@ -206,5 +210,116 @@ describe('chat — streaming do LLM local (core-05b)', () => {
     expect(container.querySelector('.msg-streaming')).toBeNull();
     expect(container.textContent).toContain('modelo_nao_carregado');
     expect(streamStates[streamStates.length - 1]).toBe(false);
+  });
+
+  it('modo auto: erro do motor degrada para intenções offline (sem bolha de erro)', async () => {
+    // Seleção automática (Fase 3): no `auto`, motor indisponível não mostra
+    // erro — o turno cai para o roteador offline (welcome quando a frase
+    // não casa intenção).
+    const chat = new ChatUI(container, {
+      getSettings: () => ({ ...makeSettings(), mode: 'auto' }),
+      getRemoteConfig: () => null,
+      onStatusChange: () => undefined,
+    });
+    await chat.init();
+
+    mocks.fakeBridge.generateLocal.mockImplementation(async () => ({
+      json: JSON.stringify({ error: 'modelo_nao_carregado' }),
+    }));
+
+    await chat.send('oi');
+
+    expect(container.textContent).not.toContain('modelo_nao_carregado');
+    const offline = [...container.querySelectorAll('.msg')].at(-1);
+    expect(offline?.className).toContain('msg-assistant');
+  });
+
+  it('core-06: resultado da ferramenta volta ao modelo local (2ª passagem) e vira resposta natural', async () => {
+    const chat = makeChat();
+    mocks.fakeBridge.listTools.mockResolvedValue({
+      tools: [
+        {
+          id: 'time.now',
+          name: 'Hora atual',
+          description: 'Data e hora do dispositivo.',
+          params: [],
+          permissions: [],
+          confirmation: 'none',
+          context: 'app',
+          timeout_ms: 1000,
+        },
+      ],
+    });
+    await chat.init();
+
+    // 1ª passagem: o modelo pede a ferramenta; 2ª: responde em linguagem natural
+    mocks.fakeBridge.generateLocal
+      .mockImplementationOnce(async () => ({
+        json: JSON.stringify({ text: '{"tool": "time.now", "params": {}}' }),
+      }))
+      .mockImplementationOnce(async () => ({
+        json: JSON.stringify({ text: 'Agora são 10h00 em Maputo.' }),
+      }));
+    mocks.fakeBridge.invokeTool.mockResolvedValue({
+      outcomeJson: JSON.stringify({ status: 'ok', tool_id: 'time.now', data: { iso: '2026-09-16T10:00:00+02:00' } }),
+    });
+
+    await chat.send('que horas são');
+
+    expect(mocks.fakeBridge.generateLocal.mock.calls.length).toBe(2);
+
+    const first = mocks.fakeBridge.generateLocal.mock.calls[0]?.[0] as Record<string, unknown>;
+    const second = mocks.fakeBridge.generateLocal.mock.calls[1]?.[0] as Record<string, unknown>;
+    expect(first['stream']).toBe(true);
+    expect(second['stream']).toBe(false);
+
+    // 2ª passagem carrega a instrução de follow-up com o JSON do outcome
+    const history2 = JSON.parse(second['messagesJson'] as string) as Array<{ role: string; content: string }>;
+    const instruction = history2.at(-1)!;
+    expect(instruction.role).toBe('user');
+    expect(instruction.content).toContain('resultado da ferramenta');
+    expect(instruction.content).toContain('time.now');
+    expect(instruction.content).toContain('2026-09-16T10:00:00');
+
+    // resposta natural substitui o genérico "Pronto!" (nas mensagens do
+    // assistente — a bolha da ferramenta continua com o rótulo de status)
+    const assistantTexts = [...container.querySelectorAll('.msg-assistant .msg-text')].map(
+      (el) => el.textContent,
+    );
+    expect(assistantTexts).toContain('Agora são 10h00 em Maputo.');
+    expect(assistantTexts).not.toContain(t('chat.tool.ok'));
+    expect(replies).toContain('Agora são 10h00 em Maputo.');
+  });
+
+  it('core-06: follow-up que falha mantém a mensagem genérica de sucesso', async () => {
+    const chat = makeChat();
+    mocks.fakeBridge.listTools.mockResolvedValue({
+      tools: [
+        {
+          id: 'time.now',
+          name: 'Hora atual',
+          description: 'Data e hora do dispositivo.',
+          params: [],
+          permissions: [],
+          confirmation: 'none',
+          context: 'app',
+          timeout_ms: 1000,
+        },
+      ],
+    });
+    await chat.init();
+
+    mocks.fakeBridge.generateLocal
+      .mockImplementationOnce(async () => ({
+        json: JSON.stringify({ text: '{"tool": "time.now", "params": {}}' }),
+      }))
+      .mockImplementationOnce(async () => ({
+        json: JSON.stringify({ error: 'resposta_invalida' }),
+      }));
+
+    await chat.send('que horas são');
+
+    expect(mocks.fakeBridge.generateLocal.mock.calls.length).toBe(2);
+    expect(container.textContent).toContain(t('chat.tool.ok'));
   });
 });

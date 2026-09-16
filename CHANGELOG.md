@@ -4,6 +4,48 @@ Todas as mudanças notáveis deste projeto são documentadas aqui.
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/),
 versionamento [Semântico](https://semver.org/lang/pt-BR/).
 
+## [0.3.0-alpha.5] — Modo automático + follow-up de ferramentas / Auto backend + tool follow-up
+
+### Adicionado / Added
+
+- **Modo Automático de backend** (Fase 3): seleção automática por turno —
+  remoto quando há rede, chave configurada e bateria saudável (>15%, sem
+  poupança de energia nem térmico alto); modelo local quando offline ou
+  bateria baixa; intenções offline como último recurso. Bateria
+  desconhecida (nativo devolve 0) não bloqueia o remoto. O `auto` é o novo
+  modo padrão; `local`/`remoto`/`self-hosted` continuam disponíveis e
+  preservam o comportamento explícito. No `auto`, motor local indisponível
+  degrada para intenções em vez de mostrar erro.
+  *Automatic backend mode (Phase 3): per-turn selection — remote when there
+  is network, a configured key and healthy battery (>15%, no battery saver,
+  no thermal alert); local model when offline or low battery; offline
+  intents as the last resort. Unknown battery (native returns 0) does not
+  block the remote path. `auto` is the new default mode; the explicit
+  `local`/`remote`/`selfhosted` modes keep their previous behavior. In
+  `auto`, an unavailable local engine degrades to intents instead of
+  showing an error.*
+- **Follow-up de 2ª passagem** (`core-06`, Fase 4): o resultado de uma
+  ferramenta executada com sucesso volta ao modelo (remoto **ou** local)
+  como instrução compacta com o JSON do outcome — a resposta passa a ser
+  natural e contextual ("Agora são 10h00 em Maputo") em vez do genérico
+  "Feito". A resposta da 2ª passagem nunca é reinterpreta­da como tool call
+  (sem loops); falha mantém a mensagem genérica de sucesso. Funciona no
+  chat e na tela de voz (que usa o mesmo fluxo).
+  *Second-pass follow-up (`core-06`, Phase 4): a successful tool outcome
+  goes back to the model (remote **or** local) as a compact instruction
+  with the outcome JSON — the reply becomes natural and contextual
+  ("It's 10:00 in Maputo now") instead of a generic "Done". The 2nd-pass
+  reply is never re-interpreted as a tool call (no loops); on failure the
+  generic success message is kept. Works in chat and the voice screen
+  (same flow).*
+
+### Alterado / Changed
+
+- Novos testes: matriz do `pickBackend` (bateria/rede/modo) e do follow-up
+  (contrato, resposta natural, fallback) — 62 testes vitest.
+  *New tests: `pickBackend` matrix (battery/network/mode) and follow-up
+  (contract, natural reply, fallback) — 62 vitest tests.*
+
 ## [0.3.0-alpha.4] — Streaming do LLM + TTS neural Piper / LLM streaming + Piper neural TTS
 
 ### Adicionado / Added

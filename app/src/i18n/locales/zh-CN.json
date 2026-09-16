@@ -17,6 +17,7 @@
   "chat.confirm.deny": "拒绝",
   "settings.title": "设置",
   "settings.mode": "运行模式",
+  "settings.mode.auto": "自动（电池与网络）",
   "settings.mode.local": "本地（离线）",
   "settings.mode.remote": "远程（API）",
   "settings.mode.selfhosted": "自托管",

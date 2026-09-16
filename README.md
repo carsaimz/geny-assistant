@@ -101,6 +101,10 @@ Guia completo: [`docs/build.md`](docs/build.md) · Modelos: [`scripts/download-m
   por palavra + botão Parar + temperatura/seed) e **TTS neural Piper**
   (pt-BR/pt-PT/en-US, vozes ~63 MB sob demanda, fallback para o TTS do
   sistema)
+- ✨ **Novo em v0.3.0-alpha.5**: **modo Automático** (remoto com rede e
+  bateria saudável → modelo local quando offline → intenções, Fase 3
+  completa) e **follow-up de 2ª passagem** (o resultado das ferramentas
+  volta ao modelo e vira resposta natural, core-06)
 - ⏳ Próxima: wake word + UniFFI + Room → ver [`ROADMAP.md`](ROADMAP.md)
 
 > **Nota de build**: o APK compila whisper.cpp **e** llama.cpp — o CI faz

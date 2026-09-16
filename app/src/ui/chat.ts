@@ -3,6 +3,8 @@
  * de tool calling (intenção offline ou LLM remoto/self-hosted).
  */
 import { bridge, setConfirmationHandler } from '../core/bridge';
+import { pickBackend, type BackendContext, type PickedBackend } from '../core/backend-picker';
+import { compactOutcomeJson, toolFollowupInstruction } from '../core/followup';
 import type { LlmEvent } from '../core/llm-types';
 import { matchIntent } from '../core/intent';
 import { remoteComplete, remoteConfigured, tryParseToolCall, type RemoteConfig } from '../core/remote';
@@ -237,12 +239,14 @@ export class ChatUI {
     try {
       const cfg = this.deps.getRemoteConfig();
       const settings = this.deps.getSettings();
-      if (settings.mode !== 'local' && remoteConfigured(cfg)) {
+      const backend = await this.pickBackendForTurn(settings, cfg);
+      if (backend === 'remote' && remoteConfigured(cfg)) {
         await this.sendViaRemote(cfg);
-      } else if (settings.mode === 'local' && settings.localModel.length > 0) {
-        // Fase 3 (TODO app-02): backend local GGUF; sem modelo carregado
-        // (ou sem JNI), cai para o roteador de intenções offline.
-        const viaLocal = await this.sendViaLocalLlm();
+      } else if (backend === 'local') {
+        // Fase 3 (TODO app-02): backend local GGUF. No modo explícito `local`,
+        // erro do motor aparece como mensagem; no `auto`, degrada para o
+        // roteador de intenções offline (seleção automática, Fase 3).
+        const viaLocal = await this.sendViaLocalLlm(settings.mode === 'auto');
         if (!viaLocal) await this.sendOffline(text);
       } else {
         await this.sendOffline(text);
@@ -257,6 +261,36 @@ export class ChatUI {
     } finally {
       this.deps.onStatusChange(false);
     }
+  }
+
+  /**
+   * Seleção de backend para este turno (TODO Fase 3 — bateria, rede e
+   * configuração): lê o DeviceContext da ponte (bateria/rede) com valores
+   * conservadores quando indisponível e delega ao `pickBackend` puro.
+   */
+  private async pickBackendForTurn(settings: Settings, cfg: RemoteConfig | null): Promise<PickedBackend> {
+    const ctx: BackendContext = {
+      mode: settings.mode,
+      remoteReady: remoteConfigured(cfg),
+      online: true,
+      batteryPct: -1,
+      batterySaver: false,
+      thermalHigh: false,
+      localModelFile: settings.localModel,
+    };
+    if (settings.mode !== 'auto') return pickBackend(ctx);
+    try {
+      const { json } = await bridge.getDeviceContext();
+      const device = JSON.parse(json) as { online?: boolean; batteryPct?: number; batterySaver?: boolean; thermalHigh?: boolean };
+      ctx.online = device.online ?? true;
+      ctx.batteryPct = device.batteryPct ?? -1;
+      ctx.batterySaver = device.batterySaver ?? false;
+      ctx.thermalHigh = device.thermalHigh ?? false;
+    } catch {
+      // sem contexto do dispositivo: segue com os defaults conservadores
+      // (assumir online só é usado quando há remoto configurado)
+    }
+    return pickBackend(ctx);
   }
 
   private async sendOffline(text: string): Promise<void> {
@@ -297,14 +331,16 @@ export class ChatUI {
         at: Date.now(),
         tool: outcome,
       });
-      if (outcome.status === 'ok') {
-        this.push({
-          id: this.nextId(),
-          role: 'assistant',
-          content: t('chat.tool.ok'),
-          at: Date.now(),
-        });
-      }
+      if (outcome.status !== 'ok') return;
+      // core-06 (2ª passagem): o resultado da ferramenta volta ao modelo
+      // e vira resposta natural — em vez do genérico "Pronto!".
+      const reply = await this.followupViaRemote(cfg, result.intent.toolId, outcome);
+      this.push({
+        id: this.nextId(),
+        role: 'assistant',
+        content: reply ?? t('chat.tool.ok'),
+        at: Date.now(),
+      });
       return;
     }
     this.push({
@@ -316,12 +352,40 @@ export class ChatUI {
   }
 
   /**
+   * core-06 (2ª passagem remota): o resultado JSON da ferramenta volta ao
+   * modelo com instrução de responder em linguagem natural. A resposta NUNCA
+   * é reinterpreta­da como tool call (sem loops); falha devolve `null` e a
+   * UI mostra a mensagem genérica de sucesso.
+   */
+  private async followupViaRemote(
+    cfg: RemoteConfig,
+    toolId: string,
+    outcome: ToolOutcome,
+  ): Promise<string | null> {
+    const history = this.messages
+      .filter((m) => m.role !== 'tool')
+      .slice(-12)
+      .map((m) => ({ role: m.role === 'assistant' ? 'assistant' : 'user', content: m.content }));
+    history.push({
+      role: 'user',
+      content: toolFollowupInstruction(toolId, compactOutcomeJson(outcome as unknown as Record<string, unknown>)),
+    });
+    try {
+      const result = await remoteComplete(cfg, this.systemPrompt(), history);
+      const text = result.text.trim();
+      return text.length > 0 ? text : null;
+    } catch {
+      return null;
+    }
+  }
+
+  /**
    * Gera a resposta com o LLM local (llama.cpp via ponte) com streaming
    * (TODO core-05b): os tokens chegam pelo canal `genyLlm` e são desenhados
    * progressivamente enquanto a promessa não resolve. Devolve `false`
    * quando o motor não está disponível — o fluxo cai para intenções offline.
    */
-  private async sendViaLocalLlm(): Promise<boolean> {
+  private async sendViaLocalLlm(allowEngineFallback = false): Promise<boolean> {
     const history = this.messages
       .filter((m) => m.role !== 'tool')
       .slice(-10)
@@ -345,8 +409,10 @@ export class ChatUI {
       const result = JSON.parse(json) as { text?: string; error?: string };
       this.endStreaming();
       if (result.error !== undefined || typeof result.text !== 'string') {
-        // Erro explícito do motor (ex.: modelo_nao_carregado): informa e
-        // NÃO cai no fluxo offline — evita resposta duplicada.
+        // Motor indisponível (ex.: modelo_nao_carregado): no modo `auto`
+        // (seleção automática) degrada para intenções offline; no modo
+        // `local` explícito informa o erro e não cai no fluxo offline.
+        if (allowEngineFallback) return false;
         this.push({
           id: this.nextId(),
           role: 'assistant',
@@ -365,14 +431,16 @@ export class ChatUI {
           at: Date.now(),
           tool: outcome,
         });
-        if (outcome.status === 'ok') {
-          this.push({
-            id: this.nextId(),
-            role: 'assistant',
-            content: t('chat.tool.ok'),
-            at: Date.now(),
-          });
-        }
+        if (outcome.status !== 'ok') return true;
+        // core-06 (2ª passagem local): resultado volta ao modelo, mesmo
+        // contrato da 1ª passagem (messagesJson + system), sem streaming.
+        const reply = await this.followupViaLocal(intent.toolId, outcome);
+        this.push({
+          id: this.nextId(),
+          role: 'assistant',
+          content: reply ?? t('chat.tool.ok'),
+          at: Date.now(),
+        });
         return true;
       }
       this.push({
@@ -386,6 +454,39 @@ export class ChatUI {
       // mock web/erro de ponte: segue no fluxo offline
       this.endStreaming();
       return false;
+    }
+  }
+
+  /**
+   * core-06 (2ª passagem local): mesmo contrato da 1ª (`messagesJson` +
+   * `system`), sem streaming; resposta nunca reinterpreta­da como tool call;
+   * falha devolve `null` (mensagem genérica de sucesso).
+   */
+  private async followupViaLocal(toolId: string, outcome: ToolOutcome): Promise<string | null> {
+    const history = this.messages
+      .filter((m) => m.role !== 'tool')
+      .slice(-10)
+      .map((m) => ({ role: m.role === 'assistant' ? 'assistant' as const : 'user' as const, content: m.content }));
+    history.push({
+      role: 'user',
+      content: toolFollowupInstruction(toolId, compactOutcomeJson(outcome as unknown as Record<string, unknown>)),
+    });
+    try {
+      const settings = this.deps.getSettings();
+      const { json } = await bridge.generateLocal({
+        messagesJson: JSON.stringify(history),
+        system: this.systemPrompt(),
+        maxTokens: 192,
+        temperature: settings.localTemperature ?? 0.7,
+        topP: 0.9,
+        seed: settings.localSeed ?? -1,
+        stream: false,
+      });
+      const result = JSON.parse(json) as { text?: string; error?: string };
+      const text = (result.text ?? '').trim();
+      return result.error === undefined && text.length > 0 ? text : null;
+    } catch {
+      return null;
     }
   }
 

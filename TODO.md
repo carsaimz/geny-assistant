@@ -38,11 +38,11 @@
 - [ ] `core-04` UniFFI: bindings geny-core ↔ Kotlin (`feature = "uniffi"`)
 - [ ] `android-04` Migração do GenyDb para Room + KSP
 - [x] Prompt de sistema por idioma/cultura (do core i18n) — `buildSystemPrompt` no app espelha `i18n.rs` e serve os backends remoto e local (v0.3.0-alpha.4)
-- [ ] Seleção automática local/remoto conforme bateria, rede e tarefa
+- [x] Seleção automática local/remoto conforme bateria, rede e tarefa — modo `auto` com `pickBackend` puro (bateria >15%, rede, poupança); padrão novo (v0.3.0-alpha.5)
 
 ## Fase 4 — Ferramentas avançadas
 
-- [ ] `core-06` Follow-up de 2ª passagem: resultado da ferramenta volta ao modelo
+- [x] `core-06` Follow-up de 2ª passagem: resultado da ferramenta volta ao modelo (remoto e local, sem loops; v0.3.0-alpha.5)
 - [ ] `android-05` SAF: pastas autorizadas, criar/ler/editar/excluir
 - [ ] `android-06` OCR local (ML Kit) em imagens e screenshots
 - [ ] `core-07` Sandbox mlua executando ferramentas `tools/` com API `geny.*`

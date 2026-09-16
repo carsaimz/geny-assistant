@@ -17,6 +17,7 @@
   "chat.confirm.deny": "Ablehnen",
   "settings.title": "Einstellungen",
   "settings.mode": "Betriebsmodus",
+  "settings.mode.auto": "Automatisch (Akku und Netzwerk)",
   "settings.mode.local": "Lokal (offline)",
   "settings.mode.remote": "Remote (API)",
   "settings.mode.selfhosted": "Selbst gehostet",
