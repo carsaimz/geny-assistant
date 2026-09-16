@@ -17,6 +17,9 @@ pub mod orchestrator;
 pub mod session;
 pub mod tools;
 
+#[cfg(feature = "lua")]
+pub mod lua_sandbox;
+
 #[cfg(feature = "uniffi")]
 pub mod uniffi_api;
 

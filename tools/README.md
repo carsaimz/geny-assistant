@@ -39,9 +39,16 @@ end
 | API | Descrição |
 |---|---|
 | `geny.toast(msg)` | Mostra um toast curto na tela |
-| `geny.now_ms()` | Horário atual em ms |
+| `geny.now_ms()` | Horário atual em milissegundos |
 | `geny.storage.get/set(key, value)` | KV persistente da ferramenta |
-| `geny.http.get(url)` | HTTP GET (requer `network: true` no manifesto) |
+| `geny.device.battery_level` | Nível de bateria (leitura; presente quando o host fornece) |
+| `geny.device.charging` | Se o aparelho está carregando (leitura) |
+| `geny.root.run(cmd)` | Execução privilegiada — só existe com `allow_root` (Fase 7, opt-in) |
+
+A sandbox é `mlua` (Lua 5.4) em modo seguro: **sem** `io`, `package`/`require`,
+`dofile`/`loadfile`, `load` ou `os.execute` — `os` é reduzido a `time`/`clock`
+e há teto de memória (8 MiB) e orçamento de instruções contra loops infinitos.
+`geny.http` ainda não existe: ferramentas com rede entram em fase posterior.
 
 ## Instalação
 

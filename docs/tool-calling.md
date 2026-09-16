@@ -72,7 +72,9 @@ end
 ```
 
 O sandbox (mlua, Fase 4 — `core-07`) expõe apenas `geny.toast`, `geny.now_ms`,
-`geny.storage` e `geny.http` (opt-in). Sem `os.execute` nem `io` irrestrito.
+`geny.storage.get/set`, `geny.device` (leitura) e `geny.root` (opt-in com
+`allow_root`, Fase 7). Sem `io`, sem `require`/`load`, sem `os.execute` — com
+teto de memória (8 MiB) e orçamento de instruções contra loops infinitos.
 
 ## Adicionar uma nova ferramenta — checklist
 

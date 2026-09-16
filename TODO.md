@@ -46,7 +46,7 @@
 - [x] `core-06` Follow-up de 2ª passagem: resultado da ferramenta volta ao modelo (remoto e local, sem loops; v0.3.0-alpha.5)
 - [ ] `android-05` SAF: pastas autorizadas, criar/ler/editar/excluir
 - [ ] `android-06` OCR local (ML Kit) em imagens e screenshots
-- [ ] `core-07` Sandbox mlua executando ferramentas `tools/` com API `geny.*`
+- [x] `core-07` Sandbox mlua executando ferramentas `tools/` com API `geny.*` — Lua 5.4 segura (sem io/require/os.execute), teto de memória, orçamento de instruções, host injetável (toast/storage/device/root opt-in) e 25 testes (#42, v0.3.0-alpha.8)
 - [ ] `android-07` Responder notificações (RemoteInput) via listener
 - [ ] `app-03` Catálogo de ferramentas na UI com níveis de confirmação visíveis
 
