@@ -14,6 +14,7 @@ ksp = "2.0.21-1.0.28"
 robolectric = "4.14.1"
 androidxTestCore = "1.6.1"
 jna = "5.14.0"
+mlkitTextRecognition = "16.0.1"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -28,6 +29,10 @@ androidx-room-runtime = { group = "androidx.room", name = "room-runtime", versio
 androidx-room-ktx = { group = "androidx.room", name = "room-ktx", version.ref = "room" }
 androidx-room-compiler = { group = "androidx.room", name = "room-compiler", version.ref = "room" }
 androidx-test-core = { group = "androidx.test", name = "core-ktx", version.ref = "androidxTestCore" }
+# OCR local (TODO android-06): ML Kit v2 bundle — 100% on-device, sem Play
+# Services. Artefato Latin (pt/en/es/fr/de/it); outros scripts entram como
+# opt-in posterior (cada bundle custa ~10-20 MB).
+mlkit-text-recognition = { group = "com.google.mlkit", name = "text-recognition", version.ref = "mlkitTextRecognition" }
 robolectric = { group = "org.robolectric", name = "robolectric", version.ref = "robolectric" }
 # JNA: runtime dos bindings UniFFI (TODO core-04) — artefato @aar para Android.
 jna = { group = "net.java.dev.jna", name = "jna", version.ref = "jna" }

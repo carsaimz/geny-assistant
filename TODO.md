@@ -45,9 +45,9 @@
 
 - [x] `core-06` Follow-up de 2ª passagem: resultado da ferramenta volta ao modelo (remoto e local, sem loops; v0.3.0-alpha.5)
 - [x] `android-05` SAF: pastas autorizadas com permissão persistida — criar/ler/editar/append/excluir/mkdir dentro do escopo, métodos `saf*` na ponte, guard de pasta autorizada e auditoria (#40, v0.3.0-alpha.9)
-- [ ] `android-06` OCR local (ML Kit) em imagens e screenshots
+- [x] `android-06` OCR local (ML Kit v2 bundle Latin, 100% on-device, sem Play Services) — tool `ocr.read` (nível simple) com envelope de códigos estáveis e `ocrRead` na ponte (#41, v0.3.0-alpha.10)
 - [x] `core-07` Sandbox mlua executando ferramentas `tools/` com API `geny.*` — Lua 5.4 segura (sem io/require/os.execute), teto de memória, orçamento de instruções, host injetável (toast/storage/device/root opt-in) e 25 testes (#42, v0.3.0-alpha.8)
-- [x] `android-07` Responder notificações (RemoteInput) via listener — tool `notifications.reply` (nível explicit), `NotificationReplier` com remoteInputs/remoteInputSources, testes Robolectric (#43, v0.3.0-alpha.9)
+- [x] `android-07` Responder notificações (RemoteInput) via listener — tool `notifications.reply` (nível explicit), `NotificationReplier` com remoteInputs + androidx addResultsToIntent, testes Robolectric (#43, v0.3.0-alpha.9)
 - [x] `app-03` Catálogo de ferramentas na UI com níveis de confirmação visíveis — seção nas configurações com selo por nível (4 cores) e contagem, 6 chaves × 11 locales (#44, v0.3.0-alpha.9)
 
 ## Fase 5 — Memória

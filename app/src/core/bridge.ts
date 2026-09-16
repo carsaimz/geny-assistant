@@ -66,6 +66,8 @@ export interface GenyBridge {
   safMkdir(options: { treeUri: string; path: string }): Promise<{ json: string }>;
   /** Apaga um arquivo dentro da pasta autorizada. */
   safDelete(options: { treeUri: string; path: string }): Promise<{ json: string }>;
+  /** OCR local: extrai texto de uma imagem (content://) 100% on-device. */
+  ocrRead(options: { imageUri: string }): Promise<{ json: string }>;
   // ---- Wake word (Fase 3, TODO android-03b) — desligado por padrão ----
   getWakeWordStatus(): Promise<{ json: string }>;
   setWakeWordEnabled(options: { enabled: boolean; modelId?: string }): Promise<{ ok: boolean; error?: string }>;
@@ -138,6 +140,13 @@ function webCatalog(): ToolDefinition[] {
       'Responde uma notificação pelo id (mock web: sem efeito).',
       [str('id', true), str('text', true)],
       'explicit',
+    ),
+    def(
+      'ocr.read',
+      'Ler texto de imagem (OCR)',
+      'Extrai texto de imagem 100% no dispositivo (mock web: indisponível).',
+      [str('imageUri', true)],
+      'simple',
     ),
     def(
       'web.search',
@@ -215,6 +224,10 @@ function createWebMockBridge(): GenyBridge {
     ...createWebWakeWordMock(),
     ...createWebVoiceMock(),
     ...createWebLlmMock(),
+    async ocrRead() {
+      // Mock web: o motor de OCR é Android-only — nega com honestidade.
+      return { json: JSON.stringify({ ok: false, code: 'unavailable_on_web' }) };
+    },
   };
 }
 

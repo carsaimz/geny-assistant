@@ -122,6 +122,8 @@ dependencies {
     ksp(libs.androidx.room.compiler)
     // UniFFI (TODO core-04): runtime JNA para libgeny_core.so.
     implementation(libs.jna) { artifact { type = "aar" } }
+    // OCR local (TODO android-06): ML Kit v2 bundle, 100% on-device.
+    implementation(libs.mlkit.text.recognition)
 
     testImplementation(libs.junit)
     // Robolectric: testes JVM do Room com SQLite real (TODO android-04).

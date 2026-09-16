@@ -120,6 +120,7 @@ class GenyPlugin : Plugin() {
                 NoteCreateTool(),
                 NoteListTool(),
                 NoteReadTool(),
+                OcrReadTool(),
                 ShareTextTool(),
                 LocationGetTool(),
                 ReminderSetTool(),
