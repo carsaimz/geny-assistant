@@ -1,6 +1,8 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
+    // Room (TODO android-04): processamento de anotações via KSP.
+    alias(libs.plugins.ksp)
 }
 
 // Assinatura de release via segredos de CI (docs §17.5). Os valores chegam
@@ -90,7 +92,7 @@ android {
     }
 
     testOptions {
-        unitTests.isIncludeAndroidResources = false
+        unitTests.isIncludeAndroidResources = true
     }
 }
 
@@ -107,8 +109,15 @@ dependencies {
     implementation(project(":capacitor-android"))
     // LLM local (Fase 3, TODO core-05): .so do llama.cpp empacotado via módulo.
     implementation(project(":llama-native"))
+    // Room (TODO android-04): persistência GenyDb.
+    implementation(libs.androidx.room.runtime)
+    implementation(libs.androidx.room.ktx)
+    ksp(libs.androidx.room.compiler)
 
     testImplementation(libs.junit)
+    // Robolectric: testes JVM do Room com SQLite real (TODO android-04).
+    testImplementation(libs.robolectric)
+    testImplementation(libs.androidx.test.core)
     // org.json real para testes JVM (o stub do android.jar lanca excecao)
     testImplementation(libs.org.json)
 }

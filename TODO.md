@@ -37,7 +37,7 @@
 - [x] `android-03` Tela nativa de Modelos com progresso, hash e espaço (#35, v0.3.0-alpha.6)
 - [ ] `android-03b` Wake word opcional desligado por padrão (openWakeWord/ONNX)
 - [ ] `core-04` UniFFI: bindings geny-core ↔ Kotlin (`feature = "uniffi"`)
-- [ ] `android-04` Migração do GenyDb para Room + KSP
+- [x] `android-04` Migração do GenyDb para Room + KSP (#36)
 - [x] Prompt de sistema por idioma/cultura (do core i18n) — `buildSystemPrompt` no app espelha `i18n.rs` e serve os backends remoto e local (v0.3.0-alpha.4)
 - [x] Seleção automática local/remoto conforme bateria, rede e tarefa — modo `auto` com `pickBackend` puro (bateria >15%, rede, poupança); padrão novo (v0.3.0-alpha.5)
 

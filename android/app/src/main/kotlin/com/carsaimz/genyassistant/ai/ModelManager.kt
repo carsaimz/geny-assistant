@@ -117,10 +117,14 @@ class ModelManager(private val context: Context) {
         return db.listModels(kind)
     }
 
-    /** Remove um modelo baixado. */
+    /** Remove um modelo baixado (arquivo + registro no Room). */
     fun delete(name: String): Boolean {
         val file = File(modelsDir, name)
-        return file.exists() && file.delete()
+        val deleted = file.exists() && file.delete()
+        if (deleted) {
+            db.deleteModelByPath(file.absolutePath)
+        }
+        return deleted
     }
 
     /** Uso de disco pelos modelos, em bytes. */

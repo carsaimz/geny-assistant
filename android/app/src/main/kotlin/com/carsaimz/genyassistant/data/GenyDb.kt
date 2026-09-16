@@ -1,11 +1,21 @@
 package com.carsaimz.genyassistant.data
 
-import android.content.ContentValues
 import android.content.Context
-import android.database.sqlite.SQLiteDatabase
-import android.database.sqlite.SQLiteOpenHelper
+import androidx.room.ColumnInfo
+import androidx.room.Dao
+import androidx.room.Database
+import androidx.room.Entity
+import androidx.room.Index
+import androidx.room.Insert
+import androidx.room.OnConflictStrategy
+import androidx.room.PrimaryKey
+import androidx.room.Query
+import androidx.room.Room
+import androidx.room.RoomDatabase
+import androidx.room.migration.Migration
+import androidx.sqlite.db.SupportSQLiteDatabase
 
-/** Registro de modelo baixado (docs §7.5). */
+/** Registro de modelo baixado (docs §7.5) — API pública da fachada. */
 data class ModelRecord(
     val id: Long,
     val kind: String,
@@ -16,132 +26,249 @@ data class ModelRecord(
     val downloadedAtMs: Long,
 )
 
+// ---------------------------------------------------------------- entities --
+
+@Entity(tableName = "messages")
+data class MessageEntity(
+    @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    val role: String,
+    val content: String,
+    @ColumnInfo(name = "at_ms") val atMs: Long,
+)
+
+@Entity(tableName = "tool_calls")
+data class ToolCallEntity(
+    @PrimaryKey val id: String,
+    @ColumnInfo(name = "tool_id") val toolId: String,
+    val params: String,
+    val status: String,
+    @ColumnInfo(name = "at_ms") val atMs: Long,
+)
+
+@Entity(
+    tableName = "models",
+    indices = [Index(value = ["kind", "name"], unique = true)],
+)
+data class ModelEntity(
+    @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    val kind: String,
+    val name: String,
+    val path: String,
+    val sha256: String,
+    @ColumnInfo(name = "size_bytes") val sizeBytes: Long,
+    @ColumnInfo(name = "downloaded_at_ms") val downloadedAtMs: Long,
+)
+
+@Entity(tableName = "facts")
+data class FactEntity(
+    @PrimaryKey val key: String,
+    val value: String,
+    @ColumnInfo(name = "updated_at_ms") val updatedAtMs: Long,
+)
+
+/** Projeção de leitura do histórico (evita carregar o id/at_ms à toa). */
+data class RoleContent(val role: String, val content: String)
+
+// -------------------------------------------------------------------- daos --
+
+@Dao
+interface MessageDao {
+    @Insert
+    fun insert(message: MessageEntity)
+
+    @Query("SELECT role, content FROM messages ORDER BY id DESC LIMIT :limit")
+    fun recent(limit: Int): List<RoleContent>
+
+    @Query("DELETE FROM messages")
+    fun clear()
+}
+
+@Dao
+interface ToolCallDao {
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    fun upsert(call: ToolCallEntity)
+}
+
+@Dao
+interface ModelDao {
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    fun upsert(model: ModelEntity)
+
+    @Query("SELECT * FROM models WHERE kind = :kind ORDER BY name")
+    fun listByKind(kind: String): List<ModelEntity>
+
+    @Query("SELECT * FROM models ORDER BY name")
+    fun listAll(): List<ModelEntity>
+
+    @Query("DELETE FROM models WHERE path = :path")
+    fun deleteByPath(path: String): Int
+}
+
+@Dao
+interface FactDao {
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    fun upsert(fact: FactEntity)
+
+    @Query("SELECT value FROM facts WHERE key = :key")
+    fun valueOf(key: String): String?
+}
+
+// --------------------------------------------------------------- database --
+
 /**
- * Persistência v0 (docs §15): SQLiteOpenHelper com tabelas de conversas,
- * chamadas de ferramentas, modelos e fatos aprendidos.
+ * Banco Room (docs §15, TODO android-04): conversas, chamadas de ferramentas,
+ * modelos e fatos aprendidos — o mesmo schema do SQLiteOpenHelper v0, agora
+ * validado pelo Room.
  *
- * Migração para Room + banco vetorial: Fase 5 (ver TODO android-04/android-12).
+ * Migração 1→2: recria `tool_calls`, `models` e `facts` no formato exato que
+ * o Room espera (PK TEXT com NOT NULL, índice único nomeado em `models`).
+ * `messages` já era compatível e não precisa de reconstrução. Os dados são
+ * preservados na migração. Banco vetorial (sqlite-vec): Fase 5 (TODO core-08).
  */
-class GenyDb(context: Context) : SQLiteOpenHelper(context, DB_NAME, null, DB_VERSION) {
+@Database(
+    entities = [MessageEntity::class, ToolCallEntity::class, ModelEntity::class, FactEntity::class],
+    version = 2,
+    exportSchema = false,
+)
+abstract class GenyDatabase : RoomDatabase() {
 
-    override fun onCreate(db: SQLiteDatabase) {
-        db.execSQL(
-            "CREATE TABLE messages(" +
-                "id INTEGER PRIMARY KEY AUTOINCREMENT, role TEXT NOT NULL, " +
-                "content TEXT NOT NULL, at_ms INTEGER NOT NULL)",
-        )
-        db.execSQL(
-            "CREATE TABLE tool_calls(" +
-                "id TEXT PRIMARY KEY, tool_id TEXT NOT NULL, params TEXT NOT NULL, " +
-                "status TEXT NOT NULL, at_ms INTEGER NOT NULL)",
-        )
-        db.execSQL(
-            "CREATE TABLE models(" +
-                "id INTEGER PRIMARY KEY AUTOINCREMENT, kind TEXT NOT NULL, name TEXT NOT NULL, " +
-                "path TEXT NOT NULL, sha256 TEXT NOT NULL, size_bytes INTEGER NOT NULL, " +
-                "downloaded_at_ms INTEGER NOT NULL, UNIQUE(kind, name))",
-        )
-        db.execSQL(
-            "CREATE TABLE facts(" +
-                "key TEXT PRIMARY KEY, value TEXT NOT NULL, updated_at_ms INTEGER NOT NULL)",
-        )
-    }
+    abstract fun messages(): MessageDao
+    abstract fun toolCalls(): ToolCallDao
+    abstract fun models(): ModelDao
+    abstract fun facts(): FactDao
 
-    override fun onUpgrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) {
-        // v0: sem upgrades ainda; migrações incrementais a partir da v2.
-    }
+    companion object {
+        @Volatile
+        private var instance: GenyDatabase? = null
 
-    fun insertMessage(role: String, content: String, atMs: Long) {
-        val values = ContentValues().apply {
-            put("role", role)
-            put("content", content)
-            put("at_ms", atMs)
-        }
-        writableDatabase.insert("messages", null, values)
-    }
+        /** Singleton por processo — fachadas compartilham a mesma conexão. */
+        fun get(context: Context): GenyDatabase =
+            instance ?: synchronized(this) {
+                instance ?: build(context.applicationContext).also { instance = it }
+            }
 
-    fun recentMessages(limit: Int): List<Pair<String, String>> {
-        val out = mutableListOf<Pair<String, String>>()
-        readableDatabase.rawQuery(
-            "SELECT role, content FROM messages ORDER BY id DESC LIMIT ?",
-            arrayOf(limit.toString()),
-        ).use { cursor ->
-            while (cursor.moveToNext()) {
-                out.add(cursor.getString(0) to cursor.getString(1))
+        private fun build(context: Context): GenyDatabase =
+            Room.databaseBuilder(context, GenyDatabase::class.java, "geny.db")
+                .addMigrations(MIGRATION_1_2)
+                .build()
+
+        /**
+         * Fecha e limpa a instância em cache. Uso exclusivo de testes JVM
+         * (Robolectric), onde singletons sobrevivem entre métodos da mesma
+         * classe e precisam ser recriados por teste.
+         */
+        internal fun resetForTests() {
+            synchronized(this) {
+                instance?.close()
+                instance = null
             }
         }
-        return out.reversed()
+
+        val MIGRATION_1_2: Migration = object : Migration(1, 2) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                // tool_calls: PK TEXT passa a ser NOT NULL (formato Room).
+                db.execSQL(
+                    "CREATE TABLE tool_calls_new(" +
+                        "id TEXT NOT NULL, tool_id TEXT NOT NULL, params TEXT NOT NULL, " +
+                        "status TEXT NOT NULL, at_ms INTEGER NOT NULL, PRIMARY KEY(id))",
+                )
+                db.execSQL(
+                    "INSERT INTO tool_calls_new(id, tool_id, params, status, at_ms) " +
+                        "SELECT id, tool_id, params, status, at_ms FROM tool_calls",
+                )
+                db.execSQL("DROP TABLE tool_calls")
+                db.execSQL("ALTER TABLE tool_calls_new RENAME TO tool_calls")
+
+                // models: UNIQUE inline vira índice único nomeado do Room.
+                db.execSQL(
+                    "CREATE TABLE models_new(" +
+                        "id INTEGER PRIMARY KEY AUTOINCREMENT, kind TEXT NOT NULL, " +
+                        "name TEXT NOT NULL, path TEXT NOT NULL, sha256 TEXT NOT NULL, " +
+                        "size_bytes INTEGER NOT NULL, downloaded_at_ms INTEGER NOT NULL)",
+                )
+                db.execSQL(
+                    "INSERT INTO models_new(id, kind, name, path, sha256, size_bytes, downloaded_at_ms) " +
+                        "SELECT id, kind, name, path, sha256, size_bytes, downloaded_at_ms FROM models",
+                )
+                db.execSQL("DROP TABLE models")
+                db.execSQL("ALTER TABLE models_new RENAME TO models")
+                db.execSQL(
+                    "CREATE UNIQUE INDEX IF NOT EXISTS index_models_kind_name " +
+                        "ON models (kind, name)",
+                )
+
+                // facts: PK TEXT passa a ser NOT NULL (formato Room).
+                db.execSQL(
+                    "CREATE TABLE facts_new(" +
+                        "key TEXT NOT NULL, value TEXT NOT NULL, " +
+                        "updated_at_ms INTEGER NOT NULL, PRIMARY KEY(key))",
+                )
+                db.execSQL(
+                    "INSERT INTO facts_new(key, value, updated_at_ms) " +
+                        "SELECT key, value, updated_at_ms FROM facts",
+                )
+                db.execSQL("DROP TABLE facts")
+                db.execSQL("ALTER TABLE facts_new RENAME TO facts")
+            }
+        }
+    }
+}
+
+/**
+ * Persistência (docs §15, TODO android-04): fachada do Room com a MESMA API
+ * síncrona do SQLiteOpenHelper v0 — chamadores (GenyPlugin, ModelManager) não
+ * mudam. As consultas rodam na thread do chamador (pool do Capacitor /
+ * Dispatchers.IO), nunca na principal. Fase 5 expõe DAOs Flow/suspend para a
+ * UI de memória (TODO android-08).
+ */
+class GenyDb(context: Context) {
+
+    private val db = GenyDatabase.get(context)
+
+    fun insertMessage(role: String, content: String, atMs: Long) {
+        db.messages().insert(MessageEntity(role = role, content = content, atMs = atMs))
     }
 
+    fun recentMessages(limit: Int): List<Pair<String, String>> =
+        db.messages().recent(limit).map { it.role to it.content }.reversed()
+
     fun recordToolCall(callId: String, toolId: String, params: String, status: String, atMs: Long) {
-        val values = ContentValues().apply {
-            put("id", callId)
-            put("tool_id", toolId)
-            put("params", params)
-            put("status", status)
-            put("at_ms", atMs)
-        }
-        writableDatabase.insertWithOnConflict("tool_calls", null, values, SQLiteDatabase.CONFLICT_REPLACE)
+        db.toolCalls().upsert(
+            ToolCallEntity(id = callId, toolId = toolId, params = params, status = status, atMs = atMs),
+        )
     }
 
     fun upsertModel(kind: String, name: String, path: String, sha256: String, sizeBytes: Long, atMs: Long) {
-        val values = ContentValues().apply {
-            put("kind", kind)
-            put("name", name)
-            put("path", path)
-            put("sha256", sha256)
-            put("size_bytes", sizeBytes)
-            put("downloaded_at_ms", atMs)
-        }
-        writableDatabase.insertWithOnConflict(
-            "models", null, values, SQLiteDatabase.CONFLICT_REPLACE,
+        db.models().upsert(
+            ModelEntity(
+                kind = kind, name = name, path = path,
+                sha256 = sha256, sizeBytes = sizeBytes, downloadedAtMs = atMs,
+            ),
         )
     }
 
     fun listModels(kind: String? = null): List<ModelRecord> {
-        val out = mutableListOf<ModelRecord>()
-        val selection = if (kind == null) null else "kind = ?"
-        val args = if (kind == null) null else arrayOf(kind)
-        readableDatabase.query(
-            "models", null, selection, args, null, null, "name",
-        ).use { cursor ->
-            while (cursor.moveToNext()) {
-                out.add(
-                    ModelRecord(
-                        id = cursor.getLong(0),
-                        kind = cursor.getString(1),
-                        name = cursor.getString(2),
-                        path = cursor.getString(3),
-                        sha256 = cursor.getString(4),
-                        sizeBytes = cursor.getLong(5),
-                        downloadedAtMs = cursor.getLong(6),
-                    ),
-                )
-            }
+        val rows = if (kind == null) db.models().listAll() else db.models().listByKind(kind)
+        return rows.map {
+            ModelRecord(
+                id = it.id,
+                kind = it.kind,
+                name = it.name,
+                path = it.path,
+                sha256 = it.sha256,
+                sizeBytes = it.sizeBytes,
+                downloadedAtMs = it.downloadedAtMs,
+            )
         }
-        return out
+    }
+
+    fun deleteModelByPath(path: String) {
+        db.models().deleteByPath(path)
     }
 
     fun rememberFact(key: String, value: String, atMs: Long) {
-        val values = ContentValues().apply {
-            put("key", key)
-            put("value", value)
-            put("updated_at_ms", atMs)
-        }
-        writableDatabase.insertWithOnConflict("facts", null, values, SQLiteDatabase.CONFLICT_REPLACE)
+        db.facts().upsert(FactEntity(key = key, value = value, updatedAtMs = atMs))
     }
 
-    fun recallFact(key: String): String? {
-        readableDatabase.rawQuery(
-            "SELECT value FROM facts WHERE key = ?", arrayOf(key),
-        ).use { cursor ->
-            if (cursor.moveToFirst()) return cursor.getString(0)
-        }
-        return null
-    }
-
-    private companion object {
-        const val DB_NAME = "geny.db"
-        const val DB_VERSION = 1
-    }
+    fun recallFact(key: String): String? = db.facts().valueOf(key)
 }
