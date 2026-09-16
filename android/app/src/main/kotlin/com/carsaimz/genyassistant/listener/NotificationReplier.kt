@@ -4,6 +4,7 @@ import android.app.Notification
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
+import android.os.Bundle
 import androidx.core.app.RemoteInput
 
 /**
@@ -59,11 +60,13 @@ object NotificationReplier {
         val pending = action.actionIntent ?: return false
         return try {
             val intent = Intent().addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-            // androidx.core.app.RemoteInput.addResultsTo embute o mecanismo
-            // correto por versão (extra/clipData) que o app de origem lê com
-            // RemoteInput.getResultsFromIntent.
+            // androidx.core.app.RemoteInput.addResultsToIntent embute o
+            // mecanismo correto por versão (extra/clipData) que o app de
+            // origem lê com RemoteInput.getResultsFromIntent.
             val compatInput = RemoteInput.Builder(remoteInput.resultKey).build()
-            RemoteInput.addResultsTo(arrayOf(compatInput), intent)
+            val results = Bundle()
+            results.putCharSequence(remoteInput.resultKey, text)
+            RemoteInput.addResultsToIntent(arrayOf(compatInput), intent, results)
             pending.send(context, 0, intent)
             true
         } catch (_: PendingIntent.CanceledException) {
