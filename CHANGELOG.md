@@ -4,6 +4,50 @@ Todas as mudanças notáveis deste projeto são documentadas aqui.
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/),
 versionamento [Semântico](https://semver.org/lang/pt-BR/).
 
+## [0.3.0-alpha.8] — Sandbox Lua para ferramentas do usuário / Lua sandbox for user tools
+
+### Adicionado / Added
+
+- **Sandbox mlua** (`core-07`, Fase 4, #42): nova feature `lua` no geny-core
+  com mlua 0.12 (Lua 5.4 vendored — sem dependência do sistema). O manifesto
+  `--[==[ Geny Tool ... ]==]--` é parseado e validado (id, nome, descrição,
+  versão, nível de confirmação, permissões e esquema de parâmetros, com
+  continuação multilinha e listas `[a, b]`). A sandbox roda em modo seguro:
+  `StdLib::ALL_SAFE`, sem `io`/`package`/`require`/`dofile`/`loadfile`/`load`,
+  `os` reduzido a `time`/`clock`/`date` — mais teto de memória (8 MiB) e
+  orçamento de instruções via hook de depuração, que interrompe loops
+  infinitos. A API `geny.*` é injetada pelo host via trait `LuaHost`:
+  `geny.toast`, `geny.now_ms`, `geny.storage.get/set`, `geny.device`
+  (somente leitura) e `geny.root.run` opt-in com `allow_root` (Fase 7).
+  `load_tools_from_dir` carrega a pasta `tools/` e `LuaTool.definition`
+  mapeia cada ferramenta para o registro padrão, pronto para catálogo e
+  prompt. 26 testes novos cobrem os 3 exemplos reais, bloqueios de
+  segurança (io/os/require), limites de memória e de instruções, validação
+  de parâmetros obrigatórios/tipos e manifestos inválidos.
+  *mlua sandbox* (`core-07`, Phase 4, #42): new `lua` feature in geny-core
+  with mlua 0.12 (vendored Lua 5.4 — no system dependency). The
+  `--[==[ Geny Tool ... ]==]--` manifest is parsed and validated (id, name,
+  description, version, confirmation level, permissions and param schema,
+  with multi-line continuation and `[a, b]` lists). The sandbox runs in safe
+  mode: `StdLib::ALL_SAFE`, no `io`/`package`/`require`/`dofile`/`loadfile`/
+  `load`, `os` reduced to `time`/`clock`/`date` — plus a memory cap (8 MiB)
+  and an instruction budget via debug hook that interrupts infinite loops.
+  The `geny.*` API is injected by the host through the `LuaHost` trait:
+  `geny.toast`, `geny.now_ms`, `geny.storage.get/set`, `geny.device`
+  (read-only) and opt-in `geny.root.run` with `allow_root` (Phase 7).
+  `load_tools_from_dir` loads the `tools/` folder and `LuaTool.definition`
+  maps each tool into the standard registry, ready for catalog and prompt.
+  26 new tests cover the 3 real examples, security blocks (io/os/require),
+  memory and instruction limits, required/type parameter validation and
+  invalid manifests.
+
+### Documentação / Documentation
+
+- `docs/tool-calling.md` e `tools/README.md` atualizados com a API real da
+  sandbox (incl. ausência deliberada de `geny.http` nesta fase).
+  *docs/tool-calling.md and tools/README.md updated with the actual sandbox
+  API (including the deliberate absence of `geny.http` in this phase).*
+
 ## [0.3.0-alpha.7] — Fase 3 completa: wake word + Room + UniFFI / Phase 3 complete
 
 ### Adicionado / Added
