@@ -49,6 +49,23 @@ export interface GenyBridge {
   stopLocalGenerate(): Promise<void>;
   /** Abre a tela nativa de Modelos (Fase 3, TODO android-03 / issue #35). */
   openModelsScreen(): Promise<void>;
+  // ---- SAF: pastas autorizadas (Fase 4, TODO android-05) ----
+  /** Abre o seletor do sistema e persiste a permissão da pasta escolhida. */
+  safPickFolder(): Promise<{ ok: boolean; treeUri?: string; error?: string }>;
+  /** Lista as pastas autorizadas (com estado da permissão persistida). */
+  safAuthorized(): Promise<{ ok: boolean; folders: Array<{ treeUri: string; persisted: boolean }> }>;
+  /** Revoga a permissão de uma pasta autorizada. */
+  safRevoke(options: { treeUri: string }): Promise<{ ok: boolean; error?: string }>;
+  /** Lista o conteúdo de um caminho relativo dentro da pasta autorizada. */
+  safList(options: { treeUri: string; path?: string }): Promise<{ json: string }>;
+  /** Lê um arquivo de texto dentro da pasta autorizada. */
+  safRead(options: { treeUri: string; path: string }): Promise<{ json: string }>;
+  /** Escreve (cria/sobrescreve/append) um arquivo de texto. */
+  safWrite(options: { treeUri: string; path: string; content: string; append?: boolean }): Promise<{ json: string }>;
+  /** Cria um diretório dentro da pasta autorizada. */
+  safMkdir(options: { treeUri: string; path: string }): Promise<{ json: string }>;
+  /** Apaga um arquivo dentro da pasta autorizada. */
+  safDelete(options: { treeUri: string; path: string }): Promise<{ json: string }>;
   // ---- Wake word (Fase 3, TODO android-03b) — desligado por padrão ----
   getWakeWordStatus(): Promise<{ json: string }>;
   setWakeWordEnabled(options: { enabled: boolean; modelId?: string }): Promise<{ ok: boolean; error?: string }>;
@@ -114,6 +131,13 @@ function webCatalog(): ToolDefinition[] {
       'Cria uma nota local (localStorage no web).',
       [str('title', true), str('body', true)],
       'simple',
+    ),
+    def(
+      'notifications.reply',
+      'Responder notificação',
+      'Responde uma notificação pelo id (mock web: sem efeito).',
+      [str('id', true), str('text', true)],
+      'explicit',
     ),
     def(
       'web.search',
@@ -187,9 +211,50 @@ function createWebMockBridge(): GenyBridge {
     async openModelsScreen() {
       // Mock web: não há tela nativa no navegador — no-op honesto.
     },
+    ...createWebSafMock(),
     ...createWebWakeWordMock(),
     ...createWebVoiceMock(),
     ...createWebLlmMock(),
+  };
+}
+
+// ------------------------------------------- mock de SAF (web) --
+
+/**
+ * **PT** Mock de SAF no navegador: o seletor de pastas e o DocumentsContract
+ * são APIs Android — o mock nega com honestidade.
+ * **EN** SAF mock in the browser: the folder picker and DocumentsContract are
+ * Android APIs — the mock denies honestly.
+ */
+function createWebSafMock(): Pick<
+  GenyBridge,
+  'safPickFolder' | 'safAuthorized' | 'safRevoke' | 'safList' | 'safRead' | 'safWrite' | 'safMkdir' | 'safDelete'
+> {
+  return {
+    async safPickFolder() {
+      return { ok: false, error: 'unavailable_on_web' };
+    },
+    async safAuthorized() {
+      return { ok: true, folders: [] };
+    },
+    async safRevoke() {
+      return { ok: false, error: 'unavailable_on_web' };
+    },
+    async safList() {
+      return { json: JSON.stringify({ ok: false, error: 'unavailable_on_web' }) };
+    },
+    async safRead() {
+      return { json: JSON.stringify({ ok: false, error: 'unavailable_on_web' }) };
+    },
+    async safWrite() {
+      return { json: JSON.stringify({ ok: false, error: 'unavailable_on_web' }) };
+    },
+    async safMkdir() {
+      return { json: JSON.stringify({ ok: false, error: 'unavailable_on_web' }) };
+    },
+    async safDelete() {
+      return { json: JSON.stringify({ ok: false, error: 'unavailable_on_web' }) };
+    },
   };
 }
 

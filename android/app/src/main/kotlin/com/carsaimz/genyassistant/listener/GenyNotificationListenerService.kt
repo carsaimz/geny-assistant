@@ -71,4 +71,22 @@ object NotificationListenerBridge {
             false
         }
     }
+
+    /**
+     * Responde uma notificação via RemoteInput (TODO android-07, #43).
+     * Retorna o código de resultado de [NotificationReplier].
+     */
+    fun reply(id: String, text: String): String {
+        val service = instance ?: return NotificationReplier.NO_SERVICE
+        return try {
+            val active = service.activeNotifications ?: return NotificationReplier.NO_SERVICE
+            val target = active.firstOrNull { it.key == id }
+                ?: return NotificationReplier.NOT_FOUND
+            val notification = target.notification
+                ?: return NotificationReplier.NOT_FOUND
+            NotificationReplier.replyTo(service.applicationContext, notification, text)
+        } catch (_: Exception) {
+            NotificationReplier.SEND_FAILED
+        }
+    }
 }

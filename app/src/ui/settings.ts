@@ -10,7 +10,7 @@ import type { VoiceEvent, WakeWordStatus } from '../core/voice-types';
 import type { VoiceCapabilities, WhisperModelStatus } from '../core/voice-types';
 import type { LlmCapabilities, LlmEvent, LlmModelStatus } from '../core/llm-types';
 import { LOCALES, t, tf } from '../i18n';
-import type { Settings } from '../types';
+import type { Settings, ToolDefinition } from '../types';
 
 export interface SettingsCallbacks {
   onSave: (s: Settings) => void;
@@ -29,6 +29,21 @@ const LLM_FALLBACK_LABELS: Record<string, string> = {
   'qwen2.5-1.5b-instruct': 'Qwen2.5 1.5B (~1,0 GB)',
   'gemma-2-2b-it': 'Gemma 2 2B (~1,6 GB)',
 };
+
+/** Classe CSS do selo por nível de confirmação (docs §12.3). */
+export const CONFIRMATION_LEVEL_CLASS: Record<ToolDefinition['confirmation'], string> = {
+  none: 'level-none',
+  simple: 'level-simple',
+  explicit: 'level-explicit',
+  authenticated: 'level-authenticated',
+};
+
+/** Selo do nível de confirmação: "nenhuma | simples | explícita | autenticada". */
+export function confirmationBadge(level: ToolDefinition['confirmation']): string {
+  const label = t(`settings.tools.level.${level}`);
+  const cls = CONFIRMATION_LEVEL_CLASS[level] ?? 'level-none';
+  return `<span class="tool-badge ${cls}">${label}</span>`;
+}
 
 export function renderSettingsDrawer(
   drawer: HTMLElement,
@@ -154,6 +169,10 @@ export function renderSettingsDrawer(
         ${t('settings.model.nativeScreen')}
       </button>
 
+      <h3 class="drawer-section">${t('settings.tools.title')}</h3>
+      <small id="tools-catalog-count" class="tools-count"></small>
+      <div id="tools-catalog" class="tools-catalog" aria-live="polite"></div>
+
       <p class="privacy-note">${t('settings.privacy')}</p>
       <button type="submit" class="btn-primary">${t('settings.save')}</button>
     </form>`;
@@ -190,6 +209,35 @@ export function renderSettingsDrawer(
       void bridge.openModelsScreen();
     });
   }
+
+  // Catálogo de ferramentas (TODO app-03 / issue #44): nome, descrição e
+  // nível de confirmação de cada ferramenta registrada na ponte nativa.
+  const toolsCatalog = $<HTMLElement>('tools-catalog');
+  const toolsCount = $<HTMLElement>('tools-catalog-count');
+  void bridge
+    .listTools()
+    .then(({ tools }) => {
+      toolsCount.textContent = tf('settings.tools.count', { n: tools.length });
+      toolsCatalog.innerHTML = tools
+        .map((tool) => {
+          const params = tool.params
+            .map((p) => `${p.name}${p.required ? '*' : ''}`)
+            .join(', ');
+          return `<div class="tool-row">
+            <div class="tool-row-head">
+              <strong class="tool-name">${tool.name}</strong>
+              ${confirmationBadge(tool.confirmation)}
+            </div>
+            <small class="tool-desc">${tool.description}</small>
+            ${params ? `<small class="tool-params">${params}</small>` : ''}
+          </div>`;
+        })
+        .join('');
+    })
+    .catch(() => {
+      // Sem catálogo (pontes antigas): seção fica vazia, sem erro visível.
+      toolsCatalog.hidden = true;
+    });
 
   mode.value = settings.mode;
   baseUrl.value = settings.baseUrl;

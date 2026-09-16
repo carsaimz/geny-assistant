@@ -15,6 +15,9 @@ import com.carsaimz.genyassistant.ai.CoreBridge
 import com.carsaimz.genyassistant.ai.LocalLlmManager
 import com.carsaimz.genyassistant.data.GenyDb
 import com.carsaimz.genyassistant.models.ModelsActivity
+import com.carsaimz.genyassistant.saf.SafOps
+import com.carsaimz.genyassistant.saf.SafPaths
+import com.carsaimz.genyassistant.saf.SafStore
 import com.carsaimz.genyassistant.security.AuditLog
 import com.carsaimz.genyassistant.security.ConfirmationManager
 import com.carsaimz.genyassistant.security.KeystoreManager
@@ -29,6 +32,7 @@ import com.carsaimz.genyassistant.tools.NoteListTool
 import com.carsaimz.genyassistant.tools.NoteReadTool
 import com.carsaimz.genyassistant.tools.NotificationDismissTool
 import com.carsaimz.genyassistant.tools.NotificationReadTool
+import com.carsaimz.genyassistant.tools.NotificationReplyTool
 import com.carsaimz.genyassistant.tools.ReminderSetTool
 import com.carsaimz.genyassistant.tools.SendSmsTool
 import com.carsaimz.genyassistant.tools.ShareTextTool
@@ -46,8 +50,11 @@ import com.getcapacitor.Plugin
 import com.getcapacitor.PluginCall
 import com.getcapacitor.PluginMethod
 import com.getcapacitor.annotation.CapacitorPlugin
+import com.getcapacitor.annotation.ActivityCallback
 import com.getcapacitor.annotation.Permission
 import com.getcapacitor.annotation.PermissionCallback
+import androidx.activity.result.ActivityResult
+import android.net.Uri
 import org.json.JSONArray
 import org.json.JSONObject
 import java.io.File
@@ -109,6 +116,7 @@ class GenyPlugin : Plugin() {
                 ContactSearchTool(),
                 NotificationReadTool(),
                 NotificationDismissTool(),
+                NotificationReplyTool(),
                 NoteCreateTool(),
                 NoteListTool(),
                 NoteReadTool(),
@@ -680,6 +688,165 @@ class GenyPlugin : Plugin() {
             audit.log("voice", "permissão de microfone negada (wake word)")
             call.resolve(JSObject().put("ok", false).put("error", "denied"))
         }
+    }
+
+    // ---------------------------------------------------------------- SAF --
+    // Pastas autorizadas (TODO android-05, issue #40): o usuário autoriza
+    // pastas com ACTION_OPEN_DOCUMENT_TREE e a ponte oferece criar/ler/
+    // editar/excluir DENTRO do escopo autorizado, sempre auditado.
+
+    private fun safStore(): SafStore = SafStore(db)
+
+    @PluginMethod
+    fun safPickFolder(call: PluginCall) {
+        val intent =
+            Intent(Intent.ACTION_OPEN_DOCUMENT_TREE).addFlags(
+                Intent.FLAG_GRANT_READ_URI_PERMISSION or
+                    Intent.FLAG_GRANT_WRITE_URI_PERMISSION or
+                    Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION or
+                    Intent.FLAG_GRANT_PREFIX_URI_PERMISSION,
+            )
+        startActivityForResult(call, intent, "onSafFolderPicked")
+    }
+
+    @ActivityCallback
+    fun onSafFolderPicked(call: PluginCall?, result: ActivityResult) {
+        val data = result?.data
+        val uri = data?.data
+        if (call == null || uri == null) {
+            call?.resolve(JSObject().put("ok", false).put("error", "pasta nao selecionada"))
+            return
+        }
+        try {
+            context.contentResolver.takePersistableUriPermission(
+                uri,
+                Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION,
+            )
+            safStore().add(uri.toString())
+            audit.log("saf", "pasta autorizada: $uri")
+            call.resolve(
+                JSObject()
+                    .put("ok", true)
+                    .put("treeUri", uri.toString()),
+            )
+        } catch (e: Exception) {
+            audit.log("saf", "falha ao autorizar pasta: ${e.message}")
+            call.resolve(JSObject().put("ok", false).put("error", e.message ?: "falha saf"))
+        }
+    }
+
+    @PluginMethod
+    fun safAuthorized(call: PluginCall) {
+        val resolver = context.contentResolver
+        val persisted =
+            resolver.persistedUriPermissions
+                .filter { it.isReadPermission || it.isWritePermission }
+                .map { it.uri.toString() }
+                .toSet()
+        val folders = JSArray()
+        for (tree in safStore().list()) {
+            folders.put(
+                JSObject()
+                    .put("treeUri", tree)
+                    .put("persisted", tree in persisted),
+            )
+        }
+        call.resolve(JSObject().put("ok", true).put("folders", folders))
+    }
+
+    @PluginMethod
+    fun safRevoke(call: PluginCall) {
+        val tree = call.getString("treeUri") ?: ""
+        if (tree.isEmpty()) {
+            call.resolve(JSObject().put("ok", false).put("error", "treeUri ausente"))
+            return
+        }
+        try {
+            val uri = Uri.parse(tree)
+            context.contentResolver.releasePersistableUriPermission(
+                uri,
+                Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION,
+            )
+            safStore().remove(tree)
+            audit.log("saf", "pasta revogada: $tree")
+            call.resolve(JSObject().put("ok", true))
+        } catch (e: Exception) {
+            call.resolve(JSObject().put("ok", false).put("error", e.message ?: "falha saf"))
+        }
+    }
+
+    private fun safTree(call: PluginCall): Uri? {
+        val raw = call.getString("treeUri") ?: ""
+        if (raw.isEmpty()) {
+            call.resolve(JSObject().put("ok", false).put("error", "treeUri ausente"))
+            return null
+        }
+        // Defesa: só executa em pastas que o usuário autorizou de fato.
+        if (raw !in safStore().list()) {
+            audit.log("saf", "acesso a pasta nao autorizada: $raw")
+            call.resolve(JSObject().put("ok", false).put("error", "pasta nao autorizada"))
+            return null
+        }
+        return Uri.parse(raw)
+    }
+
+    @PluginMethod
+    fun safList(call: PluginCall) {
+        val tree = safTree(call) ?: return
+        val path = call.getString("path") ?: ""
+        call.resolve(JSObject.fromJSONObject(SafOps.list(context.contentResolver, tree, path)))
+    }
+
+    @PluginMethod
+    fun safRead(call: PluginCall) {
+        val tree = safTree(call) ?: return
+        val path = call.getString("path") ?: ""
+        if (path.isBlank()) {
+            call.resolve(JSObject().put("ok", false).put("error", "path ausente"))
+            return
+        }
+        call.resolve(JSObject.fromJSONObject(SafOps.readText(context.contentResolver, tree, path)))
+    }
+
+    @PluginMethod
+    fun safWrite(call: PluginCall) {
+        val tree = safTree(call) ?: return
+        val path = call.getString("path") ?: ""
+        val content = call.getString("content") ?: ""
+        val append = call.getBoolean("append") ?: false
+        if (path.isBlank()) {
+            call.resolve(JSObject().put("ok", false).put("error", "path ausente"))
+            return
+        }
+        val result = SafOps.writeText(context.contentResolver, tree, path, content, append)
+        audit.log("saf", "escrita: $path (append=$append) -> ${result.optBoolean("ok")}")
+        call.resolve(JSObject.fromJSONObject(result))
+    }
+
+    @PluginMethod
+    fun safDelete(call: PluginCall) {
+        val tree = safTree(call) ?: return
+        val path = call.getString("path") ?: ""
+        if (path.isBlank()) {
+            call.resolve(JSObject().put("ok", false).put("error", "path ausente"))
+            return
+        }
+        val result = SafOps.delete(context.contentResolver, tree, path)
+        audit.log("saf", "exclusao: $path -> ${result.optBoolean("ok")}")
+        call.resolve(JSObject.fromJSONObject(result))
+    }
+
+    @PluginMethod
+    fun safMkdir(call: PluginCall) {
+        val tree = safTree(call) ?: return
+        val path = call.getString("path") ?: ""
+        if (path.isBlank()) {
+            call.resolve(JSObject().put("ok", false).put("error", "path ausente"))
+            return
+        }
+        val result = SafOps.mkdir(context.contentResolver, tree, path)
+        audit.log("saf", "mkdir: $path -> ${result.optBoolean("ok")}")
+        call.resolve(JSObject.fromJSONObject(result))
     }
 
     // -------------------------------------------------------- Modelos (UI) --

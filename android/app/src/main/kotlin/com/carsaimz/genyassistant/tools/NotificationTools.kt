@@ -64,3 +64,31 @@ class NotificationDismissTool : Tool(
         return JSONObject().put("dismissed", removed)
     }
 }
+
+/**
+ * Responder notificações via RemoteInput (TODO android-07, #43): localiza a
+ * ação de resposta do app de origem e entrega o texto pelo próprio
+ * PendingIntent — sem acessar rede ou credenciais. Nível EXPLICIT: envia
+ * mensagem em nome do usuário.
+ */
+class NotificationReplyTool : Tool(
+    id = "notifications.reply",
+    name = "Responder notificação",
+    description = "Responde uma notificacao pelo id usando a acao de resposta do app de origem.",
+    params = listOf(
+        ParamSpec("id", "string", required = true, description = "id da notificacao capturada"),
+        ParamSpec("text", "string", required = true, description = "texto da resposta"),
+    ),
+    confirmation = ConfirmationLevel.EXPLICIT,
+    context = ToolContext.SERVICE,
+) {
+    override fun execute(params: JSONObject, host: ToolHost): JSONObject {
+        val id = params.getString("id")
+        val text = params.getString("text")
+        val result = com.carsaimz.genyassistant.listener.NotificationListenerBridge.reply(id, text)
+        val sent = result == com.carsaimz.genyassistant.listener.NotificationReplier.SENT
+        return JSONObject()
+            .put("sent", sent)
+            .put("result", result)
+    }
+}
