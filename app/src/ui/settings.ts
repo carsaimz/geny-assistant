@@ -6,7 +6,7 @@
  */
 import { Capacitor } from '@capacitor/core';
 import { bridge } from '../core/bridge';
-import type { VoiceEvent } from '../core/voice-types';
+import type { VoiceEvent, WakeWordStatus } from '../core/voice-types';
 import type { VoiceCapabilities, WhisperModelStatus } from '../core/voice-types';
 import type { LlmCapabilities, LlmEvent, LlmModelStatus } from '../core/llm-types';
 import { LOCALES, t, tf } from '../i18n';
@@ -109,6 +109,24 @@ export function renderSettingsDrawer(
         <small id="set-piper-hint" hidden>${t('settings.tts.piper.unavailable')}</small>
       </label>
       <div id="piper-voices" class="model-status" hidden></div>
+
+      <h3 class="drawer-section">${t('settings.wake.title')}</h3>
+      <label class="check-row">
+        <input id="set-wake-enabled" type="checkbox" />
+        <span>${t('settings.wake.enable')}</span>
+      </label>
+      <label>
+        <span>${t('settings.wake.phrase')}</span>
+        <select id="set-wake-model">
+          <option value="oww-hey-jarvis">“Hey Jarvis”</option>
+          <option value="oww-hey-mycroft">“Hey Mycroft”</option>
+          <option value="oww-alexa">“Alexa”</option>
+          <option value="oww-hey-rhasspy">“Hey Rhasspy”</option>
+        </select>
+        <small>${t('settings.wake.offbydefault')}</small>
+      </label>
+      <small id="set-wake-hint" hidden>${t('settings.wake.unavailable')}</small>
+      <div id="wake-status" class="model-status" hidden></div>
 
       <h3 class="drawer-section">${t('settings.llm.title')}</h3>
       <label>
@@ -328,6 +346,112 @@ export function renderSettingsDrawer(
   };
 
   refreshPiper(true);
+
+  // ------------------------------------------------------------ Wake word --
+  // Fase 3 (TODO android-03b): opcional, DESLIGADO por padrão. O nativo
+  // exige os 2 modelos de características + a frase escolhida antes de
+  // ligar o serviço em primeiro plano.
+
+  const wakeEnabled = $<HTMLInputElement>('set-wake-enabled');
+  const wakeModel = $<HTMLSelectElement>('set-wake-model');
+  const wakeHint = $<HTMLElement>('set-wake-hint');
+  const wakeStatus = $<HTMLElement>('wake-status');
+
+  let wakeState: WakeWordStatus | null = null;
+
+  const wakeRowFor = (id: string) => wakeState?.models.find((m) => m.id === id);
+
+  const missingForEnable = (): string[] => {
+    if (!wakeState) return [];
+    const needed = ['oww-melspectrogram', 'oww-embedding', wakeModel.value];
+    return needed.filter((id) => !wakeRowFor(id)?.downloaded);
+  };
+
+  const wakeDownloadButtons = (ids: string[]): void => {
+    for (const id of ids) {
+      const row = wakeRowFor(id);
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'btn-primary btn-small';
+      btn.textContent = `${t('settings.voice.model.download')} — ${row?.label ?? id}`;
+      btn.addEventListener('click', () => {
+        btn.disabled = true;
+        btn.textContent = `${t('settings.voice.model.downloading')} 0%`;
+        void bridge.downloadVoiceModel({ kind: 'wakeword', id });
+      });
+      wakeStatus.appendChild(btn);
+    }
+  };
+
+  const refreshWake = (refetch = false): void => {
+    if (refetch) {
+      void bridge
+        .getWakeWordStatus()
+        .then(({ json }) => {
+          wakeState = JSON.parse(json) as WakeWordStatus;
+          refreshWake();
+        })
+        .catch(() => undefined);
+      return;
+    }
+    if (wakeState === null) return;
+    const native = Capacitor.isNativePlatform();
+    wakeHint.hidden = native;
+    if (!native || wakeState.models.length === 0) return;
+    wakeEnabled.checked = wakeState.enabled;
+    wakeModel.value = wakeState.modelId;
+    wakeStatus.hidden = true;
+    wakeStatus.textContent = '';
+    if (wakeState.enabled) {
+      wakeStatus.hidden = false;
+      wakeStatus.textContent = t('settings.wake.listening');
+      return;
+    }
+    const missing = missingForEnable();
+    if (missing.length > 0 && wakeEnabled.checked) {
+      wakeStatus.hidden = false;
+      wakeDownloadButtons(missing);
+    }
+  };
+
+  wakeEnabled.addEventListener('change', () => {
+    const enable = wakeEnabled.checked;
+    if (!enable) {
+      void bridge.setWakeWordEnabled({ enabled: false }).then(() => refreshWake(true));
+      return;
+    }
+    const missing = missingForEnable();
+    if (missing.length > 0) {
+      // Sem modelos ainda: mostra os downloads e volta o toggle para off
+      // até que a ativação seja possível.
+      wakeStatus.hidden = false;
+      wakeStatus.textContent = t('settings.wake.needsmodels');
+      wakeDownloadButtons(missing);
+      wakeEnabled.checked = false;
+      return;
+    }
+    void bridge
+      .setWakeWordEnabled({ enabled: true, modelId: wakeModel.value })
+      .then((res) => {
+        if (!res.ok) {
+          wakeStatus.hidden = false;
+          wakeStatus.textContent = res.error ?? 'erro';
+          wakeEnabled.checked = false;
+        }
+        refreshWake(true);
+      })
+      .catch(() => {
+        wakeEnabled.checked = false;
+      });
+  });
+
+  wakeModel.addEventListener('change', () => refreshWake());
+
+  if (Capacitor.isNativePlatform()) {
+    refreshWake(true);
+  } else {
+    wakeHint.hidden = false;
+  }
 
   // ------------------------------------------------------------ LLM local --
   // Fase 3 (TODO app-02): catálogo, download com progresso, carga e remoção.

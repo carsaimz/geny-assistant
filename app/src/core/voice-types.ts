@@ -83,3 +83,28 @@ export type VoiceListener = (event: VoiceEvent) => void;
 
 /** Eventos do canal `genyTts` — progresso da fala (TTS) nativo/mock. */
 export type TtsEvent = { type: 'start' } | { type: 'done' } | { type: 'error' };
+
+/**
+ * Eventos do canal `genyWake` (Fase 3, TODO android-03b) — wake word
+ * opcional, desligado por padrão no lado nativo.
+ */
+export type WakeWordEvent =
+  | { type: 'triggered'; score: number; model: string }
+  | { type: 'listening'; model: string }
+  | { type: 'error'; code: string; message?: string };
+
+/** Modelo do catálogo de wake word (estado do download na UI). */
+export interface WakeWordModelStatus {
+  id: string;
+  file: string;
+  label: string;
+  bytes: number;
+  downloaded: boolean;
+}
+
+export interface WakeWordStatus {
+  enabled: boolean;
+  modelId: string;
+  ready: boolean;
+  models: WakeWordModelStatus[];
+}

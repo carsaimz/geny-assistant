@@ -8,7 +8,7 @@
  */
 import { Capacitor, registerPlugin } from '@capacitor/core';
 import type { ConfirmationLevel, DeviceContext, ToolDefinition, ToolOutcome } from '../types';
-import type { VoiceCapabilities, VoiceEvent, TtsEvent } from './voice-types';
+import type { VoiceCapabilities, VoiceEvent, TtsEvent, WakeWordEvent, WakeWordStatus } from './voice-types';
 import type { LocalGenerateOptions, LlmEvent } from './llm-types';
 
 export interface GenyBridge {
@@ -38,15 +38,6 @@ export interface GenyBridge {
   deleteVoiceModel(options: { file: string }): Promise<{ deleted: boolean }>;
   speak(options: { text: string; language: string; engine?: string }): Promise<void>;
   stopSpeaking(): Promise<void>;
-  /**
-   * Canal único de eventos com três domínios: `genyVoice` (Fase 2),
-   * `genyLlm` (Fase 3) e `genyTts` (progresso da fala). O payload é
-   * discriminado pelo campo `type`.
-   */
-  addListener(
-    eventName: 'genyVoice' | 'genyLlm' | 'genyTts',
-    listenerFunc: (event: VoiceEvent | LlmEvent | TtsEvent) => void,
-  ): Promise<{ remove: () => void }> & { remove: () => void };
   // ---- LLM local (Fase 3, docs §6) ----
   getLlmCapabilities(): Promise<{ json: string }>;
   downloadLlmModel(options: { id: string }): Promise<void>;
@@ -58,6 +49,13 @@ export interface GenyBridge {
   stopLocalGenerate(): Promise<void>;
   /** Abre a tela nativa de Modelos (Fase 3, TODO android-03 / issue #35). */
   openModelsScreen(): Promise<void>;
+  // ---- Wake word (Fase 3, TODO android-03b) — desligado por padrão ----
+  getWakeWordStatus(): Promise<{ json: string }>;
+  setWakeWordEnabled(options: { enabled: boolean; modelId?: string }): Promise<{ ok: boolean; error?: string }>;
+  addListener(
+    eventName: 'genyVoice' | 'genyLlm' | 'genyTts' | 'genyWake',
+    listenerFunc: (event: VoiceEvent | LlmEvent | TtsEvent | WakeWordEvent) => void,
+  ): Promise<{ remove: () => void }> & { remove: () => void };
 }
 
 /** Handler de confirmação registrado pela UI (modal). */
@@ -189,16 +187,42 @@ function createWebMockBridge(): GenyBridge {
     async openModelsScreen() {
       // Mock web: não há tela nativa no navegador — no-op honesto.
     },
+    ...createWebWakeWordMock(),
     ...createWebVoiceMock(),
     ...createWebLlmMock(),
   };
 }
 
+// ---------------------------------------------- mock de wake word (web) --
+
+/**
+ * **PT** Mock de wake word no navegador: não existe captura contínua em
+ * segundo plano aqui — o mock reporta indisponível de forma honesta.
+ * **EN** Wake word mock in the browser: no background continuous capture
+ * here — the mock reports unavailability honestly.
+ */
+function createWebWakeWordMock(): Pick<GenyBridge, 'getWakeWordStatus' | 'setWakeWordEnabled'> {
+  return {
+    async getWakeWordStatus() {
+      const status: WakeWordStatus = {
+        enabled: false,
+        modelId: 'oww-hey-jarvis',
+        ready: false,
+        models: [],
+      };
+      return { json: JSON.stringify(status) };
+    },
+    async setWakeWordEnabled() {
+      return { ok: false, error: 'unavailable_on_web' };
+    },
+  };
+}
+
 // ----------------------------------------------------- mock de voz (web) --
 
-/** Registro COMPARTILHADO dos eventos dos três canais no mock web. */
-const webMockListeners = new Set<(event: VoiceEvent | LlmEvent | TtsEvent) => void>();
-const emitWebMockEvent = (event: VoiceEvent | LlmEvent | TtsEvent): void => {
+/** Registro COMPARTILHADO dos eventos dos canais no mock web. */
+const webMockListeners = new Set<(event: VoiceEvent | LlmEvent | TtsEvent | WakeWordEvent) => void>();
+const emitWebMockEvent = (event: VoiceEvent | LlmEvent | TtsEvent | WakeWordEvent): void => {
   webMockListeners.forEach((fn) => fn(event));
 };
 
@@ -431,7 +455,7 @@ function createWebLlmMock(): Pick<
       // sem geração em andamento no navegador
     },
     addListener(_eventName, listenerFunc) {
-      listeners.add(listenerFunc);
+      listeners.add(listenerFunc as (event: VoiceEvent | LlmEvent | TtsEvent | WakeWordEvent) => void);
       const handle = {
         remove: (): void => {
           listeners.delete(listenerFunc);

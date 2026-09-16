@@ -148,7 +148,8 @@ export class VoiceController {
 
   // ------------------------------------------------------- tela de voz --
 
-  private openScreen(): void {
+  // Pública: usada pelo main.ts quando o wake word (genyWake) dispara.
+  openScreen(): void {
     if (!this.screen || this.screenOpen) return;
     this.screen.screen.hidden = false;
     this.screen.close.setAttribute('aria-label', t('voice.screen.close'));

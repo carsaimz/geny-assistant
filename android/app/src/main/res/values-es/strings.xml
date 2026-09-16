@@ -36,4 +36,8 @@
     <string name="models_status_done">%1$s listo</string>
     <string name="models_error_download">Fallo en la descarga: %1$s</string>
     <string name="models_error_delete">No se pudo eliminar</string>
+    <string name="wake_word_detected">Palabra de activación detectada</string>
+    <string name="wake_word_tap_to_open">Toca para abrir Geny</string>
+    <string name="wake_word_listening_title">Escuchando la palabra de activación</string>
+    <string name="wake_word_listening_text">Di la frase de activación para despertar a Geny</string>
 </resources>

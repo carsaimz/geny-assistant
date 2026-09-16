@@ -338,9 +338,13 @@ class VoiceManager(
             )
             return
         }
-        val model = when (kind) {
+        val model: VoiceModelInfo? = when (kind) {
             "stt" -> VoiceCatalog.sttById(id)
             "vad" -> if (id == VoiceCatalog.VAD_SILERO.id) VoiceCatalog.VAD_SILERO else null
+            // Wake word (TODO android-03b): mesmo contrato de download.
+            "wakeword" -> WakeWordCatalog.byId(id)?.let { m ->
+                VoiceModelInfo(m.id, m.kind, m.fileName, m.url, m.sha256, m.bytes)
+            }
             else -> null
         }
         if (model == null) {

@@ -198,6 +198,13 @@ async function boot(): Promise<void> {
     window.dispatchEvent(new CustomEvent('geny:llm-event', { detail: event }));
   });
 
+  // Wake word (TODO android-03b): abre a tela de voz quando a frase é detectada.
+  void bridge.addListener('genyWake', (event) => {
+    if (event.type === 'triggered') {
+      voice.openScreen();
+    }
+  });
+
   await chat.init();
   await voice.init();
   redrawStatic(input);

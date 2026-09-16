@@ -88,5 +88,12 @@
   "settings.tts.engine.system": "System",
   "settings.tts.engine.piper": "Piper (neural)",
   "settings.tts.piper.unavailable": "Piper engine not available in this installation — using system voice.",
-  "settings.tts.espeak": "Phoneme data (espeak, ~9 MB)"
+  "settings.tts.espeak": "Phoneme data (espeak, ~9 MB)",
+  "settings.wake.title": "Wake word",
+  "settings.wake.enable": "Listen for the wake phrase in background",
+  "settings.wake.phrase": "Wake phrase",
+  "settings.wake.offbydefault": "Off by default; audio never leaves the device.",
+  "settings.wake.unavailable": "Wake word is only available in the Android app.",
+  "settings.wake.needsmodels": "Download the models below before enabling.",
+  "settings.wake.listening": "Enabled — listening for the wake phrase…"
 }

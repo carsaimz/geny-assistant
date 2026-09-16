@@ -88,5 +88,12 @@
   "settings.tts.engine.system": "システム",
   "settings.tts.engine.piper": "Piper（ニューラル）",
   "settings.tts.piper.unavailable": "このインストールでは Piper エンジンを利用できません — システム音声を使用します。",
-  "settings.tts.espeak": "音素データ（espeak、約 9 MB）"
+  "settings.tts.espeak": "音素データ（espeak、約 9 MB）",
+  "settings.wake.title": "ウェイクワード",
+  "settings.wake.enable": "バックグラウンドでウェイクフレーズを待機",
+  "settings.wake.phrase": "ウェイクフレーズ",
+  "settings.wake.offbydefault": "デフォルトはオフ。音声は端末の外に出ません。",
+  "settings.wake.unavailable": "ウェイクワードは Android アプリでのみ利用できます。",
+  "settings.wake.needsmodels": "有効にする前に下のモデルをダウンロードしてください。",
+  "settings.wake.listening": "有効 — ウェイクフレーズを待機中…"
 }

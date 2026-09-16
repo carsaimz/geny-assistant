@@ -88,5 +88,12 @@
   "settings.tts.engine.system": "系统",
   "settings.tts.engine.piper": "Piper（神经）",
   "settings.tts.piper.unavailable": "此安装中 Piper 引擎不可用 — 使用系统语音。",
-  "settings.tts.espeak": "音素数据（espeak，约 9 MB）"
+  "settings.tts.espeak": "音素数据（espeak，约 9 MB）",
+  "settings.wake.title": "唤醒词",
+  "settings.wake.enable": "在后台聆听唤醒短语",
+  "settings.wake.phrase": "唤醒短语",
+  "settings.wake.offbydefault": "默认关闭；音频不会离开设备。",
+  "settings.wake.unavailable": "唤醒词仅在 Android 应用中可用。",
+  "settings.wake.needsmodels": "启用前请先下载以下模型。",
+  "settings.wake.listening": "已启用——正在聆听唤醒短语…"
 }

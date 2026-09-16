@@ -88,5 +88,12 @@
   "settings.tts.engine.system": "System",
   "settings.tts.engine.piper": "Piper (neural)",
   "settings.tts.piper.unavailable": "Piper-Engine in dieser Installation nicht verfügbar — Systemstimme wird genutzt.",
-  "settings.tts.espeak": "Phonemdaten (espeak, ~9 MB)"
+  "settings.tts.espeak": "Phonemdaten (espeak, ~9 MB)",
+  "settings.wake.title": "Aktivierungswort",
+  "settings.wake.enable": "Im Hintergrund nach dem Aktivierungssatz lauschen",
+  "settings.wake.phrase": "Aktivierungssatz",
+  "settings.wake.offbydefault": "Standardmäßig aus; Audio verlässt das Gerät nicht.",
+  "settings.wake.unavailable": "Wake word ist nur in der Android-App verfügbar.",
+  "settings.wake.needsmodels": "Vor dem Aktivieren die Modelle unten herunterladen.",
+  "settings.wake.listening": "Aktiviert — lauscht auf den Aktivierungssatz…"
 }

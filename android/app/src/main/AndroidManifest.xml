@@ -104,6 +104,12 @@
             android:exported="false"
             android:foregroundServiceType="mediaPlayback" />
 
+        <!-- Wake word em primeiro plano (Fase 3, TODO android-03b) — desligado por padrão -->
+        <service
+            android:name=".voice.WakeWordService"
+            android:exported="false"
+            android:foregroundServiceType="microphone" />
+
         <!-- Leitura de notificacoes (§9.3) -->
         <service
             android:name=".listener.GenyNotificationListenerService"

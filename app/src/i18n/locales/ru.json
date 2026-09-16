@@ -88,5 +88,12 @@
   "settings.tts.engine.system": "Системный",
   "settings.tts.engine.piper": "Piper (нейронный)",
   "settings.tts.piper.unavailable": "Движок Piper недоступен в этой установке — используется системный голос.",
-  "settings.tts.espeak": "Фонемные данные (espeak, ~9 МБ)"
+  "settings.tts.espeak": "Фонемные данные (espeak, ~9 МБ)",
+  "settings.wake.title": "Ключевая фраза",
+  "settings.wake.enable": "Слушать ключевую фразу в фоне",
+  "settings.wake.phrase": "Ключевая фраза",
+  "settings.wake.offbydefault": "По умолчанию выключено; звук не покидает устройство.",
+  "settings.wake.unavailable": "Wake word доступен только в приложении (Android).",
+  "settings.wake.needsmodels": "Перед включением скачайте модели ниже.",
+  "settings.wake.listening": "Включено — слушаем ключевую фразу…"
 }

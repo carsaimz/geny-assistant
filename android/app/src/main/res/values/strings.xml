@@ -38,4 +38,8 @@
     <string name="models_status_done">%1$s ready</string>
     <string name="models_error_download">Download failed: %1$s</string>
     <string name="models_error_delete">Could not delete</string>
+    <string name="wake_word_detected">Wake word detected</string>
+    <string name="wake_word_tap_to_open">Tap to open Geny</string>
+    <string name="wake_word_listening_title">Listening for wake word</string>
+    <string name="wake_word_listening_text">Say the wake phrase to wake Geny</string>
 </resources>

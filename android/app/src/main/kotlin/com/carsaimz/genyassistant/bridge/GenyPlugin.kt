@@ -37,6 +37,8 @@ import com.carsaimz.genyassistant.tools.ToolRegistry
 import com.carsaimz.genyassistant.tools.WebSearchTool
 import com.carsaimz.genyassistant.voice.TtsService
 import com.carsaimz.genyassistant.voice.VoiceManager
+import com.carsaimz.genyassistant.voice.WakeWordCatalog
+import com.carsaimz.genyassistant.voice.WakeWordService
 import com.getcapacitor.JSArray
 import com.getcapacitor.JSObject
 import com.getcapacitor.Plugin
@@ -119,6 +121,13 @@ class GenyPlugin : Plugin() {
         // Progresso da fala (TTS) → canal `genyTts` para a UI (mãos-livres).
         TtsService.eventSink = { state ->
             notifyListeners(EVENT_TTS, JSObject().put("type", state))
+        }
+
+        // Wake word (TODO android-03b) → canal `genyWake` para a UI.
+        WakeWordService.eventSink = { payload ->
+            val obj = JSObject()
+            payload.forEach { (k, v) -> obj.put(k, v) }
+            notifyListeners(EVENT_WAKE, obj)
         }
     }
 
@@ -573,6 +582,94 @@ class GenyPlugin : Plugin() {
         call.resolve()
     }
 
+    // ------------------------------------------------ Wake word (Fase 3) --
+    // TODO android-03b: wake word opcional (openWakeWord/ONNX), DESLIGADO por
+    // padrão. Estado persistido nos fatos do Room; serviço em primeiro plano
+    // com microfone; eventos no canal `genyWake`.
+
+    @PluginMethod
+    fun getWakeWordStatus(call: PluginCall) {
+        val enabled = db.recallFact(FACT_WAKE_ENABLED) == "1"
+        val modelId = db.recallFact(FACT_WAKE_MODEL) ?: WakeWordCatalog.WAKE_WORDS.first().id
+        val modelsDir = File(context.filesDir, "models")
+        val ready = com.carsaimz.genyassistant.voice.OpenWakeWordEngine.featuresReady(modelsDir)
+        val models = JSArray()
+        for (m in WakeWordCatalog.ALL) {
+            val file = File(modelsDir, m.fileName)
+            models.put(
+                JSObject()
+                    .put("id", m.id)
+                    .put("label", m.label)
+                    .put("file", m.fileName)
+                    .put("bytes", m.bytes)
+                    .put("downloaded", file.exists() && file.length() > 0),
+            )
+        }
+        call.resolve(
+            JSObject().put(
+                "json",
+                JSObject()
+                    .put("enabled", enabled)
+                    .put("modelId", modelId)
+                    .put("ready", ready)
+                    .put("models", models)
+                    .toString(),
+            ),
+        )
+    }
+
+    @PluginMethod
+    fun setWakeWordEnabled(call: PluginCall) {
+        val enabled = call.getBoolean("enabled") ?: false
+        val modelId = call.getString("modelId") ?: WakeWordCatalog.WAKE_WORDS.first().id
+        val model = WakeWordCatalog.wakeWordById(modelId)
+        if (enabled && model == null) {
+            call.resolve(JSObject().put("ok", false).put("error", "modelo desconhecido"))
+            return
+        }
+        if (!enabled) {
+            db.rememberFact(FACT_WAKE_ENABLED, "0", System.currentTimeMillis())
+            context.startService(
+                Intent(context, WakeWordService::class.java).setAction(WakeWordService.ACTION_STOP),
+            )
+            audit.log("voice", "wake word desativado")
+            call.resolve(JSObject().put("ok", true))
+            return
+        }
+        // Permissão EM CONTEXTO: pede só no toque do usuário (docs §14).
+        if (getPermissionStates()["microphone"] != com.getcapacitor.PermissionState.GRANTED) {
+            requestPermissionForAlias("microphone", call, "onWakeWordPermission")
+            return
+        }
+        val modelsDir = File(context.filesDir, "models")
+        val modelFile = File(modelsDir, model!!.fileName)
+        if (!com.carsaimz.genyassistant.voice.OpenWakeWordEngine.featuresReady(modelsDir) ||
+            !(modelFile.exists() && modelFile.length() > 0)
+        ) {
+            call.resolve(JSObject().put("ok", false).put("error", "model_missing"))
+            return
+        }
+        db.rememberFact(FACT_WAKE_ENABLED, "1", System.currentTimeMillis())
+        db.rememberFact(FACT_WAKE_MODEL, modelId, System.currentTimeMillis())
+        val service = Intent(context, WakeWordService::class.java)
+            .setAction(WakeWordService.ACTION_START)
+            .putExtra(WakeWordService.EXTRA_MODEL, model.fileName)
+        context.startForegroundService(service)
+        audit.log("voice", "wake word ativado: model=$modelId")
+        call.resolve(JSObject().put("ok", true))
+    }
+
+    @PermissionCallback
+    fun onWakeWordPermission(call: PluginCall) {
+        if (getPermissionStates()["microphone"] == com.getcapacitor.PermissionState.GRANTED) {
+            audit.log("voice", "permissão concedida: ativando wake word")
+            setWakeWordEnabled(call)
+        } else {
+            audit.log("voice", "permissão de microfone negada (wake word)")
+            call.resolve(JSObject().put("ok", false).put("error", "denied"))
+        }
+    }
+
     // -------------------------------------------------------- Modelos (UI) --
     // Fase 3 (TODO android-03, issue #35): abre a tela nativa de Modelos —
     // espelho offline da seção web, com progresso, SHA-256 e espaço em disco.
@@ -600,5 +697,8 @@ class GenyPlugin : Plugin() {
         const val EVENT_VOICE = "genyVoice"
         const val EVENT_TTS = "genyTts"
         const val EVENT_LLM = "genyLlm"
+        const val EVENT_WAKE = "genyWake"
+        const val FACT_WAKE_ENABLED = "wakeword.enabled"
+        const val FACT_WAKE_MODEL = "wakeword.model"
     }
 }

@@ -7,6 +7,7 @@ import com.carsaimz.genyassistant.ai.ModelManager
 import com.carsaimz.genyassistant.voice.PiperTts
 import com.carsaimz.genyassistant.voice.PiperVoiceCatalog
 import com.carsaimz.genyassistant.voice.VoiceCatalog
+import com.carsaimz.genyassistant.voice.WakeWordCatalog
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -121,6 +122,7 @@ class ModelsRepository(private val context: Context) {
         VoiceCatalog.ALL.firstOrNull { it.id == entry.id }?.let { return it.url }
         PiperVoiceCatalog.VOICES.firstOrNull { it.id == entry.id }?.let { return it.url }
         PiperVoiceCatalog.ESPEAK_DATA.takeIf { it.id == entry.id }?.let { return it.url }
+        WakeWordCatalog.byId(entry.id)?.let { return it.url }
         return LlmCatalog.byId(entry.id)?.url.orEmpty()
     }
 

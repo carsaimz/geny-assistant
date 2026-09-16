@@ -88,5 +88,12 @@
   "settings.tts.engine.system": "النظام",
   "settings.tts.engine.piper": "Piper (عصبي)",
   "settings.tts.piper.unavailable": "محرك Piper غير متوفر في هذا التثبيت — سيُستخدم صوت النظام.",
-  "settings.tts.espeak": "بيانات الأصوات (espeak، ~9 MB)"
+  "settings.tts.espeak": "بيانات الأصوات (espeak، ~9 MB)",
+  "settings.wake.title": "كلمة التنشيط",
+  "settings.wake.enable": "الاستماع لعبارة التنشيط في الخلفية",
+  "settings.wake.phrase": "عبارة التنشيط",
+  "settings.wake.offbydefault": "مُعطّلة افتراضيًا؛ الصوت لا يترك الجهاز.",
+  "settings.wake.unavailable": "كلمة التنشيط متاحة فقط في تطبيق أندرويد.",
+  "settings.wake.needsmodels": "نزّل النماذج أدناه قبل التفعيل.",
+  "settings.wake.listening": "مفعّلة — نستمع لعبارة التنشيط…"
 }

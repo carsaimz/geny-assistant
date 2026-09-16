@@ -3,23 +3,25 @@ package com.carsaimz.genyassistant.models
 import com.carsaimz.genyassistant.ai.LlmCatalog
 import com.carsaimz.genyassistant.voice.PiperVoiceCatalog
 import com.carsaimz.genyassistant.voice.VoiceCatalog
+import com.carsaimz.genyassistant.voice.WakeWordCatalog
 
 /**
  * Entrada unificada do catálogo de modelos para a tela nativa
  * (TODO android-03, issue #35).
  *
- * **PT** Espelha os três catálogos existentes (`VoiceCatalog` stt/vad,
- * `PiperVoiceCatalog` tts e `LlmCatalog` llm) numa única lista estável para
- * a UI nativa. Todos os modelos são baixados pelo [com.carsaimz.genyassistant.ai.ModelManager]
- * com SHA-256 pinado — nada é embutido no APK e nada sai do dispositivo.
- * **EN** Mirrors the three existing catalogs (stt/vad, tts and llm) into a
- * single stable list for the native UI. Every model is downloaded by
- * [com.carsaimz.genyassistant.ai.ModelManager] with a pinned SHA-256 — nothing
- * ships inside the APK and nothing leaves the device.
+ * **PT** Espelha os quatro catálogos existentes (`VoiceCatalog` stt/vad,
+ * `PiperVoiceCatalog` tts, `LlmCatalog` llm e `WakeWordCatalog` wakeword)
+ * numa única lista estável para a UI nativa. Todos os modelos são baixados
+ * pelo [com.carsaimz.genyassistant.ai.ModelManager] com SHA-256 pinado —
+ * nada é embutido no APK e nada sai do dispositivo.
+ * **EN** Mirrors the four existing catalogs (stt/vad, tts, llm and wakeword)
+ * into a single stable list for the native UI. Every model is downloaded by
+ * [com.carsaimz.genyassistant.ai.ModelManager] with a pinned SHA-256 —
+ * nothing ships inside the APK and nothing leaves the device.
  */
 data class ModelEntry(
     val id: String,
-    /** stt | vad | tts | llm — agrupamento visual na tela. */
+    /** stt | vad | tts | llm | wakeword — agrupamento visual na tela. */
     val kind: String,
     val fileName: String,
     val label: String,
@@ -29,7 +31,7 @@ data class ModelEntry(
 
 object ModelsCatalog {
 
-    /** Catálogo completo na ordem de exibição: stt → vad → tts → llm. */
+    /** Catálogo completo na ordem de exibição: stt → vad → tts → llm → wakeword. */
     fun all(): List<ModelEntry> {
         val sttAndVad = VoiceCatalog.ALL.map { m ->
             ModelEntry(m.id, m.kind, m.fileName, labelFor(m.id, m.fileName, m.bytes), m.bytes, m.sha256)
@@ -44,7 +46,10 @@ object ModelsCatalog {
         val llm = LlmCatalog.MODELS.map { m ->
             ModelEntry(m.id, "llm", m.fileName, m.label, m.bytes, m.sha256)
         }
-        return sttAndVad + tts + llm
+        val wake = WakeWordCatalog.ALL.map { m ->
+            ModelEntry(m.id, m.kind, m.fileName, m.label, m.bytes, m.sha256)
+        }
+        return sttAndVad + tts + llm + wake
     }
 
     /** Rótulo curto quando o catálogo de origem não traz um pronto (stt/vad/espeak). */

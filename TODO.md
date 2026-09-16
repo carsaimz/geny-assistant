@@ -35,7 +35,7 @@
 - [x] `core-03` TTS neural via Piper (pt-BR Faber, pt-PT Tugão, en-US Amy): espeak-ng submodule pinado + VITS via ONNX Runtime existente, download sob demanda com SHA-256, fallback para TTS do sistema (#3, v0.3.0-alpha.4)
 - [x] `core-05b` Streaming de tokens na ponte (`llmToken` + botão Parar) + temperatura/seed na UI (v0.3.0-alpha.4)
 - [x] `android-03` Tela nativa de Modelos com progresso, hash e espaço (#35, v0.3.0-alpha.6)
-- [ ] `android-03b` Wake word opcional desligado por padrão (openWakeWord/ONNX)
+- [x] `android-03b` Wake word opcional desligado por padrão — openWakeWord/ONNX (modelos v0.5.1 com SHA-256 pinado, serviço de primeiro plano, canal `genyWake`) (#37)
 - [ ] `core-04` UniFFI: bindings geny-core ↔ Kotlin (`feature = "uniffi"`)
 - [x] `android-04` Migração do GenyDb para Room + KSP (#36)
 - [x] Prompt de sistema por idioma/cultura (do core i18n) — `buildSystemPrompt` no app espelha `i18n.rs` e serve os backends remoto e local (v0.3.0-alpha.4)

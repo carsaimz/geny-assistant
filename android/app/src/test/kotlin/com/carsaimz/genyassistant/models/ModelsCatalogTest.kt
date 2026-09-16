@@ -14,9 +14,10 @@ import org.junit.Test
 class ModelsCatalogTest {
 
     @Test
-    fun catalogoCompletoTem13Entradas() {
+    fun catalogoCompletoTem19Entradas() {
         // 4 whisper + 1 silero (stt/vad) + 3 piper + 1 espeak (tts) + 4 gguf (llm)
-        assertEquals(13, ModelsCatalog.all().size)
+        // + 2 feature (melspectrogram/embedding) + 4 frases (wakeword)
+        assertEquals(19, ModelsCatalog.all().size)
     }
 
     @Test
@@ -26,6 +27,7 @@ class ModelsCatalogTest {
         assertEquals(1, porKind["vad"]?.size)
         assertEquals(4, porKind["tts"]?.size)
         assertEquals(4, porKind["llm"]?.size)
+        assertEquals(6, porKind["wakeword"]?.size)
     }
 
     @Test
@@ -48,11 +50,14 @@ class ModelsCatalogTest {
     }
 
     @Test
-    fun ordemDeExibicaoSttVadTtsLlm() {
+    fun ordemDeExibicaoSttVadTtsLlmWake() {
         val kinds = ModelsCatalog.all().map { it.kind }.distinct()
-        assertEquals(listOf("stt", "vad", "tts", "llm"), kinds)
+        assertEquals(listOf("stt", "vad", "tts", "llm", "wakeword"), kinds)
         assertEquals("whisper-tiny", ModelsCatalog.all().first().id)
         assertEquals("espeak-data", ModelsCatalog.all()[8].id)
+        // Wakeword entra DEPOIS do llm (evolução do catálogo sem reordenar).
+        // 13: melspectrogram, 14: embedding, 15: primeira frase (hey-jarvis).
+        assertEquals("oww-hey-jarvis", ModelsCatalog.all()[15].id)
     }
 
     @Test
