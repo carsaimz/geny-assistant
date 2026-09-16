@@ -36,7 +36,7 @@
 - [x] `core-05b` Streaming de tokens na ponte (`llmToken` + botão Parar) + temperatura/seed na UI (v0.3.0-alpha.4)
 - [x] `android-03` Tela nativa de Modelos com progresso, hash e espaço (#35, v0.3.0-alpha.6)
 - [x] `android-03b` Wake word opcional desligado por padrão — openWakeWord/ONNX (modelos v0.5.1 com SHA-256 pinado, serviço de primeiro plano, canal `genyWake`) (#37)
-- [ ] `core-04` UniFFI: bindings geny-core ↔ Kotlin (`feature = "uniffi"`)
+- [x] `core-04` UniFFI: bindings geny-core ↔ Kotlin — `libgeny_core.so` (3 ABIs no CI) + Kotlin gerado versionado, `CoreBridge` com fallback gracioso, prompt de sistema do Rust no nativo (#38)
 - [x] `android-04` Migração do GenyDb para Room + KSP (#36)
 - [x] Prompt de sistema por idioma/cultura (do core i18n) — `buildSystemPrompt` no app espelha `i18n.rs` e serve os backends remoto e local (v0.3.0-alpha.4)
 - [x] Seleção automática local/remoto conforme bateria, rede e tarefa — modo `auto` com `pickBackend` puro (bateria >15%, rede, poupança); padrão novo (v0.3.0-alpha.5)

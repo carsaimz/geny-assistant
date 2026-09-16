@@ -16,5 +16,13 @@
 # org.json acessado via reflexao em alguns caminhos
 -dontwarn org.json.**
 
+
+# UniFFI + JNA (TODO core-04): os bindings acessam libgeny_core.so via JNA
+# (Native.load resolve campos/métodos por nome — reflexão estrutural).
+-keep class com.sun.jna.** { *; }
+-keepclassmembers class * extends com.sun.jna.** { *; }
+-dontwarn com.sun.jna.**
+-keep class uniffi.geny_core.** { *; }
+
 # Mantem linhas de stacktrace para o log de auditoria local
 -keepattributes SourceFile,LineNumberTable

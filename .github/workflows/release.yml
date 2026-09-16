@@ -33,6 +33,41 @@ jobs:
         with:
           gradle-version: "8.9"
 
+      # TODO core-04: núcleo Rust (UniFFI) para as 3 ABIs — igual ao Build APK.
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: |
+            aarch64-linux-android
+            armv7-linux-androideabi
+            x86_64-linux-android
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: core
+
+      - name: Instalar cargo-ndk
+        run: cargo install cargo-ndk --locked
+
+      - name: Instalar NDK r27
+        uses: nttld/setup-ndk@v1
+        id: ndk
+        with:
+          ndk-version: r27c
+
+      - name: Build libgeny_core.so (uniffi, 3 ABIs)
+        working-directory: core
+        env:
+          ANDROID_NDK_HOME: ${{ steps.ndk.outputs.ndk-path }}
+        run: |
+          set -e
+          for pair in "arm64-v8a:aarch64-linux-android" "armeabi-v7a:armv7-linux-androideabi" "x86_64:x86_64-linux-android"; do
+            abi="${pair%%:*}"; target="${pair##*:}"
+            cargo ndk --target "$target" --platform 26 -- build --release --features uniffi
+            mkdir -p ../android/app/src/main/jniLibs/$abi
+            cp target/$target/release/libgeny_core.so ../android/app/src/main/jniLibs/$abi/
+          done
+          ls -la ../android/app/src/main/jniLibs/*/
+
       # NDK + CMake para o build nativo do whisper.cpp (docs §17.2).
       - name: Instalar NDK e CMake
         run: |

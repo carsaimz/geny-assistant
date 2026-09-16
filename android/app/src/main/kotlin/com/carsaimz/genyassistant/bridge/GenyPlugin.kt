@@ -11,6 +11,7 @@ import android.os.Build
 import android.os.VibrationEffect
 import android.os.Vibrator
 import android.os.VibratorManager
+import com.carsaimz.genyassistant.ai.CoreBridge
 import com.carsaimz.genyassistant.ai.LocalLlmManager
 import com.carsaimz.genyassistant.data.GenyDb
 import com.carsaimz.genyassistant.models.ModelsActivity
@@ -527,7 +528,18 @@ class GenyPlugin : Plugin() {
         val messagesJson = call.getString("messagesJson")
             ?: call.getArray("messages")?.toString()
             ?: "[]"
-        val system = call.getString("system").orEmpty()
+        val systemRaw = call.getString("system").orEmpty()
+        // Fallback do prompt no lado nativo (TODO core-04): quando o app não
+        // envia o prompt (buildSystemPrompt), o núcleo Rust real (UniFFI)
+        // constrói o prompt por idioma/cultura com o catálogo REAL de
+        // ferramentas; sem libgeny_core.so, cai no fallback do manager.
+        val system = systemRaw.ifBlank {
+            CoreBridge.buildSystemPrompt(
+                java.util.Locale.getDefault().toLanguageTag(),
+                registry.catalogJson(),
+                privacyStatement = true,
+            ).orEmpty()
+        }
         val maxTokens = call.getInt("maxTokens", 256) ?: 256
         val temperature = call.getFloat("temperature", 0.7f) ?: 0.7f
         val topP = call.getFloat("topP", 0.9f) ?: 0.9f

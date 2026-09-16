@@ -42,16 +42,32 @@ jobs:
           ndk-version: r27c
       - name: Instalar cargo-ndk
         run: cargo install cargo-ndk --locked
-      - name: Build
+      # TODO core-04: constrói o core COM a feature uniffi — o .so expõe
+      # os exports FFI consumidos pelo Kotlin (libgeny_core.so + JNA).
+      - name: Build (uniffi)
         working-directory: core
         env:
           ANDROID_NDK_HOME: ${{ steps.ndk.outputs.ndk-path }}
-        run: cargo ndk --target ${{ matrix.target }} --platform 26 -- build --release
+        run: cargo ndk --target ${{ matrix.target }} --platform 26 -- build --release --features uniffi
       - uses: actions/upload-artifact@v7
         with:
           name: geny-core-${{ matrix.abi }}
           path: core/target/${{ matrix.target }}/release/libgeny_core.so
-          if-no-files-found: ignore
+          if-no-files-found: error
+
+      # Verificação de desvio (só no 1º ABI — determinístico): regenera os
+      # bindings Kotlin do .so host (debug, sem strip) e COMPARA com o
+      # arquivo versionado. Se mudou a superfície Rust sem regenerar, falha.
+      - name: Verificar bindings Kotlin (drift)
+        if: matrix.abi == 'arm64-v8a'
+        working-directory: core
+        run: |
+          cargo build --features uniffi
+          cargo run --features uniffi --bin uniffi-bindgen generate \
+            --library target/debug/libgeny_core.so \
+            --language kotlin --out-dir /tmp/gen-check --no-format
+          diff -u ../android/app/src/main/gen-kotlin/uniffi/geny_core/geny_core.kt \
+            /tmp/gen-check/uniffi/geny_core/geny_core.kt
 
   # ci-02 (Fase 3): matriz dos wrappers JNI C++ por ABI — whisper.cpp (STT),
   # espeak-ng (fonemização do Piper) e llama.cpp (LLM local) — com artefatos

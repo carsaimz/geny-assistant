@@ -17,6 +17,9 @@ pub mod orchestrator;
 pub mod session;
 pub mod tools;
 
+#[cfg(feature = "uniffi")]
+pub mod uniffi_api;
+
 #[cfg(feature = "vad")]
 pub mod vad;
 
@@ -31,6 +34,10 @@ pub const CORE_VERSION: &str = env!("CARGO_PKG_VERSION");
 
 /// Identificador do produto, usado em prompts e logs locais.
 pub const PRODUCT_NAME: &str = "Geny Assistant";
+
+// Scaffolding UniFFI (TODO core-04): gera os exports FFI para o bindgen.
+#[cfg(feature = "uniffi")]
+uniffi::setup_scaffolding!("geny_core");
 
 #[cfg(test)]
 mod tests {

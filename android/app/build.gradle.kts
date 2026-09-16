@@ -94,6 +94,13 @@ android {
     testOptions {
         unitTests.isIncludeAndroidResources = true
     }
+
+    sourceSets {
+        // Bindings UniFFI gerados do geny-core (TODO core-04). Arquivo gerado
+        // versionado no repo: a geração é determinística a partir do Rust e
+        // os jobs gradle do CI não compilam o core.
+        getByName("main").java.srcDirs("src/main/gen-kotlin")
+    }
 }
 
 dependencies {
@@ -113,6 +120,8 @@ dependencies {
     implementation(libs.androidx.room.runtime)
     implementation(libs.androidx.room.ktx)
     ksp(libs.androidx.room.compiler)
+    // UniFFI (TODO core-04): runtime JNA para libgeny_core.so.
+    implementation(libs.jna) { artifact { type = "aar" } }
 
     testImplementation(libs.junit)
     // Robolectric: testes JVM do Room com SQLite real (TODO android-04).
