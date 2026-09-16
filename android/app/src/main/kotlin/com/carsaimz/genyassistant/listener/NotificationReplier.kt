@@ -2,10 +2,9 @@ package com.carsaimz.genyassistant.listener
 
 import android.app.Notification
 import android.app.PendingIntent
-import android.app.RemoteInput
 import android.content.Context
 import android.content.Intent
-import android.os.Bundle
+import androidx.core.app.RemoteInput
 
 /**
  * Envio de resposta a uma notificação via RemoteInput (TODO android-07, #43).
@@ -54,17 +53,17 @@ object NotificationReplier {
     private fun trySend(
         context: Context,
         action: Notification.Action,
-        remoteInput: RemoteInput,
+        remoteInput: android.app.RemoteInput,
         text: String,
     ): Boolean {
         val pending = action.actionIntent ?: return false
         return try {
             val intent = Intent().addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-            val results = Bundle()
-            results.putCharSequence(remoteInput.resultKey, text)
-            // Equivalente ao contrato de RemoteInput.addResultsTo: o app de
-            // origem lê EXTRA_RESULTS com RemoteInput.getResultsFromIntent.
-            intent.putExtra(RemoteInput.EXTRA_RESULTS, results)
+            // androidx.core.app.RemoteInput.addResultsTo embute o mecanismo
+            // correto por versão (extra/clipData) que o app de origem lê com
+            // RemoteInput.getResultsFromIntent.
+            val compatInput = RemoteInput.Builder(remoteInput.resultKey).build()
+            RemoteInput.addResultsTo(arrayOf(compatInput), intent)
             pending.send(context, 0, intent)
             true
         } catch (_: PendingIntent.CanceledException) {
