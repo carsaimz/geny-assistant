@@ -13,6 +13,7 @@ import android.os.Vibrator
 import android.os.VibratorManager
 import com.carsaimz.genyassistant.ai.LocalLlmManager
 import com.carsaimz.genyassistant.data.GenyDb
+import com.carsaimz.genyassistant.models.ModelsActivity
 import com.carsaimz.genyassistant.security.AuditLog
 import com.carsaimz.genyassistant.security.ConfirmationManager
 import com.carsaimz.genyassistant.security.KeystoreManager
@@ -569,6 +570,19 @@ class GenyPlugin : Plugin() {
     fun stopLocalGenerate(call: PluginCall) {
         audit.log("llm", "parada de geracao pedida pela UI")
         llmManager().stopGeneration()
+        call.resolve()
+    }
+
+    // -------------------------------------------------------- Modelos (UI) --
+    // Fase 3 (TODO android-03, issue #35): abre a tela nativa de Modelos —
+    // espelho offline da seção web, com progresso, SHA-256 e espaço em disco.
+
+    @PluginMethod
+    fun openModelsScreen(call: PluginCall) {
+        audit.log("bridge", "abrir tela nativa de modelos")
+        val intent = Intent(context, ModelsActivity::class.java)
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        context.startActivity(intent)
         call.resolve()
     }
 

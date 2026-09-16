@@ -14,4 +14,26 @@
     <string name="notif_channel_tts_desc">Lee en voz alta las respuestas de Geny en el dispositivo</string>
     <string name="notif_tts_title">Geny está hablando</string>
     <string name="notif_tts_body">Toca para volver a la conversación</string>
+
+    <!-- Pantalla nativa de modelos (Fase 3, android-03 / issue #35) -->
+    <string name="models_title">Modelos</string>
+    <string name="models_disk_free">Libre: %1$s • Modelos: %2$s</string>
+    <string name="models_section_stt">Voz a texto (Whisper)</string>
+    <string name="models_section_vad">Detección de voz (VAD)</string>
+    <string name="models_section_tts">Voces neuronales (Piper)</string>
+    <string name="models_section_llm">Modelo local de chat (GGUF)</string>
+    <string name="models_kind_stt">STT</string>
+    <string name="models_kind_vad">VAD</string>
+    <string name="models_kind_tts">TTS</string>
+    <string name="models_kind_llm">LLM</string>
+    <string name="models_sha_label">%1$s • %2$s • SHA-256 %3$s</string>
+    <string name="models_action_download">Descargar</string>
+    <string name="models_action_delete">Eliminar</string>
+    <string name="models_status_downloaded">Descargado (%1$s)</string>
+    <string name="models_status_not_downloaded">No descargado</string>
+    <string name="models_status_downloading">Descargando… %1$d%%</string>
+    <string name="models_status_extracting">Extrayendo…</string>
+    <string name="models_status_done">%1$s listo</string>
+    <string name="models_error_download">Fallo en la descarga: %1$s</string>
+    <string name="models_error_delete">No se pudo eliminar</string>
 </resources>

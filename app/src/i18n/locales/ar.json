@@ -23,6 +23,7 @@
   "settings.mode.selfhosted": "استضافة ذاتية",
   "settings.baseUrl": "العنوان الأساسي (متوافق مع OpenAI)",
   "settings.model": "النموذج",
+  "settings.model.nativeScreen": "افتح شاشة النماذج الأصلية",
   "settings.apiKey": "مفتاح API",
   "settings.apiKey.desc": "يبقى على جهازك فقط (Keystore في أندرويد).",
   "settings.language": "اللغة",

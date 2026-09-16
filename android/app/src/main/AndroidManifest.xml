@@ -81,6 +81,12 @@
             </intent-filter>
         </activity>
 
+        <!-- Tela nativa de Modelos (Fase 3, android-03 / issue #35) -->
+        <activity
+            android:name=".models.ModelsActivity"
+            android:exported="false"
+            android:label="@string/models_title" />
+
         <!-- Servico em primeiro plano do assistente (§3.1) -->
         <service
             android:name=".service.AssistantForegroundService"

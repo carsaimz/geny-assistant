@@ -23,6 +23,7 @@
   "settings.mode.selfhosted": "自托管",
   "settings.baseUrl": "基础 URL（兼容 OpenAI）",
   "settings.model": "模型",
+  "settings.model.nativeScreen": "打开原生模型界面",
   "settings.apiKey": "API 密钥",
   "settings.apiKey.desc": "仅保存在你的设备上（Android 上使用 Keystore）。",
   "settings.language": "语言",

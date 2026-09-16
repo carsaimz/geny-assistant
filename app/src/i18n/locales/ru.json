@@ -23,6 +23,7 @@
   "settings.mode.selfhosted": "Свой сервер (self-hosted)",
   "settings.baseUrl": "Базовый URL (совместимый с OpenAI)",
   "settings.model": "Модель",
+  "settings.model.nativeScreen": "Открыть нативный экран моделей",
   "settings.apiKey": "API-ключ",
   "settings.apiKey.desc": "Хранится только на вашем устройстве (Keystore на Android).",
   "settings.language": "Язык",

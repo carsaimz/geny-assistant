@@ -4,6 +4,7 @@
  * delegada ao Keystore via ponte nativa; no web fica em localStorage
  * (apenas dev).
  */
+import { Capacitor } from '@capacitor/core';
 import { bridge } from '../core/bridge';
 import type { VoiceEvent } from '../core/voice-types';
 import type { VoiceCapabilities, WhisperModelStatus } from '../core/voice-types';
@@ -131,6 +132,9 @@ export function renderSettingsDrawer(
         <small id="llm-disk-usage" hidden></small>
       </div>
       <div id="llm-model-status" class="model-status" hidden></div>
+      <button id="open-models-screen" type="button" class="btn-primary btn-small" hidden>
+        ${t('settings.model.nativeScreen')}
+      </button>
 
       <p class="privacy-note">${t('settings.privacy')}</p>
       <button type="submit" class="btn-primary">${t('settings.save')}</button>
@@ -159,6 +163,15 @@ export function renderSettingsDrawer(
   const llmHint = $<HTMLElement>('set-llm-hint');
   const llmDisk = $<HTMLElement>('llm-disk-usage');
   const llmStatus = $<HTMLElement>('llm-model-status');
+
+  // Tela nativa de Modelos (TODO android-03 / issue #35): botão só no app.
+  const openModelsBtn = $<HTMLButtonElement>('open-models-screen');
+  if (Capacitor.isNativePlatform()) {
+    openModelsBtn.hidden = false;
+    openModelsBtn.addEventListener('click', () => {
+      void bridge.openModelsScreen();
+    });
+  }
 
   mode.value = settings.mode;
   baseUrl.value = settings.baseUrl;

@@ -4,6 +4,49 @@ Todas as mudanças notáveis deste projeto são documentadas aqui.
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/),
 versionamento [Semântico](https://semver.org/lang/pt-BR/).
 
+## [0.3.0-alpha.6] — Tela nativa de Modelos / Native Models screen
+
+### Adicionado / Added
+
+- **Tela nativa de Modelos** (`android-03`, Fase 3, #35): espelho offline da
+  seção de modelos da web num `ModelsActivity` dedicado — lista única dos
+  catálogos Whisper (STT), Silero (VAD), vozes Piper (TTS) e modelos GGUF
+  (LLM) com estado do arquivo no disco, SHA-256 pinado em cada cartão,
+  download com barra de progresso (e fase de extração do espeak-ng),
+  exclusão e resumo de espaço (livre no volume + uso dos modelos). Aberta
+  pela seção Modelo local nas configurações (botão visível só no app) via
+  novo método `openModelsScreen` da ponte; strings em en/pt/es e ícones do
+  tema Material3 existente.
+  *Native Models screen* (`android-03`, Phase 3, #35): an offline mirror of
+  the web models section in a dedicated `ModelsActivity` — a single list of
+  the Whisper (STT), Silero (VAD), Piper voice (TTS) and GGUF (LLM)
+  catalogs with on-disk state, pinned SHA-256 per card, download with a
+  progress bar (including the espeak-ng extraction phase), delete and a
+  space summary (free volume + models usage). Opened from the web settings'
+  Local model section (button visible in the app only) through the new
+  `openModelsScreen` bridge method; strings in en/pt/es on the existing
+  Material3 theme.
+
+### Alterado / Changed
+
+- `ModelManager` ganha guarda estática anti-colisão de downloads: a tela
+  nativa e a UI web agora compartilham o controle por arquivo — quem pedir
+  o mesmo modelo enquanto outro download está em andamento recebe erro em
+  vez de corromper o `.part`.
+  *`ModelManager` gains a static download anti-collision guard: the native
+  screen and the web UI now share per-file control — requesting the same
+  model while another download is running fails cleanly instead of
+  corrupting the shared `.part` file.*
+
+- Novos testes: catálogo unificado (13 entradas, hashes/bytes válidos,
+  ordem stt→vad→tts→llm, `formatBytes` determinístico), guarda de download
+  (exclusividade e case-insensitive) e contrato web do botão/ponte com
+  paridade de i18n nos 11 locales.
+  *New tests: unified catalog (13 entries, valid hashes/bytes, stt→vad→tts→llm
+  order, deterministic `formatBytes`), download guard (exclusivity and
+  case-insensitivity) and the web button/bridge contract with i18n parity
+  across all 11 locales.*
+
 ## [0.3.0-alpha.5] — Modo automático + follow-up de ferramentas / Auto backend + tool follow-up
 
 ### Adicionado / Added

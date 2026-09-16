@@ -16,4 +16,26 @@
     <string name="notif_channel_tts_desc">Speaks the Geny Assistant replies on device</string>
     <string name="notif_tts_title">Geny is speaking</string>
     <string name="notif_tts_body">Touch to return to the conversation</string>
+
+    <!-- Tela nativa de Modelos (Fase 3, android-03 / issue #35) -->
+    <string name="models_title">Models</string>
+    <string name="models_disk_free">Free: %1$s • Models: %2$s</string>
+    <string name="models_section_stt">Speech to text (Whisper)</string>
+    <string name="models_section_vad">Voice detection (VAD)</string>
+    <string name="models_section_tts">Neural voices (Piper)</string>
+    <string name="models_section_llm">Local chat model (GGUF)</string>
+    <string name="models_kind_stt">STT</string>
+    <string name="models_kind_vad">VAD</string>
+    <string name="models_kind_tts">TTS</string>
+    <string name="models_kind_llm">LLM</string>
+    <string name="models_sha_label">%1$s • %2$s • SHA-256 %3$s</string>
+    <string name="models_action_download">Download</string>
+    <string name="models_action_delete">Delete</string>
+    <string name="models_status_downloaded">Downloaded (%1$s)</string>
+    <string name="models_status_not_downloaded">Not downloaded</string>
+    <string name="models_status_downloading">Downloading… %1$d%%</string>
+    <string name="models_status_extracting">Extracting…</string>
+    <string name="models_status_done">%1$s ready</string>
+    <string name="models_error_download">Download failed: %1$s</string>
+    <string name="models_error_delete">Could not delete</string>
 </resources>

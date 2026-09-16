@@ -34,6 +34,7 @@
 - [x] `ci-02` Matriz de build C++ por ABI (arm64-v8a/x86_64) com artefatos dos JNI (#34)
 - [x] `core-03` TTS neural via Piper (pt-BR Faber, pt-PT Tugão, en-US Amy): espeak-ng submodule pinado + VITS via ONNX Runtime existente, download sob demanda com SHA-256, fallback para TTS do sistema (#3, v0.3.0-alpha.4)
 - [x] `core-05b` Streaming de tokens na ponte (`llmToken` + botão Parar) + temperatura/seed na UI (v0.3.0-alpha.4)
+- [x] `android-03` Tela nativa de Modelos com progresso, hash e espaço (#35, v0.3.0-alpha.6)
 - [ ] `android-03b` Wake word opcional desligado por padrão (openWakeWord/ONNX)
 - [ ] `core-04` UniFFI: bindings geny-core ↔ Kotlin (`feature = "uniffi"`)
 - [ ] `android-04` Migração do GenyDb para Room + KSP

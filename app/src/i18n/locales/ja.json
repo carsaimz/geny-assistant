@@ -23,6 +23,7 @@
   "settings.mode.selfhosted": "セルフホスト",
   "settings.baseUrl": "ベースURL（OpenAI互換）",
   "settings.model": "モデル",
+  "settings.model.nativeScreen": "ネイティブのモデル画面を開く",
   "settings.apiKey": "APIキー",
   "settings.apiKey.desc": "あなたのデバイスにのみ保存されます（AndroidではKeystore）。",
   "settings.language": "言語",

@@ -55,6 +55,26 @@ class ModelManager(private val context: Context) {
         onProgress: (Long, Long) -> Unit,
     ): File {
         require(name.matches(Regex("[A-Za-z0-9._-]+"))) { "nome de modelo invalido" }
+        // Guarda anti-colisão (TODO android-03): a tela nativa e a UI web podem
+        // pedir o MESMO arquivo — quem chegar segundo recebe erro em vez de
+        // corromper o .part compartilhado.
+        check(tryAcquireDownload(name)) { "download ja em andamento: $name" }
+        try {
+            return downloadLocked(url, name, kind, expectedSha256, onProgress)
+        } finally {
+            releaseDownload(name)
+        }
+    }
+
+    /** Corpo do download; só roda com a guarda do arquivo adquirida. */
+    @Throws(Exception::class)
+    private fun downloadLocked(
+        url: String,
+        name: String,
+        kind: String,
+        expectedSha256: String?,
+        onProgress: (Long, Long) -> Unit,
+    ): File {
         val tmp = File(modelsDir, "$name.part")
         val digest = MessageDigest.getInstance("SHA-256")
         var total = -1L
@@ -109,6 +129,30 @@ class ModelManager(private val context: Context) {
     }
 
     companion object {
+
+        // Instâncias de ModelManager são criadas ad hoc (web e tela nativa);
+        // a guarda de download tem de ser estática para valer entre elas.
+        private val inFlight = java.util.concurrent.ConcurrentHashMap<String, Boolean>()
+
+        /**
+         * Reserva o arquivo para download. `false` quando já há um download
+         * em andamento para o mesmo nome (comparação sem maiúsculas).
+         * Puro o bastante para teste JVM (não toca em Context/rede).
+         */
+        @JvmStatic
+        fun tryAcquireDownload(name: String): Boolean =
+            inFlight.putIfAbsent(name.lowercase(), true) == null
+
+        /** Libera a reserva de download (idempotente). */
+        @JvmStatic
+        fun releaseDownload(name: String) {
+            inFlight.remove(name.lowercase())
+        }
+
+        /** true quando existe download em andamento para o nome. */
+        @JvmStatic
+        fun isDownloading(name: String): Boolean = inFlight.containsKey(name.lowercase())
+
         /** Metadados mínimos de um modelo para o gerenciador. */
         fun meta(kind: String, name: String, url: String, sha256: String?): JSONObject {
             return JSONObject()

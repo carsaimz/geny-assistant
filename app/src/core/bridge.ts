@@ -56,6 +56,8 @@ export interface GenyBridge {
   generateLocal(options: LocalGenerateOptions): Promise<{ json: string }>;
   /** Pede a parada da geração local em andamento (TODO core-05b). */
   stopLocalGenerate(): Promise<void>;
+  /** Abre a tela nativa de Modelos (Fase 3, TODO android-03 / issue #35). */
+  openModelsScreen(): Promise<void>;
 }
 
 /** Handler de confirmação registrado pela UI (modal). */
@@ -183,6 +185,9 @@ function createWebMockBridge(): GenyBridge {
         locale: navigator.language,
       };
       return { json: JSON.stringify(ctx) };
+    },
+    async openModelsScreen() {
+      // Mock web: não há tela nativa no navegador — no-op honesto.
     },
     ...createWebVoiceMock(),
     ...createWebLlmMock(),
