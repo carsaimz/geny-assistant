@@ -4,6 +4,65 @@ Todas as mudanças notáveis deste projeto são documentadas aqui.
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/),
 versionamento [Semântico](https://semver.org/lang/pt-BR/).
 
+## [0.3.0-alpha.9] — SAF, resposta a notificações e catálogo de ferramentas / SAF, notification reply and tool catalog
+
+### Adicionado / Added
+
+- **Pastas autorizadas (SAF)** (`android-05`, Fase 4, #40): seletor de pasta
+  via `ACTION_OPEN_DOCUMENT_TREE` com permissão persistida e lista guardada
+  nos fatos do GenyDb. Métodos `safPickFolder`/`safAuthorized`/`safRevoke`/
+  `safList`/`safRead`/`safWrite`/`safMkdir`/`safDelete` na ponte — criar,
+  ler, escrever (com append), criar pastas e excluir por caminho RELATIVO,
+  sempre dentro da pasta autorizada (`SafPaths` rejeita `..`, `.` e
+  absolutos), com guard de pasta autorizada na ponte, limite de leitura de
+  2 MiB e auditoria. Mock web nega com honestidade.
+  *Authorized folders (SAF)* (`android-05`, Phase 4, #40): folder picker via
+  `ACTION_OPEN_DOCUMENT_TREE` with persisted grant, folder list kept in
+  GenyDb facts. `safPickFolder`/`safAuthorized`/`safRevoke`/`safList`/
+  `safRead`/`safWrite`/`safMkdir`/`safDelete` bridge methods — create, read,
+  write (with append), mkdir and delete by RELATIVE path, always inside the
+  authorized folder (`SafPaths` rejects `..`, `.` and absolute paths), with
+  an authorized-folder guard on the bridge, a 2 MiB read cap and audit. The
+  web mock denies honestly.
+
+- **Responder notificações** (`android-07`, Fase 4, #43): tool
+  `notifications.reply` (nível EXPLICIT) que localiza a ação de resposta da
+  notificação capturada (`remoteInputs`), escreve o texto via
+  `androidx.core.app.RemoteInput.addResultsToIntent` (mecanismo correto por
+  versão, lido por `RemoteInput.getResultsFromIntent` no app de origem) e
+  dispara o PendingIntent — sem rede nem credenciais. Códigos de resultado
+  estáveis (`sent`/`sem_acao_de_resposta`/...) no envelope e na auditoria;
+  testes Robolectric com notificação real.
+  *Notification replies* (`android-07`, Phase 4, #43): the `notifications.reply`
+  tool (EXPLICIT level) locates the captured notification's reply action
+  (`remoteInputs`), writes the text via
+  `androidx.core.app.RemoteInput.addResultsToIntent` (per-version mechanism
+  read by `RemoteInput.getResultsFromIntent` on the origin app) and fires
+  the PendingIntent — no network, no credentials. Stable result codes
+  (`sent`/`sem_acao_de_resposta`/...) in the envelope and audit; Robolectric
+  tests with a real notification.
+
+- **Catálogo de ferramentas na UI** (`app-03`, Fase 4, #44): nova seção
+  "Ferramentas registradas" nas configurações lista cada ferramenta da
+  ponte com nome, descrição, parâmetros (`req*` marcados) e um selo
+  colorido do nível de confirmação (nenhuma/simples/explícita/
+  autenticada), com contagem. 6 chaves novas nos 11 locales e testes de
+  contrato web (selos, locales, catálogo do mock).
+  *Tool catalog in the UI* (`app-03`, Phase 4, #44): a new "Registered
+  tools" section in settings lists each bridge tool with name, description,
+  parameters (`req*` marked) and a colored confirmation-level badge
+  (none/simple/explicit/authenticated), plus a count. 6 new keys in all 11
+  locales and web contract tests (badges, locales, mock catalog).
+
+### Corrigido / Fixed
+
+- Envio de resposta usa `addResultsToIntent` do androidx core — as
+  constantes/métodos do framework (`EXTRA_RESULTS`, `remoteInputSources`)
+  não estão disponíveis no compileSdk atual.
+  *Reply sending uses androidx core's `addResultsToIntent` — framework
+  constants/methods (`EXTRA_RESULTS`, `remoteInputSources`) are not
+  available on the current compileSdk.*
+
 ## [0.3.0-alpha.8] — Sandbox Lua para ferramentas do usuário / Lua sandbox for user tools
 
 ### Adicionado / Added
