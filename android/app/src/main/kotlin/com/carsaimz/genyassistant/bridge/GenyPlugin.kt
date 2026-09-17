@@ -33,6 +33,7 @@ import com.carsaimz.genyassistant.tools.NoteReadTool
 import com.carsaimz.genyassistant.tools.NotificationDismissTool
 import com.carsaimz.genyassistant.tools.NotificationReadTool
 import com.carsaimz.genyassistant.tools.NotificationReplyTool
+import com.carsaimz.genyassistant.tools.OcrReadTool
 import com.carsaimz.genyassistant.tools.ReminderSetTool
 import com.carsaimz.genyassistant.tools.SendSmsTool
 import com.carsaimz.genyassistant.tools.ShareTextTool
