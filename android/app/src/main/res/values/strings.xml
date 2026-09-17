@@ -42,4 +42,30 @@
     <string name="wake_word_tap_to_open">Tap to open Geny</string>
     <string name="wake_word_listening_title">Listening for wake word</string>
     <string name="wake_word_listening_text">Say the wake phrase to wake Geny</string>
+    <!-- Memória (Fase 5, android-08 / issue #46) -->
+    <string name="memory_title">Memory</string>
+    <string name="memory_summary">%1$d facts • retention: %2$s</string>
+    <string name="memory_add">Add fact</string>
+    <string name="memory_edit">Edit</string>
+    <string name="memory_save">Save</string>
+    <string name="memory_delete">Delete</string>
+    <string name="memory_clear">Clear all</string>
+    <string name="memory_search_hint">Search memory (semantic)</string>
+    <string name="memory_empty">No facts learned yet.\nTell Geny something like: "remember that my wifi password is 12345678".</string>
+    <string name="memory_no_matches">No facts match the search.</string>
+    <string name="memory_key">Fact name (ex.: wifi password)</string>
+    <string name="memory_value">Fact content (ex.: 12345678)</string>
+    <string name="memory_error_empty">Fill in the name and the content of the fact</string>
+    <string name="memory_delete_confirm">Forget \"%1$s\"?</string>
+    <string name="memory_clear_confirm">Forget ALL %1$d facts? This cannot be undone.</string>
+    <string name="memory_saved">Saved</string>
+    <string name="memory_retention_edit">Retention policy…</string>
+    <string name="memory_retention_applied">Retention applied</string>
+    <string name="memory_retention_off">off</string>
+    <string name="memory_retention_facts">max %1$d facts</string>
+    <string name="memory_retention_age">max %1$d days</string>
+    <string name="memory_retention_bytes">max %1$d bytes/fact</string>
+    <string name="memory_retention_max_facts">Max number of facts (0 = unlimited)</string>
+    <string name="memory_retention_max_age">Max age in days (0 = unlimited)</string>
+    <string name="memory_retention_max_bytes">Max size per fact in bytes (0 = unlimited)</string>
 </resources>

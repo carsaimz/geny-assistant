@@ -320,7 +320,7 @@ export class ChatUI {
       .filter((m) => m.role !== 'tool')
       .slice(-12)
       .map((m) => ({ role: m.role === 'assistant' ? 'assistant' : 'user', content: m.content }));
-    const system = this.systemPrompt();
+    const system = await this.systemPrompt();
     const result = await remoteComplete(cfg, system, history);
     if (result.intent !== null) {
       const outcome = await this.runTool(result.intent.toolId, result.intent.params);
@@ -371,7 +371,7 @@ export class ChatUI {
       content: toolFollowupInstruction(toolId, compactOutcomeJson(outcome as unknown as Record<string, unknown>)),
     });
     try {
-      const result = await remoteComplete(cfg, this.systemPrompt(), history);
+      const result = await remoteComplete(cfg, await this.systemPrompt(), history);
       const text = result.text.trim();
       return text.length > 0 ? text : null;
     } catch {
@@ -399,7 +399,7 @@ export class ChatUI {
         // Antes enviávamos `messages` (array) e o plugin lia `messagesJson`
         // — todo pedido caía em `sem_mensagens`.
         messagesJson: JSON.stringify(history),
-        system: this.systemPrompt(),
+        system: await this.systemPrompt(),
         maxTokens: 256,
         temperature: settings.localTemperature ?? 0.7,
         topP: 0.9,
@@ -475,7 +475,7 @@ export class ChatUI {
       const settings = this.deps.getSettings();
       const { json } = await bridge.generateLocal({
         messagesJson: JSON.stringify(history),
-        system: this.systemPrompt(),
+        system: await this.systemPrompt(),
         maxTokens: 192,
         temperature: settings.localTemperature ?? 0.7,
         topP: 0.9,
@@ -494,14 +494,33 @@ export class ChatUI {
    * Prompt de sistema por idioma/cultura (TODO Fase 3) — fonte única
    * (`buildSystemPrompt`, espelho do `i18n.rs` do core) para os backends
    * remoto e local; o catálogo entra como JSON para o modelo só selecionar
-   * ferramentas registradas.
+   * ferramentas registradas. Fase 5 (core-08): inclui o recall de memória
+   * ANTES de responder — fatos relevantes entram como linhas no prompt.
    */
-  private systemPrompt(): string {
+  private async systemPrompt(): Promise<string> {
     const lang = this.deps.getSettings().language;
+    const memoryLines = await this.recallMemoryLines();
     return buildSystemPrompt({
       language: lang,
       toolCatalogJson: JSON.stringify(this.catalog),
+      memoryLines,
     });
+  }
+
+  /**
+   * Recall de memória (Fase 5, core-08/core-09): busca top-5 por similaridade
+   * da última mensagem do usuário — semântica no núcleo (score de cosseno)
+   * ou substring na ponte; qualquer falha degrada para prompt sem fatos.
+   */
+  private async recallMemoryLines(): Promise<string[]> {
+    const lastUser = [...this.messages].reverse().find((m) => m.role === 'user');
+    if (lastUser === undefined || lastUser.content.trim().length === 0) return [];
+    try {
+      const { hits } = await bridge.memorySearch({ query: lastUser.content, limit: 5 });
+      return hits.slice(0, 5).map((h) => `${h.key} = ${h.value}`);
+    } catch {
+      return [];
+    }
   }
 
   // -------------------------------------------------------------- tool run --

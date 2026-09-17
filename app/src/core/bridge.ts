@@ -71,6 +71,54 @@ export interface GenyBridge {
   // ---- Wake word (Fase 3, TODO android-03b) — desligado por padrão ----
   getWakeWordStatus(): Promise<{ json: string }>;
   setWakeWordEnabled(options: { enabled: boolean; modelId?: string }): Promise<{ ok: boolean; error?: string }>;
+  // ---- Memória de longo prazo (Fase 5, TODO android-08 / core-08) ----
+  /** Lista os fatos aprendidos (Room); `semantic` indica se o índice do core está ativo. */
+  memoryList(): Promise<{
+    ok: boolean;
+    semantic: boolean;
+    facts: Array<{ key: string; value: string; updatedAtMs: number }>;
+  }>;
+  /** Registra/atualiza um fato. */
+  memorySet(options: { key: string; value: string }): Promise<{ ok: boolean; forgotten?: string[]; error?: string }>;
+  /** Apaga um fato. */
+  memoryDelete(options: { key: string }): Promise<{ ok: boolean; deleted: boolean }>;
+  /** Apaga TODOS os fatos. */
+  memoryClear(): Promise<{ ok: boolean; removed: number }>;
+  /** Busca top-k (semântica no core; substring no mock web). */
+  memorySearch(options: { query: string; limit?: number }): Promise<{
+    ok: boolean;
+    hits: Array<{ key: string; value: string; score: number }>;
+  }>;
+  /** Exporta a memória como envelope JSON v1. */
+  memoryExport(): Promise<{ ok: boolean; json: string }>;
+  /** Importa um envelope v1 (ou array legado), substituindo a memória. */
+  memoryImport(options: { json: string }): Promise<{ ok: boolean; imported?: number; error?: string }>;
+  /** Lê (sem args) ou define (com args) a política de retenção (0 = sem limite). */
+  memoryRetention(options?: {
+    maxFacts?: number;
+    maxAgeDays?: number;
+    maxValueBytes?: number;
+  }): Promise<{
+    ok: boolean;
+    maxFacts: number;
+    maxAgeDays: number;
+    maxValueBytes: number;
+    forgotten?: string[];
+  }>;
+  /** Abre a tela nativa de Memória (TODO android-08). */
+  openMemoryScreen(): Promise<void>;
+  // ---- Backup cifrado (Fase 5, TODO app-04) — GENYBAK1 PBKDF2+AES-GCM ----
+  /** Abre o seletor para GRAVAR o backup cifrado (configurações + fatos). */
+  backupExport(options: {
+    settingsJson: string;
+    passphrase: string;
+  }): Promise<{ ok: boolean; bytes?: number; error?: string }>;
+  /** Abre o seletor para LER e restaurar um backup; devolve as configurações. */
+  backupImport(options: { passphrase: string }): Promise<{
+    ok: boolean;
+    settingsJson?: string;
+    error?: string;
+  }>;
   addListener(
     eventName: 'genyVoice' | 'genyLlm' | 'genyTts' | 'genyWake',
     listenerFunc: (event: VoiceEvent | LlmEvent | TtsEvent | WakeWordEvent) => void,
@@ -222,11 +270,19 @@ function createWebMockBridge(): GenyBridge {
     },
     ...createWebSafMock(),
     ...createWebWakeWordMock(),
+    ...createWebMemoryMock(),
     ...createWebVoiceMock(),
     ...createWebLlmMock(),
     async ocrRead() {
       // Mock web: o motor de OCR é Android-only — nega com honestidade.
       return { json: JSON.stringify({ ok: false, code: 'unavailable_on_web' }) };
+    },
+    async backupExport() {
+      // Fase 5 (app-04): o GENYBAK1 cifrado só existe no app (SAF + Keystore).
+      return { ok: false, error: 'unavailable_on_web' };
+    },
+    async backupImport() {
+      return { ok: false, error: 'unavailable_on_web' };
     },
   };
 }
@@ -292,6 +348,112 @@ function createWebWakeWordMock(): Pick<GenyBridge, 'getWakeWordStatus' | 'setWak
     },
     async setWakeWordEnabled() {
       return { ok: false, error: 'unavailable_on_web' };
+    },
+  };
+}
+
+// ---------------------------------------------- mock de memória (web) ----
+
+/**
+ * **PT** Mock de memória no navegador: fatos em localStorage (`geny.facts`)
+ * com busca substring — mesmo contrato da ponte nativa (Room + core).
+ * **EN** Browser memory mock: facts in localStorage (`geny.facts`) with
+ * substring search — same contract as the native bridge (Room + core).
+ */
+function createWebMemoryMock(): Pick<
+  GenyBridge,
+  | 'memoryList'
+  | 'memorySet'
+  | 'memoryDelete'
+  | 'memoryClear'
+  | 'memorySearch'
+  | 'memoryExport'
+  | 'memoryImport'
+  | 'memoryRetention'
+  | 'openMemoryScreen'
+> {
+  const STORAGE_KEY = 'geny.facts';
+  interface WebFact {
+    key: string;
+    value: string;
+    updatedAtMs: number;
+  }
+  const load = (): WebFact[] => {
+    try {
+      return JSON.parse(localStorage.getItem(STORAGE_KEY) ?? '[]') as WebFact[];
+    } catch {
+      return [];
+    }
+  };
+  const save = (facts: WebFact[]): void => {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(facts));
+  };
+
+  return {
+    async memoryList() {
+      return { ok: true, semantic: false, facts: load() };
+    },
+    async memorySet({ key, value }) {
+      const facts = load();
+      const at = Date.now();
+      const i = facts.findIndex((f) => f.key === key);
+      if (i >= 0) facts[i] = { key, value, updatedAtMs: at };
+      else facts.push({ key, value, updatedAtMs: at });
+      save(facts);
+      return { ok: true, forgotten: [] };
+    },
+    async memoryDelete({ key }) {
+      const facts = load();
+      const out = facts.filter((f) => f.key !== key);
+      save(out);
+      return { ok: true, deleted: out.length !== facts.length };
+    },
+    async memoryClear() {
+      const n = load().length;
+      save([]);
+      return { ok: true, removed: n };
+    },
+    async memorySearch({ query, limit = 5 }) {
+      const q = query.trim().toLowerCase();
+      const hits = load()
+        .filter((f) => f.key.toLowerCase().includes(q) || f.value.toLowerCase().includes(q))
+        .slice(0, limit)
+        .map((f) => ({ key: f.key, value: f.value, score: 0 }));
+      return { ok: true, hits };
+    },
+    async memoryExport() {
+      const facts = load().map((f) => ({
+        key: f.key,
+        value: f.value,
+        tags: [],
+        updated_at_ms: f.updatedAtMs,
+      }));
+      return {
+        ok: true,
+        json: JSON.stringify({ version: 1, exported_at_ms: Date.now(), facts }),
+      };
+    },
+    async memoryImport({ json }) {
+      try {
+        const parsed = JSON.parse(json) as {
+          facts?: Array<{ key: string; value: string; updated_at_ms?: number }>;
+        };
+        const facts = (parsed.facts ?? []).map((f) => ({
+          key: f.key,
+          value: f.value,
+          updatedAtMs: f.updated_at_ms ?? 0,
+        }));
+        save(facts);
+        return { ok: true, imported: facts.length };
+      } catch {
+        return { ok: false, error: 'invalid_envelope' };
+      }
+    },
+    async memoryRetention(options) {
+      return { ok: true, maxFacts: 0, maxAgeDays: 0, maxValueBytes: 0, ...options, forgotten: [] };
+    },
+    async openMemoryScreen() {
+      // No navegador não há tela nativa; a seção web de modelos cobre o fluxo.
     },
   };
 }

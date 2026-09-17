@@ -71,4 +71,40 @@ object CoreBridge {
         } catch (_: Throwable) {
             null
         }
+
+    /**
+     * Prompt de sistema com fatos de memória relevantes (Fase 5, core-08) —
+     * o recall acontece antes de responder, vale para remoto e local.
+     * null quando o core não está disponível (chamador usa o espelho TS).
+     */
+    fun buildSystemPromptWithMemory(
+        languageCode: String,
+        toolCatalogJson: String,
+        privacyStatement: Boolean,
+        memoryLines: List<String>,
+    ): String? =
+        try {
+            if (available) {
+                uniffi.geny_core.buildSystemPromptWithMemory(
+                    languageCode, toolCatalogJson, privacyStatement, memoryLines,
+                )
+            } else {
+                null
+            }
+        } catch (_: Throwable) {
+            null
+        }
+
+    /**
+     * Abre uma instância da memória do core (índice semântico + retenção,
+     * Fase 5 core-08/core-09), ou null quando indisponível. Cada chamada
+     * cria um handle novo e independente — o chamador decide o ciclo de vida
+     * (singleton em MemoryManager).
+     */
+    fun memoryOpen(): uniffi.geny_core.GenyMemory? =
+        try {
+            if (available) uniffi.geny_core.GenyMemory() else null
+        } catch (_: Throwable) {
+            null
+        }
 }

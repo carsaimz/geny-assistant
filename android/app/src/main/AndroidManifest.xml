@@ -87,6 +87,12 @@
             android:exported="false"
             android:label="@string/models_title" />
 
+        <!-- Tela nativa de Memória (Fase 5, android-08 / issue #46) -->
+        <activity
+            android:name=".memory.MemoryActivity"
+            android:exported="false"
+            android:label="@string/memory_title" />
+
         <!-- Servico em primeiro plano do assistente (§3.1) -->
         <service
             android:name=".service.AssistantForegroundService"

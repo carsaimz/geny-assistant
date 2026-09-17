@@ -40,4 +40,30 @@
     <string name="wake_word_tap_to_open">Toca para abrir Geny</string>
     <string name="wake_word_listening_title">Escuchando la palabra de activación</string>
     <string name="wake_word_listening_text">Di la frase de activación para despertar a Geny</string>
+    <!-- Memoria (Fase 5, android-08 / issue #46) -->
+    <string name="memory_title">Memoria</string>
+    <string name="memory_summary">%1$d hechos • retención: %2$s</string>
+    <string name="memory_add">Añadir hecho</string>
+    <string name="memory_edit">Editar</string>
+    <string name="memory_save">Guardar</string>
+    <string name="memory_delete">Eliminar</string>
+    <string name="memory_clear">Borrar todo</string>
+    <string name="memory_search_hint">Buscar en la memoria (semántico)</string>
+    <string name="memory_empty">Aún no hay hechos aprendidos.\nDi a Geny algo como: "recuerda que mi contraseña del wifi es 12345678".</string>
+    <string name="memory_no_matches">Ningún hecho coincide con la búsqueda.</string>
+    <string name="memory_key">Nombre del hecho (ej.: contraseña del wifi)</string>
+    <string name="memory_value">Contenido del hecho (ej.: 12345678)</string>
+    <string name="memory_error_empty">Rellena el nombre y el contenido del hecho</string>
+    <string name="memory_delete_confirm">¿Olvidar \"%1$s\"?</string>
+    <string name="memory_clear_confirm">¿Olvidar TODOS los %1$d hechos? No se puede deshacer.</string>
+    <string name="memory_saved">Guardado</string>
+    <string name="memory_retention_edit">Política de retención…</string>
+    <string name="memory_retention_applied">Retención aplicada</string>
+    <string name="memory_retention_off">apagada</string>
+    <string name="memory_retention_facts">máx %1$d hechos</string>
+    <string name="memory_retention_age">máx %1$d días</string>
+    <string name="memory_retention_bytes">máx %1$d bytes/hecho</string>
+    <string name="memory_retention_max_facts">Cantidad máxima de hechos (0 = sin límite)</string>
+    <string name="memory_retention_max_age">Edad máxima en días (0 = sin límite)</string>
+    <string name="memory_retention_max_bytes">Tamaño máximo por hecho en bytes (0 = sin límite)</string>
 </resources>

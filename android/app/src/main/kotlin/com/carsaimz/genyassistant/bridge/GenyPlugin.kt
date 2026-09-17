@@ -14,11 +14,15 @@ import android.os.VibratorManager
 import com.carsaimz.genyassistant.ai.CoreBridge
 import com.carsaimz.genyassistant.ai.LocalLlmManager
 import com.carsaimz.genyassistant.data.GenyDb
+import com.carsaimz.genyassistant.memory.MemoryActivity
 import com.carsaimz.genyassistant.models.ModelsActivity
 import com.carsaimz.genyassistant.saf.SafOps
 import com.carsaimz.genyassistant.saf.SafPaths
 import com.carsaimz.genyassistant.saf.SafStore
 import com.carsaimz.genyassistant.security.AuditLog
+import com.carsaimz.genyassistant.security.BackupApplier
+import com.carsaimz.genyassistant.security.BackupContent
+import com.carsaimz.genyassistant.security.BackupCrypto
 import com.carsaimz.genyassistant.security.ConfirmationManager
 import com.carsaimz.genyassistant.security.KeystoreManager
 import com.carsaimz.genyassistant.tools.AppTools
@@ -86,6 +90,15 @@ class GenyPlugin : Plugin() {
     private lateinit var toolExecutor: java.util.concurrent.ExecutorService
     private var voice: VoiceManager? = null
     private var llm: LocalLlmManager? = null
+
+    // Fase 5 (app-04): senha/configurações em trânsito entre o método da
+    // ponte e o callback do seletor de arquivos (um backup por vez).
+    private var pendingBackupPass: CharArray? = null
+    private var pendingBackupSettings: String? = null
+
+    /** Singleton de memória (fatos + índice semântico do core). */
+    private fun memory(): com.carsaimz.genyassistant.data.MemoryManager =
+        com.carsaimz.genyassistant.data.MemoryManager.get(context)
 
     private val host = object : ToolHost {
         override fun appContext(): Context = context
@@ -862,6 +875,244 @@ class GenyPlugin : Plugin() {
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         context.startActivity(intent)
         call.resolve()
+    }
+
+    // ------------------------------------------------------------ memória --
+    // Fase 5 (TODO android-08, issues #46/#47/#48): fatos aprendidos com
+    // busca semântica no core, retenção (core-09) e backup cifrado (app-04).
+    // A fonte de verdade é o Room; o core mantém o índice vetorial.
+
+    @PluginMethod
+    fun memoryList(call: PluginCall) {
+        val facts = JSONArray()
+        for (f in memory().facts()) {
+            facts.put(
+                JSObject()
+                    .put("key", f.key)
+                    .put("value", f.value)
+                    .put("updatedAtMs", f.updatedAtMs),
+            )
+        }
+        call.resolve(
+            JSObject()
+                .put("ok", true)
+                .put("semantic", memory().semanticAvailable)
+                .put("facts", facts),
+        )
+    }
+
+    @PluginMethod
+    fun memorySet(call: PluginCall) {
+        val key = call.getString("key").orEmpty().trim()
+        val value = call.getString("value") ?: ""
+        if (key.isEmpty() || value.isEmpty()) {
+            call.resolve(JSObject().put("ok", false).put("error", "key/value ausentes"))
+            return
+        }
+        val forgotten = memory().remember(key, value, System.currentTimeMillis())
+        audit.log("memory", "fato definido via ponte: $key")
+        val arr = JSONArray()
+        forgotten.forEach { arr.put(it) }
+        call.resolve(JSObject().put("ok", true).put("forgotten", arr))
+    }
+
+    @PluginMethod
+    fun memoryDelete(call: PluginCall) {
+        val key = call.getString("key").orEmpty()
+        if (key.isEmpty()) {
+            call.resolve(JSObject().put("ok", false).put("error", "key ausente"))
+            return
+        }
+        val deleted = memory().delete(key)
+        audit.log("memory", "fato apagado via ponte: $key (existia=$deleted)")
+        call.resolve(JSObject().put("ok", true).put("deleted", deleted))
+    }
+
+    @PluginMethod
+    fun memoryClear(call: PluginCall) {
+        val removed = memory().clear()
+        audit.log("memory", "memória limpa via ponte ($removed fatos)")
+        call.resolve(JSObject().put("ok", true).put("removed", removed))
+    }
+
+    @PluginMethod
+    fun memorySearch(call: PluginCall) {
+        val query = call.getString("query").orEmpty()
+        val limit = call.getInt("limit", 5) ?: 5
+        val hits = JSONArray()
+        for (h in memory().search(query, limit)) {
+            hits.put(
+                JSObject()
+                    .put("key", h.key)
+                    .put("value", h.value)
+                    .put("score", h.score),
+            )
+        }
+        call.resolve(JSObject().put("ok", true).put("hits", hits))
+    }
+
+    @PluginMethod
+    fun memoryExport(call: PluginCall) {
+        call.resolve(
+            JSObject()
+                .put("ok", true)
+                .put("json", memory().exportEnvelopeJson(System.currentTimeMillis())),
+        )
+    }
+
+    @PluginMethod
+    fun memoryImport(call: PluginCall) {
+        val json = call.getString("json").orEmpty()
+        if (json.isBlank()) {
+            call.resolve(JSObject().put("ok", false).put("error", "json ausente"))
+            return
+        }
+        try {
+            val imported = memory().importEnvelopeJson(json)
+            audit.log("memory", "importação de memória: $imported fatos")
+            call.resolve(JSObject().put("ok", true).put("imported", imported))
+        } catch (e: IllegalArgumentException) {
+            call.resolve(JSObject().put("ok", false).put("error", e.message ?: "envelope inválido"))
+        }
+    }
+
+    /**
+     * Retenção: sem argumentos devolve a política atual; com
+     * maxFacts/maxAgeDays/maxValueBytes (0 = sem limite) define e aplica.
+     */
+    @PluginMethod
+    fun memoryRetention(call: PluginCall) {
+        val memory = memory()
+        val maxFacts = call.getInt("maxFacts")
+        val maxAgeDays = call.getInt("maxAgeDays")
+        val maxValueBytes = call.getInt("maxValueBytes")
+        val forgotten = JSONArray()
+        if (maxFacts != null || maxAgeDays != null || maxValueBytes != null) {
+            val spec = com.carsaimz.genyassistant.data.RetentionSpec(
+                maxFacts = maxFacts ?: memory.retention().maxFacts,
+                maxAgeDays = (maxAgeDays ?: memory.retention().maxAgeDays.toInt()).toLong(),
+                maxValueBytes = (maxValueBytes ?: memory.retention().maxValueBytes.toInt()).toLong(),
+            )
+            val keys = memory.setRetention(spec, System.currentTimeMillis())
+            keys.forEach { forgotten.put(it) }
+            audit.log("memory", "retenção atualizada via ponte; ${keys.size} esquecido(s)")
+        }
+        val current = memory.retention()
+        call.resolve(
+            JSObject()
+                .put("ok", true)
+                .put("maxFacts", current.maxFacts)
+                .put("maxAgeDays", current.maxAgeDays)
+                .put("maxValueBytes", current.maxValueBytes)
+                .put("forgotten", forgotten),
+        )
+    }
+
+    @PluginMethod
+    fun openMemoryScreen(call: PluginCall) {
+        audit.log("bridge", "abrir tela nativa de memória")
+        val intent = Intent(context, MemoryActivity::class.java)
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        context.startActivity(intent)
+        call.resolve()
+    }
+
+    // ------------------------------------------------------------- backup --
+    // Fase 5 (TODO app-04, issue #48): arquivo GENYBAK1 cifrado com a senha
+    // do usuário (PBKDF2 210k + AES-256-GCM) — portável e sem nuvem.
+
+    @PluginMethod
+    fun backupExport(call: PluginCall) {
+        val pass = call.getString("passphrase").orEmpty()
+        if (pass.isEmpty()) {
+            call.resolve(JSObject().put("ok", false).put("error", "senha ausente"))
+            return
+        }
+        pendingBackupPass = pass.toCharArray()
+        pendingBackupSettings = call.getString("settingsJson") ?: "{}"
+        val name = "geny-backup-" +
+            java.text.SimpleDateFormat("yyyyMMdd-HHmmss", java.util.Locale.US)
+                .format(java.util.Date()) + ".genybak.json"
+        val intent = Intent(Intent.ACTION_CREATE_DOCUMENT).apply {
+            addCategory(Intent.CATEGORY_OPENABLE)
+            type = "application/json"
+            putExtra(Intent.EXTRA_TITLE, name)
+        }
+        startActivityForResult(call, intent, "onBackupDocCreated")
+    }
+
+    @ActivityCallback
+    fun onBackupDocCreated(call: PluginCall?, result: ActivityResult) {
+        val uri = result?.data?.data
+        val pass = pendingBackupPass
+        val settingsJson = pendingBackupSettings
+        pendingBackupPass = null
+        pendingBackupSettings = null
+        if (call == null || uri == null || pass == null) {
+            call?.resolve(JSObject().put("ok", false).put("error", "arquivo não selecionado"))
+            return
+        }
+        try {
+            val content = BackupContent.build(
+                settingsJson ?: "{}",
+                memory().exportEnvelopeJson(System.currentTimeMillis()),
+                System.currentTimeMillis(),
+            )
+            val blob = BackupCrypto.encrypt(content.toByteArray(Charsets.UTF_8), pass)
+            context.contentResolver.openOutputStream(uri, "wt")?.use { out ->
+                out.write(blob)
+            } ?: throw IllegalStateException("sem stream de escrita para $uri")
+            java.util.Arrays.fill(pass, ' ')
+            audit.log("backup", "exportação gravada ($uri, ${blob.size} bytes)")
+            call.resolve(JSObject().put("ok", true).put("bytes", blob.size))
+        } catch (e: Exception) {
+            java.util.Arrays.fill(pass, ' ')
+            audit.log("backup", "falha na exportação: ${e.message}")
+            call.resolve(JSObject().put("ok", false).put("error", e.message ?: "falha no backup"))
+        }
+    }
+
+    @PluginMethod
+    fun backupImport(call: PluginCall) {
+        val pass = call.getString("passphrase").orEmpty()
+        if (pass.isEmpty()) {
+            call.resolve(JSObject().put("ok", false).put("error", "senha ausente"))
+            return
+        }
+        pendingBackupPass = pass.toCharArray()
+        val intent = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
+            addCategory(Intent.CATEGORY_OPENABLE)
+            type = "*/*"
+        }
+        startActivityForResult(call, intent, "onBackupDocPicked")
+    }
+
+    @ActivityCallback
+    fun onBackupDocPicked(call: PluginCall?, result: ActivityResult) {
+        val uri = result?.data?.data
+        val pass = pendingBackupPass
+        pendingBackupPass = null
+        if (call == null || uri == null || pass == null) {
+            call?.resolve(JSObject().put("ok", false).put("error", "arquivo não selecionado"))
+            return
+        }
+        try {
+            val bytes = context.contentResolver.openInputStream(uri)?.use { it.readBytes() }
+                ?: throw IllegalStateException("sem stream de leitura para $uri")
+            val plain = BackupCrypto.decrypt(bytes, pass)
+            val settingsJson = BackupApplier(context).apply(String(plain, Charsets.UTF_8))
+            java.util.Arrays.fill(pass, ' ')
+            audit.log("backup", "restauração aplicada ($uri)")
+            call.resolve(
+                JSObject()
+                    .put("ok", true)
+                    .put("settingsJson", settingsJson),
+            )
+        } catch (e: Exception) {
+            java.util.Arrays.fill(pass, ' ')
+            audit.log("backup", "falha na restauração: ${e.message}")
+            call.resolve(JSObject().put("ok", false).put("error", e.message ?: "senha errada ou arquivo inválido"))
+        }
     }
 
     override fun handleOnDestroy() {

@@ -40,4 +40,30 @@
     <string name="wake_word_tap_to_open">Toque para abrir a Geny</string>
     <string name="wake_word_listening_title">Ouvindo a palavra de ativação</string>
     <string name="wake_word_listening_text">Diga a frase de ativação para acordar a Geny</string>
+    <!-- Memória (Fase 5, android-08 / issue #46) -->
+    <string name="memory_title">Memória</string>
+    <string name="memory_summary">%1$d fatos • retenção: %2$s</string>
+    <string name="memory_add">Adicionar fato</string>
+    <string name="memory_edit">Editar</string>
+    <string name="memory_save">Salvar</string>
+    <string name="memory_delete">Apagar</string>
+    <string name="memory_clear">Limpar tudo</string>
+    <string name="memory_search_hint">Buscar na memória (semântico)</string>
+    <string name="memory_empty">Nenhum fato aprendido ainda.\nDiga à Geny algo como: "lembre que minha senha do wifi é 12345678".</string>
+    <string name="memory_no_matches">Nenhum fato corresponde à busca.</string>
+    <string name="memory_key">Nome do fato (ex.: senha do wifi)</string>
+    <string name="memory_value">Conteúdo do fato (ex.: 12345678)</string>
+    <string name="memory_error_empty">Preencha o nome e o conteúdo do fato</string>
+    <string name="memory_delete_confirm">Esquecer \"%1$s\"?</string>
+    <string name="memory_clear_confirm">Esquecer TODOS os %1$d fatos? Não dá para desfazer.</string>
+    <string name="memory_saved">Salvo</string>
+    <string name="memory_retention_edit">Política de retenção…</string>
+    <string name="memory_retention_applied">Retenção aplicada</string>
+    <string name="memory_retention_off">desligada</string>
+    <string name="memory_retention_facts">máx %1$d fatos</string>
+    <string name="memory_retention_age">máx %1$d dias</string>
+    <string name="memory_retention_bytes">máx %1$d bytes/fato</string>
+    <string name="memory_retention_max_facts">Quantidade máxima de fatos (0 = sem limite)</string>
+    <string name="memory_retention_max_age">Idade máxima em dias (0 = sem limite)</string>
+    <string name="memory_retention_max_bytes">Tamanho máximo por fato em bytes (0 = sem limite)</string>
 </resources>

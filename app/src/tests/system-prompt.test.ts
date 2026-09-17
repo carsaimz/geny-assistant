@@ -86,3 +86,31 @@ describe('buildSystemPrompt — espelho do i18n::system_prompt', () => {
     expect(p).not.toContain('Catalogo de ferramentas registradas');
   });
 });
+
+// ------------------------------------------------- Fase 5 (core-08) ----
+
+describe('buildSystemPrompt com memória (Fase 5)', () => {
+  it('inclui a seção de memória com header localizado e linhas', () => {
+    const p = buildSystemPrompt({
+      language: 'pt-BR',
+      memoryLines: ['wifi = Rede5G', 'aniversário da Maria = 10/03'],
+    });
+    expect(p).toContain('Fatos relevantes que voce ja sabe sobre o usuario');
+    expect(p).toContain('- wifi = Rede5G');
+    expect(p).toContain('- aniversário da Maria = 10/03');
+    // Catálogo ausente: sem bloco de ferramentas.
+    expect(p).not.toContain('Catalogo de ferramentas');
+  });
+
+  it('header por idioma espelha i18n::memory_header do core', () => {
+    const en = buildSystemPrompt({ language: 'en', memoryLines: ['test fact'] });
+    expect(en).toContain('Relevant facts you already know about the user');
+    const zh = buildSystemPrompt({ language: 'zh-CN', memoryLines: ['事实'] });
+    expect(zh).toContain('用户相关事实');
+  });
+
+  it('sem memoryLines não inclui a seção (compatibilidade)', () => {
+    const p = buildSystemPrompt({ language: 'en' });
+    expect(p).not.toContain('Relevant facts');
+  });
+});

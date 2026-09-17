@@ -30,6 +30,26 @@ const CULTURE_NOTES: Readonly<Record<string, string>> = {
   ar: 'استخدم اللغة العربية الفصحى المبسطة بأسلوب مهذب.',
 };
 
+/**
+ * Cabeçalho da seção de memória por idioma (Fase 5, core-08) — espelho de
+ * `i18n::memory_header` no core Rust, letra por letra.
+ */
+export const MEMORY_HEADERS: Readonly<Record<string, string>> = {
+  'pt-BR':
+    'Fatos relevantes que voce ja sabe sobre o usuario (use quando uteis, sem anunciar que veio da memoria):',
+  'pt-PT':
+    'Fatos relevantes que ja conheces sobre o utilizador (usa quando uteis, sem anunciar a origem):',
+  en: 'Relevant facts you already know about the user (use when helpful; do not mention where they came from):',
+  es: 'Hechos relevantes que ya sabes sobre el usuario (usalos cuando sean utiles, sin mencionar su origen):',
+  fr: "Faits pertinents déjà connus sur l'utilisateur (utilise-les si utiles, sans mentionner leur origine) :",
+  de: 'Relevante Fakten, die Sie über den Nutzer wissen (bei Bedarf verwenden, ohne die Quelle zu nennen):',
+  it: "Fatti rilevanti già noti sull'utente (usali se utili, senza menzionarne l'origine):",
+  ru: 'Релевантные факты о пользователе (используйте при необходимости, не упоминая источник):',
+  'zh-CN': '你已了解的用户相关事实（在有用时使用，无需说明来源）：',
+  ja: 'ユーザーについて既に把握している関連事実（有用な場合に使い、出典には触れないでください）：',
+  ar: 'حقائق ذات صلة تعرفها عن المستخدم (استخدمها عند الحاجة دون ذكر المصدر):',
+};
+
 export interface LanguageInfo {
   /** Código BCP-47 canônico, ex.: `pt-BR`, `zh-CN`. */
   code: string;
@@ -78,12 +98,15 @@ export interface SystemPromptOptions {
   toolCatalogJson?: string;
   /** Embute a regra de privacidade local-first (padrão: true). */
   privacy?: boolean;
+  /** Fatos de memória relevantes (Fase 5, core-08) — recall antes de responder. */
+  memoryLines?: string[];
 }
 
 /**
  * Constrói o prompt de sistema do assistente — mesmas 5 regras (+ privacidade)
  * do `i18n::system_prompt` do core Rust, em português (língua franca do
- * projeto) com a nota de cultura no idioma de destino.
+ * projeto) com a nota de cultura no idioma de destino. Com `memoryLines`,
+ * inclui a seção de memória exatamente como `system_prompt_with_memory`.
  */
 export function buildSystemPrompt(opts: SystemPromptOptions): string {
   const lang = resolveLanguage(opts.language);
@@ -105,6 +128,13 @@ export function buildSystemPrompt(opts: SystemPromptOptions): string {
     );
   }
   let prompt = `${lines.join('\n')}\n`;
+  const memory = opts.memoryLines ?? [];
+  if (memory.length > 0) {
+    prompt += `\n${MEMORY_HEADERS[lang.code] ?? MEMORY_HEADERS.en}\n`;
+    for (const line of memory) {
+      prompt += `- ${line}\n`;
+    }
+  }
   if (opts.toolCatalogJson !== undefined) {
     prompt += `\nCatalogo de ferramentas registradas (JSON):\n${opts.toolCatalogJson}\n`;
   }

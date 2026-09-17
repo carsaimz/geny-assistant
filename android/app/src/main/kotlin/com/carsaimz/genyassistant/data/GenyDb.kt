@@ -111,6 +111,15 @@ interface FactDao {
 
     @Query("SELECT value FROM facts WHERE key = :key")
     fun valueOf(key: String): String?
+
+    @Query("SELECT * FROM facts ORDER BY key")
+    fun listAll(): List<FactEntity>
+
+    @Query("DELETE FROM facts WHERE `key` = :key")
+    fun delete(key: String): Int
+
+    @Query("DELETE FROM facts")
+    fun clear(): Int
 }
 
 // --------------------------------------------------------------- database --

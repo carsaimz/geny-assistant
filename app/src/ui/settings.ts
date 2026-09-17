@@ -169,6 +169,24 @@ export function renderSettingsDrawer(
         ${t('settings.model.nativeScreen')}
       </button>
 
+      <h3 class="drawer-section">${t('settings.memory.title')}</h3>
+      <button id="open-memory-screen" type="button" class="btn-primary btn-small" hidden>
+        ${t('settings.memory.open')}
+      </button>
+
+      <h3 class="drawer-section">${t('settings.backup.title')}</h3>
+      <small>${t('settings.backup.desc')}</small>
+      <label>
+        <span>${t('settings.backup.pass')}</span>
+        <input id="set-backup-pass" type="password" autocomplete="new-password" />
+      </label>
+      <div class="check-row">
+        <button id="backup-export" type="button" class="btn-primary btn-small">${t('settings.backup.export')}</button>
+        <button id="backup-import" type="button" class="btn-primary btn-small">${t('settings.backup.import')}</button>
+      </div>
+      <small id="backup-status" class="tools-count" hidden></small>
+      <small id="backup-webnote" hidden>${t('settings.backup.webnote')}</small>
+
       <h3 class="drawer-section">${t('settings.tools.title')}</h3>
       <small id="tools-catalog-count" class="tools-count"></small>
       <div id="tools-catalog" class="tools-catalog" aria-live="polite"></div>
@@ -207,6 +225,76 @@ export function renderSettingsDrawer(
     openModelsBtn.hidden = false;
     openModelsBtn.addEventListener('click', () => {
       void bridge.openModelsScreen();
+    });
+  }
+
+  // Fase 5 (TODO android-08 / issue #46): tela nativa de Memória — só no app.
+  const openMemoryBtn = $<HTMLButtonElement>('open-memory-screen');
+  const backupExportBtn = $<HTMLButtonElement>('backup-export');
+  const backupImportBtn = $<HTMLButtonElement>('backup-import');
+  const backupPass = $<HTMLInputElement>('set-backup-pass');
+  const backupStatus = $<HTMLElement>('backup-status');
+  const backupWebnote = $<HTMLElement>('backup-webnote');
+
+  const showBackupStatus = (msg: string): void => {
+    backupStatus.textContent = msg;
+    backupStatus.hidden = false;
+  };
+
+  if (!Capacitor.isNativePlatform()) {
+    backupWebnote.hidden = false;
+  } else {
+    openMemoryBtn.hidden = false;
+    openMemoryBtn.addEventListener('click', () => {
+      void bridge.openMemoryScreen();
+    });
+
+    // Fase 5 (TODO app-04 / issue #48): exportação/restauração cifrada —
+    // o nativo grava/lê o arquivo GENYBAK1 via SAF e aplica os fatos.
+    backupExportBtn.addEventListener('click', () => {
+      const pass = backupPass.value;
+      if (pass.length === 0) {
+        showBackupStatus(t('settings.backup.fail'));
+        return;
+      }
+      const apiKeyStored = localStorage.getItem('geny.apikey') ?? '';
+      const payload = JSON.stringify({ ...settings, apiKey: apiKeyStored });
+      void bridge
+        .backupExport({ settingsJson: payload, passphrase: pass })
+        .then((res) => {
+          showBackupStatus(res.ok ? t('settings.backup.ok') : t('settings.backup.fail'));
+          if (res.ok) backupPass.value = '';
+        })
+        .catch(() => showBackupStatus(t('settings.backup.fail')));
+    });
+
+    backupImportBtn.addEventListener('click', () => {
+      const pass = backupPass.value;
+      if (pass.length === 0) {
+        showBackupStatus(t('settings.backup.fail'));
+        return;
+      }
+      void bridge
+        .backupImport({ passphrase: pass })
+        .then((res) => {
+          if (!res.ok || res.settingsJson === undefined) {
+            showBackupStatus(t('settings.backup.fail'));
+            return;
+          }
+          try {
+            const parsed = JSON.parse(res.settingsJson) as Partial<Settings> & { apiKey?: string };
+            if (typeof parsed.apiKey === 'string') {
+              localStorage.setItem('geny.apikey', parsed.apiKey);
+              delete parsed.apiKey;
+            }
+            cb.onSave(parsed as Settings);
+            showBackupStatus(t('settings.backup.restored'));
+            backupPass.value = '';
+          } catch {
+            showBackupStatus(t('settings.backup.fail'));
+          }
+        })
+        .catch(() => showBackupStatus(t('settings.backup.fail')));
     });
   }
 
