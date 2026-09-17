@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Configuração do Android Lint do app Geny.
+
+  **PT** Os bindings UniFFI gerados (src/main/gen-kotlin) usam
+  `java.lang.ref.Cleaner` (API 33+) com guarda de RUNTIME —
+  `Class.forName("java.lang.ref.Cleaner")` com fallback para o cleaner
+  interno do JNA — então o código é seguro no minSdk 26. O lint não enxerga
+  a guarda e marca [NewApi]; ignoramos o issue APENAS na pasta gerada.
+  Nunca edite o arquivo gerado para silenciar lint (o CI compara o arquivo
+  versionado com a geração determinística — drift check do build-native).
+  **EN** The generated UniFFI bindings (src/main/gen-kotlin) use
+  `java.lang.ref.Cleaner` (API 33+) behind a RUNTIME guard —
+  `Class.forName("java.lang.ref.Cleaner")` falling back to JNA's internal
+  cleaner — so the code is safe on minSdk 26. Lint cannot see the guard and
+  raises [NewApi]; we ignore the issue ONLY inside the generated folder.
+  Never hand-edit the generated file to silence lint (CI diffs the checked-in
+  file against the deterministic generation — build-native drift check).
+-->
+<lint>
+    <issue id="NewApi" severity="ignore">
+        <path src="src/main/gen-kotlin" />
+    </issue>
+</lint>
