@@ -91,11 +91,40 @@ impl Language {
     }
 }
 
+/// Cabeçalho da seção de memória do prompt, por idioma (Fase 5, core-08).
+pub fn memory_header(lang: Language) -> &'static str {
+    match lang {
+        Language::PtBr => "Fatos relevantes que voce ja sabe sobre o usuario (use quando uteis, sem anunciar que veio da memoria):",
+        Language::PtPt => "Fatos relevantes que ja conheces sobre o utilizador (usa quando uteis, sem anunciar a origem):",
+        Language::En => "Relevant facts you already know about the user (use when helpful; do not mention where they came from):",
+        Language::Es => "Hechos relevantes que ya sabes sobre el usuario (usalos cuando sean utiles, sin mencionar su origen):",
+        Language::Fr => "Faits pertinents déjà connus sur l'utilisateur (utilise-les si utiles, sans mentionner leur origine) :",
+        Language::De => "Relevante Fakten, die Sie über den Nutzer wissen (bei Bedarf verwenden, ohne die Quelle zu nennen):",
+        Language::It => "Fatti rilevanti già noti sull'utente (usali se utili, senza menzionarne l'origine):",
+        Language::Ru => "Релевантные факты о пользователе (используйте при необходимости, не упоминая источник):",
+        Language::Zh => "你已了解的用户相关事实（在有用时使用，无需说明来源）：",
+        Language::Ja => "ユーザーについて既に把握している関連事実（有用な場合に使い、出典には触れないでください）：",
+        Language::Ar => "حقائق ذات صلة تعرفها عن المستخدم (استخدمها عند الحاجة دون ذكر المصدر):",
+    }
+}
+
 /// Constrói o prompt de sistema do assistente.
 ///
 /// `tool_catalog_json` é a serialização do catálogo de ferramentas registradas.
 /// `privacy_statement` embute a regra de privacidade local-first no modelo.
 pub fn system_prompt(lang: Language, tool_catalog_json: &str, privacy_statement: bool) -> String {
+    system_prompt_with_memory(lang, tool_catalog_json, privacy_statement, &[])
+}
+
+/// Prompt de sistema com fatos de memória (Fase 5, core-08): o recall é feito
+/// ANTES de responder e as linhas de fatos entram no prompt — os backends
+/// remoto e local veem o mesmo contexto.
+pub fn system_prompt_with_memory(
+    lang: Language,
+    tool_catalog_json: &str,
+    privacy_statement: bool,
+    memory_lines: &[String],
+) -> String {
     let mut prompt = String::new();
     prompt.push_str(&format!(
         "Voce e o {name}, um assistente virtual que roda localmente no dispositivo do usuario.\n\
@@ -115,6 +144,16 @@ pub fn system_prompt(lang: Language, tool_catalog_json: &str, privacy_statement:
             "6. Privacidade: nada sai do dispositivo sem acao explicita do usuario. \
              Nao incentive envio de dados a servicos externos.\n",
         );
+    }
+    if !memory_lines.is_empty() {
+        prompt.push('\n');
+        prompt.push_str(memory_header(lang));
+        prompt.push('\n');
+        for line in memory_lines {
+            prompt.push_str("- ");
+            prompt.push_str(line);
+            prompt.push('\n');
+        }
     }
     prompt.push_str(&format!(
         "\nCatalogo de ferramentas registradas (JSON):\n{tool_catalog_json}\n"
@@ -150,5 +189,29 @@ mod tests {
         assert!(p.contains("time.now"));
         assert!(p.contains("pt-BR"));
         assert!(p.contains("Privacidade"));
+    }
+
+    #[test]
+    fn prompt_com_memoria_tem_secao_e_linhas() {
+        let p = system_prompt_with_memory(
+            Language::PtBr,
+            "[]",
+            true,
+            &[
+                "wifi = MinhaRede5G".to_string(),
+                "aniversario da Maria = 10/03".to_string(),
+            ],
+        );
+        assert!(p.contains("Fatos relevantes"));
+        assert!(p.contains("- wifi = MinhaRede5G"));
+        assert!(p.contains("- aniversario da Maria = 10/03"));
+        // Header localizado por idioma.
+        let en = system_prompt_with_memory(Language::En, "[]", false, &["test fact".into()]);
+        assert!(en.contains("Relevant facts"));
+        let zh = system_prompt_with_memory(Language::Zh, "[]", false, &["事实".into()]);
+        assert!(zh.contains("用户相关事实"));
+        // Sem memória: sem seção.
+        let sem = system_prompt(Language::En, "[]", false);
+        assert!(!sem.contains("Relevant facts"));
     }
 }

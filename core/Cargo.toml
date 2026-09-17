@@ -26,6 +26,10 @@ uniffi = ["dep:uniffi"]
 vad = []
 # Sandbox Lua para ferramentas da pasta tools/ (Fase 4: TODO core-07)
 lua = ["dep:mlua"]
+# Memória semântica: índice vetorial + embeddings locais (Fase 5: TODO core-08)
+semantic = []
+# todas as features usadas pelos testes de integração do CI
+all = ["uniffi", "vad", "lua", "semantic"]
 
 [[bin]]
 name = "uniffi-bindgen"

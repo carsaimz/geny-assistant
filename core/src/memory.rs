@@ -25,6 +25,18 @@ pub struct LongTermMemory {
     facts: BTreeMap<String, Fact>,
 }
 
+/// Envelope versionado de exportação/importação (core-09).
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub(crate) struct MemoryEnvelope {
+    pub version: u32,
+    #[serde(default)]
+    pub exported_at_ms: u64,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub retention: Option<crate::retention::RetentionPolicy>,
+    #[serde(default = "Vec::new")]
+    pub facts: Vec<Fact>,
+}
+
 impl LongTermMemory {
     pub fn new() -> Self {
         Self::default()
@@ -37,6 +49,18 @@ impl LongTermMemory {
         value: impl Into<String>,
         tags: Vec<String>,
     ) {
+        self.remember_at(key, value, tags, now_ms());
+    }
+
+    /// Registra (ou atualiza) um fato com carimbo de tempo explícito —
+    /// usado na importação (preservar a idade do fato) e em testes.
+    pub fn remember_at(
+        &mut self,
+        key: impl Into<String>,
+        value: impl Into<String>,
+        tags: Vec<String>,
+        updated_at_ms: u64,
+    ) {
         let key = key.into();
         self.facts.insert(
             key.clone(),
@@ -44,7 +68,7 @@ impl LongTermMemory {
                 key,
                 value: value.into(),
                 tags,
-                updated_at_ms: now_ms(),
+                updated_at_ms,
             },
         );
     }
@@ -103,6 +127,41 @@ impl LongTermMemory {
         }
         Ok(mem)
     }
+
+    /// Envelope versionado de exportação (TODO core-09): versão, carimbo,
+    /// política de retenção e fatos — o mesmo formato usado pelo backup
+    /// cifrado do Android (app-04) e pelos métodos `memory*` da ponte.
+    pub fn to_envelope_json(
+        &self,
+        retention: &crate::retention::RetentionPolicy,
+        exported_at_ms: u64,
+    ) -> String {
+        let envelope = MemoryEnvelope {
+            version: 1,
+            exported_at_ms,
+            retention: Some(*retention),
+            facts: self.facts.values().cloned().collect(),
+        };
+        serde_json::to_string(&envelope)
+            .unwrap_or_else(|_| "{\"version\":1,\"facts\":[]}".to_string())
+    }
+
+    /// Importa um envelope versionado OU o formato legado (array puro).
+    /// Fatos preservam o carimbo original (`updated_at_ms`).
+    pub fn from_envelope_json(json: &str) -> crate::error::Result<Self> {
+        // Formato legado (array): aceito para compatibilidade com v0.1+.
+        let trimmed = json.trim_start();
+        if trimmed.starts_with('[') {
+            return Self::from_json(json);
+        }
+        let envelope: MemoryEnvelope = serde_json::from_str(json)
+            .map_err(|e| crate::error::CoreError::Internal(e.to_string()))?;
+        let mut mem = LongTermMemory::new();
+        for f in envelope.facts {
+            mem.facts.insert(f.key.clone(), f);
+        }
+        Ok(mem)
+    }
 }
 
 #[cfg(test)]
@@ -140,5 +199,43 @@ mod tests {
         let restored = LongTermMemory::from_json(&json).unwrap();
         assert_eq!(restored.len(), 2);
         assert_eq!(restored.recall("b").unwrap().value, "2");
+    }
+
+    #[test]
+    fn envelope_versionado_roundtrip_e_legado() {
+        use crate::retention::RetentionPolicy;
+        let mut mem = LongTermMemory::new();
+        mem.remember_at("wifi", "MinhaRede5G", vec!["rede".into()], 123);
+        mem.remember_at("niver", "10/03", vec![], 456);
+
+        let json = mem.to_envelope_json(&RetentionPolicy::default_enabled(), 999);
+        let restored = LongTermMemory::from_envelope_json(&json).unwrap();
+        assert_eq!(restored.len(), 2);
+        // Carimbo original preservado.
+        assert_eq!(restored.recall("wifi").unwrap().updated_at_ms, 123);
+        assert_eq!(restored.recall("niver").unwrap().updated_at_ms, 456);
+
+        // JSON contém metadados do envelope.
+        assert!(json.contains("\"version\":1"));
+        assert!(json.contains("\"exported_at_ms\":999"));
+        assert!(json.contains("\"retention\""));
+
+        // Formato legado (array puro) continua aceito.
+        let legacy = mem.to_json();
+        let from_legacy = LongTermMemory::from_envelope_json(&legacy).unwrap();
+        assert_eq!(from_legacy.len(), 2);
+
+        // Envelope inválido é rejeitado com erro tipado.
+        assert!(LongTermMemory::from_envelope_json("{").is_err());
+    }
+
+    #[test]
+    fn remember_at_preserva_carimbo() {
+        let mut mem = LongTermMemory::new();
+        mem.remember_at("k", "v", vec![], 42);
+        assert_eq!(mem.recall("k").unwrap().updated_at_ms, 42);
+        // remember normal atualiza o carimbo (>= anterior).
+        mem.remember("k", "v2", vec![]);
+        assert!(mem.recall("k").unwrap().updated_at_ms >= 42);
     }
 }

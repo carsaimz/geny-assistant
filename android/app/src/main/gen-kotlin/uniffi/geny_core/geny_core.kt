@@ -30,6 +30,7 @@ import java.nio.CharBuffer
 import java.nio.charset.CodingErrorAction
 import java.util.concurrent.atomic.AtomicLong
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.atomic.AtomicBoolean
 
 // This is a helper for safely working with byte buffers returned from the Rust code.
 // A rust-owned buffer is represented by its capacity, its current length, and a
@@ -719,6 +720,38 @@ internal interface UniffiForeignFutureCompleteVoid : com.sun.jna.Callback {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 // For large crates we prevent `MethodTooLargeException` (see #2340)
 // N.B. the name of the extension is very misleading, since it is 
 // rather `InterfaceTooLargeException`, caused by too many methods 
@@ -736,11 +769,41 @@ internal interface IntegrityCheckingUniffiLib : Library {
     // Integrity check functions only
     fun uniffi_geny_core_checksum_func_build_system_prompt(
 ): Short
+fun uniffi_geny_core_checksum_func_build_system_prompt_with_memory(
+): Short
 fun uniffi_geny_core_checksum_func_core_version(
 ): Short
 fun uniffi_geny_core_checksum_func_is_rtl(
 ): Short
 fun uniffi_geny_core_checksum_func_resolve_language(
+): Short
+fun uniffi_geny_core_checksum_method_genymemory_apply_retention(
+): Short
+fun uniffi_geny_core_checksum_method_genymemory_clear(
+): Short
+fun uniffi_geny_core_checksum_method_genymemory_count(
+): Short
+fun uniffi_geny_core_checksum_method_genymemory_export_json(
+): Short
+fun uniffi_geny_core_checksum_method_genymemory_forget(
+): Short
+fun uniffi_geny_core_checksum_method_genymemory_import_json(
+): Short
+fun uniffi_geny_core_checksum_method_genymemory_list(
+): Short
+fun uniffi_geny_core_checksum_method_genymemory_recall(
+): Short
+fun uniffi_geny_core_checksum_method_genymemory_remember(
+): Short
+fun uniffi_geny_core_checksum_method_genymemory_retention_json(
+): Short
+fun uniffi_geny_core_checksum_method_genymemory_search_semantic(
+): Short
+fun uniffi_geny_core_checksum_method_genymemory_search_substring(
+): Short
+fun uniffi_geny_core_checksum_method_genymemory_set_retention(
+): Short
+fun uniffi_geny_core_checksum_constructor_genymemory_new(
 ): Short
 fun ffi_geny_core_uniffi_contract_version(
 ): Int
@@ -784,10 +847,48 @@ internal interface UniffiLib : Library {
             lib
         }
         
+        // The Cleaner for the whole library
+        internal val CLEANER: UniffiCleaner by lazy {
+            UniffiCleaner.create()
+        }
     }
 
     // FFI functions
-    fun uniffi_geny_core_fn_func_build_system_prompt(`languageCode`: RustBuffer.ByValue,`toolCatalogJson`: RustBuffer.ByValue,`privacyStatement`: Byte,uniffi_out_err: UniffiRustCallStatus, 
+    fun uniffi_geny_core_fn_clone_genymemory(`ptr`: Pointer,uniffi_out_err: UniffiRustCallStatus, 
+): Pointer
+fun uniffi_geny_core_fn_free_genymemory(`ptr`: Pointer,uniffi_out_err: UniffiRustCallStatus, 
+): Unit
+fun uniffi_geny_core_fn_constructor_genymemory_new(uniffi_out_err: UniffiRustCallStatus, 
+): Pointer
+fun uniffi_geny_core_fn_method_genymemory_apply_retention(`ptr`: Pointer,uniffi_out_err: UniffiRustCallStatus, 
+): RustBuffer.ByValue
+fun uniffi_geny_core_fn_method_genymemory_clear(`ptr`: Pointer,uniffi_out_err: UniffiRustCallStatus, 
+): Int
+fun uniffi_geny_core_fn_method_genymemory_count(`ptr`: Pointer,uniffi_out_err: UniffiRustCallStatus, 
+): Int
+fun uniffi_geny_core_fn_method_genymemory_export_json(`ptr`: Pointer,uniffi_out_err: UniffiRustCallStatus, 
+): RustBuffer.ByValue
+fun uniffi_geny_core_fn_method_genymemory_forget(`ptr`: Pointer,`key`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+): Byte
+fun uniffi_geny_core_fn_method_genymemory_import_json(`ptr`: Pointer,`json`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+): Unit
+fun uniffi_geny_core_fn_method_genymemory_list(`ptr`: Pointer,uniffi_out_err: UniffiRustCallStatus, 
+): RustBuffer.ByValue
+fun uniffi_geny_core_fn_method_genymemory_recall(`ptr`: Pointer,`key`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+): RustBuffer.ByValue
+fun uniffi_geny_core_fn_method_genymemory_remember(`ptr`: Pointer,`key`: RustBuffer.ByValue,`value`: RustBuffer.ByValue,`tags`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+): RustBuffer.ByValue
+fun uniffi_geny_core_fn_method_genymemory_retention_json(`ptr`: Pointer,uniffi_out_err: UniffiRustCallStatus, 
+): RustBuffer.ByValue
+fun uniffi_geny_core_fn_method_genymemory_search_semantic(`ptr`: Pointer,`query`: RustBuffer.ByValue,`k`: Int,uniffi_out_err: UniffiRustCallStatus, 
+): RustBuffer.ByValue
+fun uniffi_geny_core_fn_method_genymemory_search_substring(`ptr`: Pointer,`query`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+): RustBuffer.ByValue
+fun uniffi_geny_core_fn_method_genymemory_set_retention(`ptr`: Pointer,`maxFacts`: Int,`maxAgeDays`: Long,`maxValueBytes`: Long,uniffi_out_err: UniffiRustCallStatus, 
+): Unit
+fun uniffi_geny_core_fn_func_build_system_prompt(`languageCode`: RustBuffer.ByValue,`toolCatalogJson`: RustBuffer.ByValue,`privacyStatement`: Byte,uniffi_out_err: UniffiRustCallStatus, 
+): RustBuffer.ByValue
+fun uniffi_geny_core_fn_func_build_system_prompt_with_memory(`languageCode`: RustBuffer.ByValue,`toolCatalogJson`: RustBuffer.ByValue,`privacyStatement`: Byte,`memoryLines`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
 ): RustBuffer.ByValue
 fun uniffi_geny_core_fn_func_core_version(uniffi_out_err: UniffiRustCallStatus, 
 ): RustBuffer.ByValue
@@ -924,6 +1025,9 @@ private fun uniffiCheckApiChecksums(lib: IntegrityCheckingUniffiLib) {
     if (lib.uniffi_geny_core_checksum_func_build_system_prompt() != 43428.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
+    if (lib.uniffi_geny_core_checksum_func_build_system_prompt_with_memory() != 14481.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
     if (lib.uniffi_geny_core_checksum_func_core_version() != 1584.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
@@ -931,6 +1035,48 @@ private fun uniffiCheckApiChecksums(lib: IntegrityCheckingUniffiLib) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if (lib.uniffi_geny_core_checksum_func_resolve_language() != 55615.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if (lib.uniffi_geny_core_checksum_method_genymemory_apply_retention() != 21119.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if (lib.uniffi_geny_core_checksum_method_genymemory_clear() != 39304.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if (lib.uniffi_geny_core_checksum_method_genymemory_count() != 57114.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if (lib.uniffi_geny_core_checksum_method_genymemory_export_json() != 21791.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if (lib.uniffi_geny_core_checksum_method_genymemory_forget() != 8993.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if (lib.uniffi_geny_core_checksum_method_genymemory_import_json() != 27501.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if (lib.uniffi_geny_core_checksum_method_genymemory_list() != 13266.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if (lib.uniffi_geny_core_checksum_method_genymemory_recall() != 28528.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if (lib.uniffi_geny_core_checksum_method_genymemory_remember() != 46842.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if (lib.uniffi_geny_core_checksum_method_genymemory_retention_json() != 26405.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if (lib.uniffi_geny_core_checksum_method_genymemory_search_semantic() != 55662.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if (lib.uniffi_geny_core_checksum_method_genymemory_search_substring() != 18041.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if (lib.uniffi_geny_core_checksum_method_genymemory_set_retention() != 40542.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if (lib.uniffi_geny_core_checksum_constructor_genymemory_new() != 50970.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
 }
@@ -1011,6 +1157,139 @@ inline fun <T : Disposable?, R> T.use(block: (T) -> R) =
  * @suppress
  * */
 object NoPointer
+/**
+ * The cleaner interface for Object finalization code to run.
+ * This is the entry point to any implementation that we're using.
+ *
+ * The cleaner registers objects and returns cleanables, so now we are
+ * defining a `UniffiCleaner` with a `UniffiClenaer.Cleanable` to abstract the
+ * different implmentations available at compile time.
+ *
+ * @suppress
+ */
+interface UniffiCleaner {
+    interface Cleanable {
+        fun clean()
+    }
+
+    fun register(value: Any, cleanUpTask: Runnable): UniffiCleaner.Cleanable
+
+    companion object
+}
+
+// The fallback Jna cleaner, which is available for both Android, and the JVM.
+private class UniffiJnaCleaner : UniffiCleaner {
+    private val cleaner = com.sun.jna.internal.Cleaner.getCleaner()
+
+    override fun register(value: Any, cleanUpTask: Runnable): UniffiCleaner.Cleanable =
+        UniffiJnaCleanable(cleaner.register(value, cleanUpTask))
+}
+
+private class UniffiJnaCleanable(
+    private val cleanable: com.sun.jna.internal.Cleaner.Cleanable,
+) : UniffiCleaner.Cleanable {
+    override fun clean() = cleanable.clean()
+}
+
+
+// We decide at uniffi binding generation time whether we were
+// using Android or not.
+// There are further runtime checks to chose the correct implementation
+// of the cleaner.
+private fun UniffiCleaner.Companion.create(): UniffiCleaner =
+    try {
+        // For safety's sake: if the library hasn't been run in android_cleaner = true
+        // mode, but is being run on Android, then we still need to think about
+        // Android API versions.
+        // So we check if java.lang.ref.Cleaner is there, and use that…
+        java.lang.Class.forName("java.lang.ref.Cleaner")
+        JavaLangRefCleaner()
+    } catch (e: ClassNotFoundException) {
+        // … otherwise, fallback to the JNA cleaner.
+        UniffiJnaCleaner()
+    }
+
+private class JavaLangRefCleaner : UniffiCleaner {
+    val cleaner = java.lang.ref.Cleaner.create()
+
+    override fun register(value: Any, cleanUpTask: Runnable): UniffiCleaner.Cleanable =
+        JavaLangRefCleanable(cleaner.register(value, cleanUpTask))
+}
+
+private class JavaLangRefCleanable(
+    val cleanable: java.lang.ref.Cleaner.Cleanable
+) : UniffiCleaner.Cleanable {
+    override fun clean() = cleanable.clean()
+}
+
+/**
+ * @suppress
+ */
+public object FfiConverterUInt: FfiConverter<UInt, Int> {
+    override fun lift(value: Int): UInt {
+        return value.toUInt()
+    }
+
+    override fun read(buf: ByteBuffer): UInt {
+        return lift(buf.getInt())
+    }
+
+    override fun lower(value: UInt): Int {
+        return value.toInt()
+    }
+
+    override fun allocationSize(value: UInt) = 4UL
+
+    override fun write(value: UInt, buf: ByteBuffer) {
+        buf.putInt(value.toInt())
+    }
+}
+
+/**
+ * @suppress
+ */
+public object FfiConverterULong: FfiConverter<ULong, Long> {
+    override fun lift(value: Long): ULong {
+        return value.toULong()
+    }
+
+    override fun read(buf: ByteBuffer): ULong {
+        return lift(buf.getLong())
+    }
+
+    override fun lower(value: ULong): Long {
+        return value.toLong()
+    }
+
+    override fun allocationSize(value: ULong) = 8UL
+
+    override fun write(value: ULong, buf: ByteBuffer) {
+        buf.putLong(value.toLong())
+    }
+}
+
+/**
+ * @suppress
+ */
+public object FfiConverterDouble: FfiConverter<Double, Double> {
+    override fun lift(value: Double): Double {
+        return value
+    }
+
+    override fun read(buf: ByteBuffer): Double {
+        return buf.getDouble()
+    }
+
+    override fun lower(value: Double): Double {
+        return value
+    }
+
+    override fun allocationSize(value: Double) = 8UL
+
+    override fun write(value: Double, buf: ByteBuffer) {
+        buf.putDouble(value)
+    }
+}
 
 /**
  * @suppress
@@ -1091,6 +1370,787 @@ public object FfiConverterString: FfiConverter<String, RustBuffer.ByValue> {
         buf.put(byteBuf)
     }
 }
+
+
+// This template implements a class for working with a Rust struct via a Pointer/Arc<T>
+// to the live Rust struct on the other side of the FFI.
+//
+// Each instance implements core operations for working with the Rust `Arc<T>` and the
+// Kotlin Pointer to work with the live Rust struct on the other side of the FFI.
+//
+// There's some subtlety here, because we have to be careful not to operate on a Rust
+// struct after it has been dropped, and because we must expose a public API for freeing
+// theq Kotlin wrapper object in lieu of reliable finalizers. The core requirements are:
+//
+//   * Each instance holds an opaque pointer to the underlying Rust struct.
+//     Method calls need to read this pointer from the object's state and pass it in to
+//     the Rust FFI.
+//
+//   * When an instance is no longer needed, its pointer should be passed to a
+//     special destructor function provided by the Rust FFI, which will drop the
+//     underlying Rust struct.
+//
+//   * Given an instance, calling code is expected to call the special
+//     `destroy` method in order to free it after use, either by calling it explicitly
+//     or by using a higher-level helper like the `use` method. Failing to do so risks
+//     leaking the underlying Rust struct.
+//
+//   * We can't assume that calling code will do the right thing, and must be prepared
+//     to handle Kotlin method calls executing concurrently with or even after a call to
+//     `destroy`, and to handle multiple (possibly concurrent!) calls to `destroy`.
+//
+//   * We must never allow Rust code to operate on the underlying Rust struct after
+//     the destructor has been called, and must never call the destructor more than once.
+//     Doing so may trigger memory unsafety.
+//
+//   * To mitigate many of the risks of leaking memory and use-after-free unsafety, a `Cleaner`
+//     is implemented to call the destructor when the Kotlin object becomes unreachable.
+//     This is done in a background thread. This is not a panacea, and client code should be aware that
+//      1. the thread may starve if some there are objects that have poorly performing
+//     `drop` methods or do significant work in their `drop` methods.
+//      2. the thread is shared across the whole library. This can be tuned by using `android_cleaner = true`,
+//         or `android = true` in the [`kotlin` section of the `uniffi.toml` file](https://mozilla.github.io/uniffi-rs/kotlin/configuration.html).
+//
+// If we try to implement this with mutual exclusion on access to the pointer, there is the
+// possibility of a race between a method call and a concurrent call to `destroy`:
+//
+//    * Thread A starts a method call, reads the value of the pointer, but is interrupted
+//      before it can pass the pointer over the FFI to Rust.
+//    * Thread B calls `destroy` and frees the underlying Rust struct.
+//    * Thread A resumes, passing the already-read pointer value to Rust and triggering
+//      a use-after-free.
+//
+// One possible solution would be to use a `ReadWriteLock`, with each method call taking
+// a read lock (and thus allowed to run concurrently) and the special `destroy` method
+// taking a write lock (and thus blocking on live method calls). However, we aim not to
+// generate methods with any hidden blocking semantics, and a `destroy` method that might
+// block if called incorrectly seems to meet that bar.
+//
+// So, we achieve our goals by giving each instance an associated `AtomicLong` counter to track
+// the number of in-flight method calls, and an `AtomicBoolean` flag to indicate whether `destroy`
+// has been called. These are updated according to the following rules:
+//
+//    * The initial value of the counter is 1, indicating a live object with no in-flight calls.
+//      The initial value for the flag is false.
+//
+//    * At the start of each method call, we atomically check the counter.
+//      If it is 0 then the underlying Rust struct has already been destroyed and the call is aborted.
+//      If it is nonzero them we atomically increment it by 1 and proceed with the method call.
+//
+//    * At the end of each method call, we atomically decrement and check the counter.
+//      If it has reached zero then we destroy the underlying Rust struct.
+//
+//    * When `destroy` is called, we atomically flip the flag from false to true.
+//      If the flag was already true we silently fail.
+//      Otherwise we atomically decrement and check the counter.
+//      If it has reached zero then we destroy the underlying Rust struct.
+//
+// Astute readers may observe that this all sounds very similar to the way that Rust's `Arc<T>` works,
+// and indeed it is, with the addition of a flag to guard against multiple calls to `destroy`.
+//
+// The overall effect is that the underlying Rust struct is destroyed only when `destroy` has been
+// called *and* all in-flight method calls have completed, avoiding violating any of the expectations
+// of the underlying Rust code.
+//
+// This makes a cleaner a better alternative to _not_ calling `destroy()` as
+// and when the object is finished with, but the abstraction is not perfect: if the Rust object's `drop`
+// method is slow, and/or there are many objects to cleanup, and it's on a low end Android device, then the cleaner
+// thread may be starved, and the app will leak memory.
+//
+// In this case, `destroy`ing manually may be a better solution.
+//
+// The cleaner can live side by side with the manual calling of `destroy`. In the order of responsiveness, uniffi objects
+// with Rust peers are reclaimed:
+//
+// 1. By calling the `destroy` method of the object, which calls `rustObject.free()`. If that doesn't happen:
+// 2. When the object becomes unreachable, AND the Cleaner thread gets to call `rustObject.free()`. If the thread is starved then:
+// 3. The memory is reclaimed when the process terminates.
+//
+// [1] https://stackoverflow.com/questions/24376768/can-java-finalize-an-object-when-it-is-still-in-scope/24380219
+//
+
+
+/**
+ * Memória de longo prazo com índice semântico e política de retenção.
+ *
+ * Criado via `GenyMemory()` no Kotlin gerado. Todas as operações são
+ * síncronas e thread-safe. Persistência: exportar/importar o envelope
+ * JSON — a fonte de verdade no Android é o Room (fatos) + este objeto
+ * (índice em memória).
+ */
+public interface GenyMemoryInterface {
+    
+    /**
+     * Aplica a retenção agora; retorna as chaves esquecidas.
+     */
+    fun `applyRetention`(): List<kotlin.String>
+    
+    /**
+     * Apaga TODOS os fatos; retorna quantos foram removidos.
+     */
+    fun `clear`(): kotlin.UInt
+    
+    /**
+     * Número de fatos armazenados.
+     */
+    fun `count`(): kotlin.UInt
+    
+    /**
+     * Exporta a memória como envelope JSON versionado (v1).
+     */
+    fun `exportJson`(): kotlin.String
+    
+    /**
+     * Esquece um fato; retorna `true` se existia.
+     */
+    fun `forget`(`key`: kotlin.String): kotlin.Boolean
+    
+    /**
+     * Importa um envelope JSON v1 (ou o array legado v0). Substitui o
+     * estado atual e reconstrói o índice semântico.
+     */
+    fun `importJson`(`json`: kotlin.String)
+    
+    /**
+     * Todos os fatos, ordenados pela chave.
+     */
+    fun `list`(): List<MemoryRecord>
+    
+    /**
+     * Recupera um fato pela chave (null quando ausente).
+     */
+    fun `recall`(`key`: kotlin.String): MemoryRecord?
+    
+    /**
+     * Registra (ou atualiza) um fato, aplicando a retenção em seguida.
+     * Retorna as chaves esquecidas pela retenção, se houver.
+     */
+    fun `remember`(`key`: kotlin.String, `value`: kotlin.String, `tags`: List<kotlin.String>): List<kotlin.String>
+    
+    /**
+     * Política atual como JSON (para a UI de configuração).
+     */
+    fun `retentionJson`(): kotlin.String
+    
+    /**
+     * Busca semântica top-k (cosseno); sem a feature `semantic` cai para
+     * substring com score 0 — o chamador nunca quebra.
+     */
+    fun `searchSemantic`(`query`: kotlin.String, `k`: kotlin.UInt): List<MemoryHit>
+    
+    /**
+     * Busca por substring (fallback determinístico, sempre disponível).
+     */
+    fun `searchSubstring`(`query`: kotlin.String): List<MemoryRecord>
+    
+    /**
+     * Define a política de retenção (0 = sem limite naquela dimensão).
+     */
+    fun `setRetention`(`maxFacts`: kotlin.UInt, `maxAgeDays`: kotlin.ULong, `maxValueBytes`: kotlin.ULong)
+    
+    companion object
+}
+
+/**
+ * Memória de longo prazo com índice semântico e política de retenção.
+ *
+ * Criado via `GenyMemory()` no Kotlin gerado. Todas as operações são
+ * síncronas e thread-safe. Persistência: exportar/importar o envelope
+ * JSON — a fonte de verdade no Android é o Room (fatos) + este objeto
+ * (índice em memória).
+ */
+open class GenyMemory: Disposable, AutoCloseable, GenyMemoryInterface
+{
+
+    constructor(pointer: Pointer) {
+        this.pointer = pointer
+        this.cleanable = UniffiLib.CLEANER.register(this, UniffiCleanAction(pointer))
+    }
+
+    /**
+     * This constructor can be used to instantiate a fake object. Only used for tests. Any
+     * attempt to actually use an object constructed this way will fail as there is no
+     * connected Rust object.
+     */
+    @Suppress("UNUSED_PARAMETER")
+    constructor(noPointer: NoPointer) {
+        this.pointer = null
+        this.cleanable = UniffiLib.CLEANER.register(this, UniffiCleanAction(pointer))
+    }
+    constructor() :
+        this(
+    uniffiRustCall() { _status ->
+    UniffiLib.INSTANCE.uniffi_geny_core_fn_constructor_genymemory_new(
+        _status)
+}
+    )
+
+    protected val pointer: Pointer?
+    protected val cleanable: UniffiCleaner.Cleanable
+
+    private val wasDestroyed = AtomicBoolean(false)
+    private val callCounter = AtomicLong(1)
+
+    override fun destroy() {
+        // Only allow a single call to this method.
+        // TODO: maybe we should log a warning if called more than once?
+        if (this.wasDestroyed.compareAndSet(false, true)) {
+            // This decrement always matches the initial count of 1 given at creation time.
+            if (this.callCounter.decrementAndGet() == 0L) {
+                cleanable.clean()
+            }
+        }
+    }
+
+    @Synchronized
+    override fun close() {
+        this.destroy()
+    }
+
+    internal inline fun <R> callWithPointer(block: (ptr: Pointer) -> R): R {
+        // Check and increment the call counter, to keep the object alive.
+        // This needs a compare-and-set retry loop in case of concurrent updates.
+        do {
+            val c = this.callCounter.get()
+            if (c == 0L) {
+                throw IllegalStateException("${this.javaClass.simpleName} object has already been destroyed")
+            }
+            if (c == Long.MAX_VALUE) {
+                throw IllegalStateException("${this.javaClass.simpleName} call counter would overflow")
+            }
+        } while (! this.callCounter.compareAndSet(c, c + 1L))
+        // Now we can safely do the method call without the pointer being freed concurrently.
+        try {
+            return block(this.uniffiClonePointer())
+        } finally {
+            // This decrement always matches the increment we performed above.
+            if (this.callCounter.decrementAndGet() == 0L) {
+                cleanable.clean()
+            }
+        }
+    }
+
+    // Use a static inner class instead of a closure so as not to accidentally
+    // capture `this` as part of the cleanable's action.
+    private class UniffiCleanAction(private val pointer: Pointer?) : Runnable {
+        override fun run() {
+            pointer?.let { ptr ->
+                uniffiRustCall { status ->
+                    UniffiLib.INSTANCE.uniffi_geny_core_fn_free_genymemory(ptr, status)
+                }
+            }
+        }
+    }
+
+    fun uniffiClonePointer(): Pointer {
+        return uniffiRustCall() { status ->
+            UniffiLib.INSTANCE.uniffi_geny_core_fn_clone_genymemory(pointer!!, status)
+        }
+    }
+
+    
+    /**
+     * Aplica a retenção agora; retorna as chaves esquecidas.
+     */override fun `applyRetention`(): List<kotlin.String> {
+            return FfiConverterSequenceString.lift(
+    callWithPointer {
+    uniffiRustCall() { _status ->
+    UniffiLib.INSTANCE.uniffi_geny_core_fn_method_genymemory_apply_retention(
+        it, _status)
+}
+    }
+    )
+    }
+    
+
+    
+    /**
+     * Apaga TODOS os fatos; retorna quantos foram removidos.
+     */override fun `clear`(): kotlin.UInt {
+            return FfiConverterUInt.lift(
+    callWithPointer {
+    uniffiRustCall() { _status ->
+    UniffiLib.INSTANCE.uniffi_geny_core_fn_method_genymemory_clear(
+        it, _status)
+}
+    }
+    )
+    }
+    
+
+    
+    /**
+     * Número de fatos armazenados.
+     */override fun `count`(): kotlin.UInt {
+            return FfiConverterUInt.lift(
+    callWithPointer {
+    uniffiRustCall() { _status ->
+    UniffiLib.INSTANCE.uniffi_geny_core_fn_method_genymemory_count(
+        it, _status)
+}
+    }
+    )
+    }
+    
+
+    
+    /**
+     * Exporta a memória como envelope JSON versionado (v1).
+     */override fun `exportJson`(): kotlin.String {
+            return FfiConverterString.lift(
+    callWithPointer {
+    uniffiRustCall() { _status ->
+    UniffiLib.INSTANCE.uniffi_geny_core_fn_method_genymemory_export_json(
+        it, _status)
+}
+    }
+    )
+    }
+    
+
+    
+    /**
+     * Esquece um fato; retorna `true` se existia.
+     */override fun `forget`(`key`: kotlin.String): kotlin.Boolean {
+            return FfiConverterBoolean.lift(
+    callWithPointer {
+    uniffiRustCall() { _status ->
+    UniffiLib.INSTANCE.uniffi_geny_core_fn_method_genymemory_forget(
+        it, FfiConverterString.lower(`key`),_status)
+}
+    }
+    )
+    }
+    
+
+    
+    /**
+     * Importa um envelope JSON v1 (ou o array legado v0). Substitui o
+     * estado atual e reconstrói o índice semântico.
+     */
+    @Throws(MemoryException::class)override fun `importJson`(`json`: kotlin.String)
+        = 
+    callWithPointer {
+    uniffiRustCallWithError(MemoryException) { _status ->
+    UniffiLib.INSTANCE.uniffi_geny_core_fn_method_genymemory_import_json(
+        it, FfiConverterString.lower(`json`),_status)
+}
+    }
+    
+    
+
+    
+    /**
+     * Todos os fatos, ordenados pela chave.
+     */override fun `list`(): List<MemoryRecord> {
+            return FfiConverterSequenceTypeMemoryRecord.lift(
+    callWithPointer {
+    uniffiRustCall() { _status ->
+    UniffiLib.INSTANCE.uniffi_geny_core_fn_method_genymemory_list(
+        it, _status)
+}
+    }
+    )
+    }
+    
+
+    
+    /**
+     * Recupera um fato pela chave (null quando ausente).
+     */override fun `recall`(`key`: kotlin.String): MemoryRecord? {
+            return FfiConverterOptionalTypeMemoryRecord.lift(
+    callWithPointer {
+    uniffiRustCall() { _status ->
+    UniffiLib.INSTANCE.uniffi_geny_core_fn_method_genymemory_recall(
+        it, FfiConverterString.lower(`key`),_status)
+}
+    }
+    )
+    }
+    
+
+    
+    /**
+     * Registra (ou atualiza) um fato, aplicando a retenção em seguida.
+     * Retorna as chaves esquecidas pela retenção, se houver.
+     */override fun `remember`(`key`: kotlin.String, `value`: kotlin.String, `tags`: List<kotlin.String>): List<kotlin.String> {
+            return FfiConverterSequenceString.lift(
+    callWithPointer {
+    uniffiRustCall() { _status ->
+    UniffiLib.INSTANCE.uniffi_geny_core_fn_method_genymemory_remember(
+        it, FfiConverterString.lower(`key`),FfiConverterString.lower(`value`),FfiConverterSequenceString.lower(`tags`),_status)
+}
+    }
+    )
+    }
+    
+
+    
+    /**
+     * Política atual como JSON (para a UI de configuração).
+     */override fun `retentionJson`(): kotlin.String {
+            return FfiConverterString.lift(
+    callWithPointer {
+    uniffiRustCall() { _status ->
+    UniffiLib.INSTANCE.uniffi_geny_core_fn_method_genymemory_retention_json(
+        it, _status)
+}
+    }
+    )
+    }
+    
+
+    
+    /**
+     * Busca semântica top-k (cosseno); sem a feature `semantic` cai para
+     * substring com score 0 — o chamador nunca quebra.
+     */override fun `searchSemantic`(`query`: kotlin.String, `k`: kotlin.UInt): List<MemoryHit> {
+            return FfiConverterSequenceTypeMemoryHit.lift(
+    callWithPointer {
+    uniffiRustCall() { _status ->
+    UniffiLib.INSTANCE.uniffi_geny_core_fn_method_genymemory_search_semantic(
+        it, FfiConverterString.lower(`query`),FfiConverterUInt.lower(`k`),_status)
+}
+    }
+    )
+    }
+    
+
+    
+    /**
+     * Busca por substring (fallback determinístico, sempre disponível).
+     */override fun `searchSubstring`(`query`: kotlin.String): List<MemoryRecord> {
+            return FfiConverterSequenceTypeMemoryRecord.lift(
+    callWithPointer {
+    uniffiRustCall() { _status ->
+    UniffiLib.INSTANCE.uniffi_geny_core_fn_method_genymemory_search_substring(
+        it, FfiConverterString.lower(`query`),_status)
+}
+    }
+    )
+    }
+    
+
+    
+    /**
+     * Define a política de retenção (0 = sem limite naquela dimensão).
+     */override fun `setRetention`(`maxFacts`: kotlin.UInt, `maxAgeDays`: kotlin.ULong, `maxValueBytes`: kotlin.ULong)
+        = 
+    callWithPointer {
+    uniffiRustCall() { _status ->
+    UniffiLib.INSTANCE.uniffi_geny_core_fn_method_genymemory_set_retention(
+        it, FfiConverterUInt.lower(`maxFacts`),FfiConverterULong.lower(`maxAgeDays`),FfiConverterULong.lower(`maxValueBytes`),_status)
+}
+    }
+    
+    
+
+    
+
+    
+    
+    companion object
+    
+}
+
+/**
+ * @suppress
+ */
+public object FfiConverterTypeGenyMemory: FfiConverter<GenyMemory, Pointer> {
+
+    override fun lower(value: GenyMemory): Pointer {
+        return value.uniffiClonePointer()
+    }
+
+    override fun lift(value: Pointer): GenyMemory {
+        return GenyMemory(value)
+    }
+
+    override fun read(buf: ByteBuffer): GenyMemory {
+        // The Rust code always writes pointers as 8 bytes, and will
+        // fail to compile if they don't fit.
+        return lift(Pointer(buf.getLong()))
+    }
+
+    override fun allocationSize(value: GenyMemory) = 8UL
+
+    override fun write(value: GenyMemory, buf: ByteBuffer) {
+        // The Rust code always expects pointers written as 8 bytes,
+        // and will fail to compile if they don't fit.
+        buf.putLong(Pointer.nativeValue(lower(value)))
+    }
+}
+
+
+
+/**
+ * Hit da busca semântica (com score de cosseno).
+ */
+data class MemoryHit (
+    var `key`: kotlin.String, 
+    var `value`: kotlin.String, 
+    var `tags`: List<kotlin.String>, 
+    var `updatedAtMs`: kotlin.ULong, 
+    var `score`: kotlin.Double
+) {
+    
+    companion object
+}
+
+/**
+ * @suppress
+ */
+public object FfiConverterTypeMemoryHit: FfiConverterRustBuffer<MemoryHit> {
+    override fun read(buf: ByteBuffer): MemoryHit {
+        return MemoryHit(
+            FfiConverterString.read(buf),
+            FfiConverterString.read(buf),
+            FfiConverterSequenceString.read(buf),
+            FfiConverterULong.read(buf),
+            FfiConverterDouble.read(buf),
+        )
+    }
+
+    override fun allocationSize(value: MemoryHit) = (
+            FfiConverterString.allocationSize(value.`key`) +
+            FfiConverterString.allocationSize(value.`value`) +
+            FfiConverterSequenceString.allocationSize(value.`tags`) +
+            FfiConverterULong.allocationSize(value.`updatedAtMs`) +
+            FfiConverterDouble.allocationSize(value.`score`)
+    )
+
+    override fun write(value: MemoryHit, buf: ByteBuffer) {
+            FfiConverterString.write(value.`key`, buf)
+            FfiConverterString.write(value.`value`, buf)
+            FfiConverterSequenceString.write(value.`tags`, buf)
+            FfiConverterULong.write(value.`updatedAtMs`, buf)
+            FfiConverterDouble.write(value.`score`, buf)
+    }
+}
+
+
+
+/**
+ * Registro de fato para a superfície UniFFI.
+ */
+data class MemoryRecord (
+    var `key`: kotlin.String, 
+    var `value`: kotlin.String, 
+    var `tags`: List<kotlin.String>, 
+    var `updatedAtMs`: kotlin.ULong
+) {
+    
+    companion object
+}
+
+/**
+ * @suppress
+ */
+public object FfiConverterTypeMemoryRecord: FfiConverterRustBuffer<MemoryRecord> {
+    override fun read(buf: ByteBuffer): MemoryRecord {
+        return MemoryRecord(
+            FfiConverterString.read(buf),
+            FfiConverterString.read(buf),
+            FfiConverterSequenceString.read(buf),
+            FfiConverterULong.read(buf),
+        )
+    }
+
+    override fun allocationSize(value: MemoryRecord) = (
+            FfiConverterString.allocationSize(value.`key`) +
+            FfiConverterString.allocationSize(value.`value`) +
+            FfiConverterSequenceString.allocationSize(value.`tags`) +
+            FfiConverterULong.allocationSize(value.`updatedAtMs`)
+    )
+
+    override fun write(value: MemoryRecord, buf: ByteBuffer) {
+            FfiConverterString.write(value.`key`, buf)
+            FfiConverterString.write(value.`value`, buf)
+            FfiConverterSequenceString.write(value.`tags`, buf)
+            FfiConverterULong.write(value.`updatedAtMs`, buf)
+    }
+}
+
+
+
+
+
+/**
+ * Erros da superfície de memória expostos ao Kotlin.
+ */
+sealed class MemoryException: kotlin.Exception() {
+    
+    /**
+     * Envelope JSON inválido (export/import de memória).
+     */
+    class InvalidEnvelope(
+        
+        val `msg`: kotlin.String
+        ) : MemoryException() {
+        override val message
+            get() = "msg=${ `msg` }"
+    }
+    
+
+    companion object ErrorHandler : UniffiRustCallStatusErrorHandler<MemoryException> {
+        override fun lift(error_buf: RustBuffer.ByValue): MemoryException = FfiConverterTypeMemoryError.lift(error_buf)
+    }
+
+    
+}
+
+/**
+ * @suppress
+ */
+public object FfiConverterTypeMemoryError : FfiConverterRustBuffer<MemoryException> {
+    override fun read(buf: ByteBuffer): MemoryException {
+        
+
+        return when(buf.getInt()) {
+            1 -> MemoryException.InvalidEnvelope(
+                FfiConverterString.read(buf),
+                )
+            else -> throw RuntimeException("invalid error enum value, something is very wrong!!")
+        }
+    }
+
+    override fun allocationSize(value: MemoryException): ULong {
+        return when(value) {
+            is MemoryException.InvalidEnvelope -> (
+                // Add the size for the Int that specifies the variant plus the size needed for all fields
+                4UL
+                + FfiConverterString.allocationSize(value.`msg`)
+            )
+        }
+    }
+
+    override fun write(value: MemoryException, buf: ByteBuffer) {
+        when(value) {
+            is MemoryException.InvalidEnvelope -> {
+                buf.putInt(1)
+                FfiConverterString.write(value.`msg`, buf)
+                Unit
+            }
+        }.let { /* this makes the `when` an expression, which ensures it is exhaustive */ }
+    }
+
+}
+
+
+
+
+/**
+ * @suppress
+ */
+public object FfiConverterOptionalTypeMemoryRecord: FfiConverterRustBuffer<MemoryRecord?> {
+    override fun read(buf: ByteBuffer): MemoryRecord? {
+        if (buf.get().toInt() == 0) {
+            return null
+        }
+        return FfiConverterTypeMemoryRecord.read(buf)
+    }
+
+    override fun allocationSize(value: MemoryRecord?): ULong {
+        if (value == null) {
+            return 1UL
+        } else {
+            return 1UL + FfiConverterTypeMemoryRecord.allocationSize(value)
+        }
+    }
+
+    override fun write(value: MemoryRecord?, buf: ByteBuffer) {
+        if (value == null) {
+            buf.put(0)
+        } else {
+            buf.put(1)
+            FfiConverterTypeMemoryRecord.write(value, buf)
+        }
+    }
+}
+
+
+
+
+/**
+ * @suppress
+ */
+public object FfiConverterSequenceString: FfiConverterRustBuffer<List<kotlin.String>> {
+    override fun read(buf: ByteBuffer): List<kotlin.String> {
+        val len = buf.getInt()
+        return List<kotlin.String>(len) {
+            FfiConverterString.read(buf)
+        }
+    }
+
+    override fun allocationSize(value: List<kotlin.String>): ULong {
+        val sizeForLength = 4UL
+        val sizeForItems = value.map { FfiConverterString.allocationSize(it) }.sum()
+        return sizeForLength + sizeForItems
+    }
+
+    override fun write(value: List<kotlin.String>, buf: ByteBuffer) {
+        buf.putInt(value.size)
+        value.iterator().forEach {
+            FfiConverterString.write(it, buf)
+        }
+    }
+}
+
+
+
+
+/**
+ * @suppress
+ */
+public object FfiConverterSequenceTypeMemoryHit: FfiConverterRustBuffer<List<MemoryHit>> {
+    override fun read(buf: ByteBuffer): List<MemoryHit> {
+        val len = buf.getInt()
+        return List<MemoryHit>(len) {
+            FfiConverterTypeMemoryHit.read(buf)
+        }
+    }
+
+    override fun allocationSize(value: List<MemoryHit>): ULong {
+        val sizeForLength = 4UL
+        val sizeForItems = value.map { FfiConverterTypeMemoryHit.allocationSize(it) }.sum()
+        return sizeForLength + sizeForItems
+    }
+
+    override fun write(value: List<MemoryHit>, buf: ByteBuffer) {
+        buf.putInt(value.size)
+        value.iterator().forEach {
+            FfiConverterTypeMemoryHit.write(it, buf)
+        }
+    }
+}
+
+
+
+
+/**
+ * @suppress
+ */
+public object FfiConverterSequenceTypeMemoryRecord: FfiConverterRustBuffer<List<MemoryRecord>> {
+    override fun read(buf: ByteBuffer): List<MemoryRecord> {
+        val len = buf.getInt()
+        return List<MemoryRecord>(len) {
+            FfiConverterTypeMemoryRecord.read(buf)
+        }
+    }
+
+    override fun allocationSize(value: List<MemoryRecord>): ULong {
+        val sizeForLength = 4UL
+        val sizeForItems = value.map { FfiConverterTypeMemoryRecord.allocationSize(it) }.sum()
+        return sizeForLength + sizeForItems
+    }
+
+    override fun write(value: List<MemoryRecord>, buf: ByteBuffer) {
+        buf.putInt(value.size)
+        value.iterator().forEach {
+            FfiConverterTypeMemoryRecord.write(it, buf)
+        }
+    }
+}
         /**
          * Constrói o prompt de sistema por idioma/cultura — ponte direta para
          * [`crate::i18n::system_prompt`]. `tool_catalog_json` é o catálogo das
@@ -1100,6 +2160,20 @@ public object FfiConverterString: FfiConverter<String, RustBuffer.ByValue> {
     uniffiRustCall() { _status ->
     UniffiLib.INSTANCE.uniffi_geny_core_fn_func_build_system_prompt(
         FfiConverterString.lower(`languageCode`),FfiConverterString.lower(`toolCatalogJson`),FfiConverterBoolean.lower(`privacyStatement`),_status)
+}
+    )
+    }
+    
+
+        /**
+         * Prompt de sistema com fatos de memória relevantes (Fase 5, core-08):
+         * o recall acontece ANTES de responder e os fatos entram no prompt —
+         * válidos para os backends remoto e local.
+         */ fun `buildSystemPromptWithMemory`(`languageCode`: kotlin.String, `toolCatalogJson`: kotlin.String, `privacyStatement`: kotlin.Boolean, `memoryLines`: List<kotlin.String>): kotlin.String {
+            return FfiConverterString.lift(
+    uniffiRustCall() { _status ->
+    UniffiLib.INSTANCE.uniffi_geny_core_fn_func_build_system_prompt_with_memory(
+        FfiConverterString.lower(`languageCode`),FfiConverterString.lower(`toolCatalogJson`),FfiConverterBoolean.lower(`privacyStatement`),FfiConverterSequenceString.lower(`memoryLines`),_status)
 }
     )
     }

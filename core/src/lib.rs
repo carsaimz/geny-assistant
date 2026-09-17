@@ -14,11 +14,17 @@ pub mod error;
 pub mod i18n;
 pub mod memory;
 pub mod orchestrator;
+pub mod retention;
 pub mod session;
 pub mod tools;
 
 #[cfg(feature = "lua")]
 pub mod lua_sandbox;
+
+#[cfg(feature = "semantic")]
+pub mod embed;
+#[cfg(feature = "semantic")]
+pub mod semantic;
 
 #[cfg(feature = "uniffi")]
 pub mod uniffi_api;
@@ -28,6 +34,12 @@ pub mod vad;
 
 pub use error::{CoreError, Result};
 pub use orchestrator::{Orchestrator, Outcome, ToolExecutor, ToolOutcome};
+pub use retention::RetentionPolicy;
+
+#[cfg(feature = "semantic")]
+pub use embed::{cosine, Embedder, HashingEmbedder, EMBED_DIM};
+#[cfg(feature = "semantic")]
+pub use semantic::{SemanticHit, SemanticIndex};
 
 #[cfg(feature = "vad")]
 pub use vad::{EnergyVad, SegmentBuffer, VadConfig, VadDecision};
