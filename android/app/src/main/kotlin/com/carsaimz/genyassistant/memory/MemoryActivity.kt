@@ -279,9 +279,9 @@ class MemoryActivity : AppCompatActivity() {
             orientation = LinearLayout.VERTICAL
             setPadding(dp(20), dp(8), dp(20), 0)
         }
-        val maxFacts = numberField(spec.maxFacts, getString(R.string.memory_retention_max_facts))
-        val maxAge = numberField(spec.maxAgeDays.toInt(), getString(R.string.memory_retention_max_age))
-        val maxBytes = numberField(spec.maxValueBytes.toInt(), getString(R.string.memory_retention_max_bytes))
+        val maxFacts = numberField(spec.maxFacts.toLong(), getString(R.string.memory_retention_max_facts))
+        val maxAge = numberField(spec.maxAgeDays, getString(R.string.memory_retention_max_age))
+        val maxBytes = numberField(spec.maxValueBytes, getString(R.string.memory_retention_max_bytes))
         host.addView(maxAge.first)
         host.addView(maxFacts.first)
         host.addView(maxBytes.first)
@@ -290,9 +290,10 @@ class MemoryActivity : AppCompatActivity() {
             .setView(host)
             .setPositiveButton(R.string.memory_save) { _, _ ->
                 val newSpec = RetentionSpec(
-                    maxFacts = maxFacts.second.text.toString().toIntOrNull()?.coerceAtLeast(0) ?: 0,
-                    maxAgeDays = maxAge.second.text.toString().toIntOrNull()?.coerceAtLeast(0)?.toLong() ?: 0L,
-                    maxValueBytes = maxBytes.second.text.toString().toIntOrNull()?.coerceAtLeast(0)?.toLong() ?: 0L,
+                    maxFacts = maxFacts.second.text.toString().toLongOrNull()?.coerceAtLeast(0L)
+                        ?.coerceAtMost(Int.MAX_VALUE.toLong())?.toInt() ?: 0,
+                    maxAgeDays = maxAge.second.text.toString().toLongOrNull()?.coerceAtLeast(0L) ?: 0L,
+                    maxValueBytes = maxBytes.second.text.toString().toLongOrNull()?.coerceAtLeast(0L) ?: 0L,
                 )
                 val forgotten = memory.setRetention(newSpec, System.currentTimeMillis())
                 audit.log("memory", "retenção definida; ${forgotten.size} fato(s) esquecido(s)")
