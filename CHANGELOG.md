@@ -4,6 +4,101 @@ Todas as mudanças notáveis deste projeto são documentadas aqui.
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/),
 versionamento [Semântico](https://semver.org/lang/pt-BR/).
 
+## [0.3.0-alpha.11] — Fase 5 completa: Memória / Phase 5 complete: Memory
+
+### Adicionado / Added
+
+- **Memória semântica no core** (`core-08`, Fase 5, #45): feature `semantic`
+  com `HashingEmbedder` — embeddings determinísticos multilíngues (n-gramas
+  de 1–3 caracteres, FNV-1a 64-bit, projeção 256d normalizada L2, zero
+  dependências) — e `SemanticIndex` com busca top-k por cosseno. O objeto
+  UniFFI `GenyMemory` expõe o ciclo completo ao Kotlin (remember/forget/
+  recall/list/search semântica e substring/export/import/retention), com o
+  índice reconstruído a partir do Room e sincronizado a cada escrita. O
+  upgrade para MiniLM via ONNX permanece como rota futura (a trait
+  `Embedder` é o ponto de extensão); sem a feature, `search_semantic` cai
+  para substring com score 0.
+  *Semantic memory in the core* (`core-08`, Phase 5, #45): `semantic`
+  feature with `HashingEmbedder` — deterministic multilingual embeddings
+  (1–3 char n-grams, FNV-1a 64-bit, 256d L2-normalized projection, zero
+  deps) — and `SemanticIndex` with top-k cosine search. The UniFFI
+  `GenyMemory` object exposes the full cycle to Kotlin (remember/forget/
+  recall/list/semantic and substring search/export/import/retention), with
+  the index rebuilt from Room and synced on every write. The MiniLM-via-ONNX
+  upgrade remains a future path (the `Embedder` trait is the extension
+  point); without the feature, `search_semantic` falls back to substring
+  with score 0.
+
+- **Recall antes de responder** (`core-08`, Fase 5): o chat consulta
+  `memorySearch` com a última mensagem do usuário e injeta os fatos
+  relevantes na seção de memória do prompt de sistema — em 11 idiomas
+  (`memory_header` no Rust, `MEMORY_HEADERS` espelho no TS) — para os
+  backends remoto e local, via `system_prompt_with_memory` (Rust),
+  `buildSystemPromptWithMemory` (UniFFI) e `buildSystemPrompt` com
+  `memoryLines` (web). Sem fatos, o prompt segue inalterado.
+  *Recall before answering* (`core-08`, Phase 5): the chat queries
+  `memorySearch` with the user's last message and injects relevant facts
+  into the system prompt's memory section — across 11 languages
+  (`memory_header` in Rust, `MEMORY_HEADERS` TS mirror) — for both remote
+  and local backends, via `system_prompt_with_memory` (Rust),
+  `buildSystemPromptWithMemory` (UniFFI) and `buildSystemPrompt` with
+  `memoryLines` (web). Without facts, the prompt is unchanged.
+
+- **Política de retenção** (`core-09`, Fase 5, #47): `RetentionPolicy`
+  (max_facts, max_age_days, max_value_bytes) aplicada automaticamente a
+  cada escrita (`remember` e `apply_retention`) — os mais antigos saem
+  primeiro, com desempate por chave — e o envelope de exportação/importação
+  versionado v1 (compatível com o array legado v0), compartilhado entre
+  core (Rust), ponte (`memoryExport`/`memoryImport`) e backup cifrado.
+  Espelho Kotlin puro (`RetentionLogic`) JVM-testável cobre builds sem o
+  core. Chaves internas (`wakeword.*`) não aparecem na memória do usuário.
+  *Retention policy* (`core-09`, Phase 5, #47): `RetentionPolicy`
+  (max_facts, max_age_days, max_value_bytes) applied automatically on every
+  write (`remember` and `apply_retention`) — oldest first, key as tiebreak
+  — plus the versioned v1 export/import envelope (backwards-compatible with
+  the legacy v0 array), shared by the core (Rust), the bridge
+  (`memoryExport`/`memoryImport`) and the encrypted backup. A pure Kotlin
+  mirror (`RetentionLogic`), JVM-testable, covers core-less builds. Internal
+  keys (`wakeword.*`) never surface in the user's memory.
+
+- **Tela nativa de Memória** (`android-08`, Fase 5, #46): `MemoryActivity`
+  no estilo da tela de Modelos (Material3, tema `Theme.Geny`, UI em código)
+  com lista de fatos (Room), busca semântica (core) com fallback substring,
+  adicionar/editar/apagar com confirmação, limpar tudo, resumo e edição da
+  política de retenção (0 = sem limite). Métodos `memoryList`/`memorySet`/
+  `memoryDelete`/`memoryClear`/`memorySearch`/`memoryExport`/`memoryImport`/
+  `memoryRetention`/`openMemoryScreen` na ponte; mock web com fatos em
+  localStorage e busca substring.
+  *Native Memory screen* (`android-08`, Phase 5, #46): `MemoryActivity` in
+  the Models-screen style (Material3, `Theme.Geny` theme, code-built UI)
+  with the facts list (Room), semantic search (core) with substring
+  fallback, add/edit/delete with confirmation, clear all, plus a retention
+  summary and editor (0 = unlimited). `memoryList`/`memorySet`/
+  `memoryDelete`/`memoryClear`/`memorySearch`/`memoryExport`/
+  `memoryImport`/`memoryRetention`/`openMemoryScreen` bridge methods; web
+  mock keeps facts in localStorage with substring search.
+
+- **Backup cifrado de configuração** (`app-04`, Fase 5, #48): arquivo
+  portátil `GENYBAK1` — PBKDF2-HMAC-SHA256 (210.000 iterações, salt 16B)
+  deriva a chave AES-256 da senha do usuário; AES-256-GCM (IV 12B, tag 128)
+  cifra o envelope com configurações (incluindo chave de API, pois o arquivo
+  inteiro é cifrado) + fatos + retenção. Gravação/leitura via SAF
+  (`ACTION_CREATE_DOCUMENT`/`ACTION_OPEN_DOCUMENT`) com `backupExport`/
+  `backupImport` na ponte; seção Backup nas configurações web (só no app,
+  com nota honesta no navegador); restauração aplica os fatos nativamente e
+  devolve as configurações à web. Sem nuvem e sem Keystore no formato — a
+  senha é o único segredo.
+  *Encrypted settings backup* (`app-04`, Phase 5, #48): portable `GENYBAK1`
+  file — PBKDF2-HMAC-SHA256 (210,000 iterations, 16B salt) derives the
+  AES-256 key from the user's passphrase; AES-256-GCM (12B IV, 128-bit tag)
+  encrypts the envelope holding settings (including the API key, since the
+  whole file is passphrase-encrypted) + facts + retention. Written/read via
+  SAF (`ACTION_CREATE_DOCUMENT`/`ACTION_OPEN_DOCUMENT`) with `backupExport`/
+  `backupImport` on the bridge; Backup section in the web settings (app
+  only, with an honest note in the browser); restore applies facts
+  natively and hands settings back to the web layer. No cloud and no
+  Keystore in the format — the passphrase is the only secret.
+
 ## [0.3.0-alpha.10] — Fase 4 completa: OCR local / Phase 4 complete: local OCR
 
 ### Adicionado / Added

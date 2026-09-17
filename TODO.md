@@ -52,10 +52,10 @@
 
 ## Fase 5 — Memória
 
-- [ ] `core-08` sqlite-vec + embeddings ONNX no core (feature `semantic`)
-- [ ] `android-08` UI de fatos aprendidos (ver/editar/apagar)
-- [ ] `core-09` Política de retenção (exclusão automática + export/import)
-- [ ] `app-04` Backup cifrado de configuração (sem nuvem)
+- [x] `core-08` Memória semântica: índice vetorial + embeddings locais no core (feature `semantic`) — `HashingEmbedder` multilíngue determinístico (n-gramas 1–3, 256d), `SemanticIndex` top-k cosseno, `GenyMemory` (UniFFI) e recall no prompt de sistema em 11 idiomas (#45, v0.3.0-alpha.11)
+- [x] `android-08` UI de fatos aprendidos (ver/editar/apagar) — `MemoryActivity` nativa com busca semântica (fallback substring) e 9 métodos `memory*` na ponte (#46, v0.3.0-alpha.11)
+- [x] `core-09` Política de retenção (exclusão automática + export/import) — `RetentionPolicy` aplicada a cada escrita + envelope v1 compartilhado com o backup; espelho Kotlin JVM-testável (#47, v0.3.0-alpha.11)
+- [x] `app-04` Backup cifrado de configuração (sem nuvem) — arquivo `GENYBAK1` (PBKDF2 210k + AES-256-GCM) via SAF, seção Backup nas configurações web (#48, v0.3.0-alpha.11)
 
 ## Fase 6 — APIs remotas
 

@@ -87,13 +87,13 @@
 - [ ] Sandbox Lua (mlua) executando `tools/` com API `geny.*`
 - [ ] Catálogo de ferramentas consultável na UI com níveis de confirmação visíveis
 
-## Fase 5 — Memória / Memory
+## ✅ Fase 5 — Memória / Memory (v0.3.0-alpha.11)
 
-- [ ] Banco vetorial local (sqlite-vec ou equivalente)
-- [ ] Embeddings locais via ONNX (MiniLM multilíngue)
-- [ ] Memória de longo prazo na UI: fatos aprendidos, editáveis e apagáveis
-- [ ] Política de retenção configurável (exclusão automática, exportação/importação)
-- [ ] Memória semântica conectada ao prompt de sistema (recall antes de responder)
+- [x] Banco vetorial local (sqlite-vec ou equivalente) — índice vetorial in-process no core (`SemanticIndex`, top-k cosseno) / in-process vector index in the core
+- [x] Embeddings locais — `HashingEmbedder` multilíngue determinístico (n-gramas 1–3, 256d, zero deps); MiniLM via ONNX segue como upgrade futuro na trait `Embedder` / deterministic multilingual `HashingEmbedder`; MiniLM-via-ONNX stays as a future upgrade on the `Embedder` trait
+- [x] Memória de longo prazo na UI: fatos aprendidos, editáveis e apagáveis — `MemoryActivity` nativa + métodos `memory*` na ponte (#46)
+- [x] Política de retenção configurável (exclusão automática, exportação/importação) — `RetentionPolicy` + envelope v1 (#47)
+- [x] Memória semântica conectada ao prompt de sistema (recall antes de responder) — `system_prompt_with_memory` em 11 idiomas, remoto e local (#45)
 
 ## Fase 6 — APIs remotas / Remote APIs
 

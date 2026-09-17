@@ -1,7 +1,7 @@
 {
   "name": "geny-assistant-app",
-  "version": "0.1.0-alpha.1",
-  "description": "Geny Assistant — app web (TypeScript + Vite + Capacitor), local-first",
+  "version": "0.3.0-alpha.11",
+  "description": "Geny Assistant \u2014 app web (TypeScript + Vite + Capacitor), local-first",
   "private": true,
   "type": "module",
   "license": "Apache-2.0",
