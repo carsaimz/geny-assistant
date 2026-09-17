@@ -4,6 +4,29 @@ Todas as mudanças notáveis deste projeto são documentadas aqui.
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/),
 versionamento [Semântico](https://semver.org/lang/pt-BR/).
 
+## [0.3.0-alpha.10] — Fase 4 completa: OCR local / Phase 4 complete: local OCR
+
+### Adicionado / Added
+
+- **OCR local** (`android-06`, Fase 4, #41): tool `ocr.read` (nível SIMPLE)
+  com `OcrReader` no pacote `ocr` — ML Kit v2 (`text-recognition` 16.0.1,
+  bundle Latin: pt/en/es/fr/de/it), 100% on-device, sem Play Services e sem
+  permissões amplas de armazenamento: a imagem abre por `content://`
+  (seletor do sistema ou pasta autorizada SAF). Execução em thread de fundo
+  com `Tasks.await` e limite de 30 s; envelope JSON com códigos estáveis
+  (`ok`/`uri_invalida`/`falha_ao_carregar`/`tempo_esgotado`/
+  `falha_do_motor`), texto extraído, número de blocos e de linhas.
+  `ocrRead` na ponte + mock web honesto + `ocr.read` no catálogo web.
+  Testes Robolectric: códigos estáveis, URIs inválidas e falha de abertura.
+  *Local OCR* (`android-06`, Phase 4, #41): `ocr.read` tool (SIMPLE level)
+  with `OcrReader` — ML Kit v2 (Latin bundle: pt/en/es/fr/de/it), 100%
+  on-device, no Play Services and no broad storage permissions: the image
+  opens via `content://` (system picker or authorized SAF folder). Runs on
+  a background thread with `Tasks.await` and a 30 s cap; JSON envelope with
+  stable codes, extracted text, block and line counts. `ocrRead` on the
+  bridge + honest web mock + `ocr.read` in the web catalog. Robolectric
+  tests: stable codes, invalid URIs and open failures.
+
 ## [0.3.0-alpha.9] — SAF, resposta a notificações e catálogo de ferramentas / SAF, notification reply and tool catalog
 
 ### Adicionado / Added
