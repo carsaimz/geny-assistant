@@ -6,6 +6,7 @@
  */
 import { Capacitor } from '@capacitor/core';
 import { bridge } from '../core/bridge';
+import { PROVIDER_PRESETS, effectiveProvider, type OperationProfileCode } from '../core/providers';
 import type { VoiceEvent, WakeWordStatus } from '../core/voice-types';
 import type { VoiceCapabilities, WhisperModelStatus } from '../core/voice-types';
 import type { LlmCapabilities, LlmEvent, LlmModelStatus } from '../core/llm-types';
@@ -66,6 +67,24 @@ export function renderSettingsDrawer(
         </select>
       </label>
       <label>
+        <span>${t('settings.profile')}</span>
+        <select id="set-profile">
+          <option value="default">${t('settings.profile.default')}</option>
+          <option value="offline-total">${t('settings.profile.offline')}</option>
+          <option value="hybrid">${t('settings.profile.hybrid')}</option>
+          <option value="home-server">${t('settings.profile.home')}</option>
+        </select>
+        <small id="set-profile-desc"></small>
+      </label>
+      <label>
+        <span>${t('settings.provider')}</span>
+        <select id="set-provider">
+          ${PROVIDER_PRESETS.map((p) => `<option value="${p.id}">${p.label}</option>`).join('')}
+          <option value="custom">${t('settings.provider.custom')}</option>
+        </select>
+        <small id="set-provider-tier"></small>
+      </label>
+      <label>
         <span>${t('settings.baseUrl')}</span>
         <input id="set-baseurl" type="url" placeholder="http://localhost:11434/v1" />
       </label>
@@ -73,10 +92,11 @@ export function renderSettingsDrawer(
         <span>${t('settings.model')}</span>
         <input id="set-model" type="text" placeholder="qwen2.5:1.5b" />
       </label>
-      <label>
+      <label id="row-apikey">
         <span>${t('settings.apiKey')}</span>
         <input id="set-apikey" type="password" placeholder="sk-…" autocomplete="off" />
         <small>${t('settings.apiKey.desc')}</small>
+        <small id="key-keystore-note" hidden>${t('settings.key.keystore')}</small>
       </label>
       <label>
         <span>${t('settings.language')}</span>
@@ -202,9 +222,15 @@ export function renderSettingsDrawer(
   };
 
   const mode = $<HTMLSelectElement>('set-mode');
+  const profile = $<HTMLSelectElement>('set-profile');
+  const profileDesc = $<HTMLElement>('set-profile-desc');
+  const providerSel = $<HTMLSelectElement>('set-provider');
+  const providerTier = $<HTMLElement>('set-provider-tier');
   const baseUrl = $<HTMLInputElement>('set-baseurl');
   const model = $<HTMLInputElement>('set-model');
   const apiKey = $<HTMLInputElement>('set-apikey');
+  const keyRow = $<HTMLElement>('row-apikey');
+  const keyKeystoreNote = $<HTMLElement>('key-keystore-note');
   const lang = $<HTMLSelectElement>('set-lang');
   const voiceReplies = $<HTMLInputElement>('set-voice-replies');
   const sttEngine = $<HTMLSelectElement>('set-stt-engine');
@@ -257,10 +283,24 @@ export function renderSettingsDrawer(
         showBackupStatus(t('settings.backup.fail'));
         return;
       }
-      const apiKeyStored = localStorage.getItem('geny.apikey') ?? '';
-      const payload = JSON.stringify({ ...settings, apiKey: apiKeyStored });
+      // Fase 6 (android-09): a chave vai do Keystore (ponte) para o arquivo
+      // — o payload é cifrado com a senha; no navegador, mock por provedor.
+      const provider = providerSel.value || 'custom';
+      const legacyKey = (): string => {
+        try {
+          return localStorage.getItem('geny.apikey') ?? '';
+        } catch {
+          return '';
+        }
+      };
       void bridge
-        .backupExport({ settingsJson: payload, passphrase: pass })
+        .providerKeyGet({ provider })
+        .then(({ value }) => (value.length > 0 ? value : legacyKey()))
+        .catch(() => legacyKey())
+        .then((apiKeyStored) => {
+          const payload = JSON.stringify({ ...settings, provider, apiKey: apiKeyStored });
+          return bridge.backupExport({ settingsJson: payload, passphrase: pass });
+        })
         .then((res) => {
           showBackupStatus(res.ok ? t('settings.backup.ok') : t('settings.backup.fail'));
           if (res.ok) backupPass.value = '';
@@ -282,11 +322,19 @@ export function renderSettingsDrawer(
             return;
           }
           try {
-            const parsed = JSON.parse(res.settingsJson) as Partial<Settings> & { apiKey?: string };
-            if (typeof parsed.apiKey === 'string') {
-              localStorage.setItem('geny.apikey', parsed.apiKey);
-              delete parsed.apiKey;
+            const parsed = JSON.parse(res.settingsJson) as Partial<Settings> & {
+              apiKey?: string;
+              provider?: string;
+            };
+            if (typeof parsed.apiKey === 'string' && parsed.apiKey.length > 0) {
+              // Fase 6 (android-09): a chave restaurada volta para o cofre do
+              // provedor (Keystore no app; mock por provedor no navegador).
+              const provider = parsed.provider ?? 'custom';
+              bridge
+                .providerKeySet({ provider, key: parsed.apiKey })
+                .catch(() => localStorage.setItem('geny.apikey', parsed.apiKey ?? ''));
             }
+            delete parsed.apiKey;
             cb.onSave(parsed as Settings);
             showBackupStatus(t('settings.backup.restored'));
             backupPass.value = '';
@@ -339,6 +387,44 @@ export function renderSettingsDrawer(
   llmTemp.value = String(settings.localTemperature ?? 0.7);
   llmSeed.value = String(settings.localSeed ?? -1);
   if (settings.apiKeySet) apiKey.placeholder = '••••••••';
+
+  // ------------------------------------------------ provedores e perfis --
+  // Fase 6 (TODO core-10 / issue #50): presets preenchem a base URL; o
+  // perfil de operação restringe o modo auto (espelho do core Rust).
+
+  const PROFILE_DESCS: Record<OperationProfileCode, string> = {
+    'default': t('settings.profile.default.desc'),
+    'offline-total': t('settings.profile.offline.desc'),
+    'hybrid': t('settings.profile.hybrid.desc'),
+    'home-server': t('settings.profile.home.desc'),
+  };
+
+  const refreshProviderUi = (): void => {
+    const preset = effectiveProvider(providerSel.value);
+    providerTier.textContent = `${t(`settings.tier.${preset.tier.replace('-', '_')}`)} · ${
+      preset.requiresKey ? t('settings.tier.key') : t('settings.tier.nokey')
+    }`;
+    keyRow.hidden = !preset.requiresKey;
+  };
+
+  const refreshProfileUi = (): void => {
+    const code = profile.value as OperationProfileCode;
+    profileDesc.textContent = PROFILE_DESCS[code] ?? '';
+  };
+
+  profile.value = (settings.profile ?? 'default') as string;
+  providerSel.value = effectiveProvider(settings.provider).id;
+  refreshProviderUi();
+  refreshProfileUi();
+  keyKeystoreNote.hidden = !Capacitor.isNativePlatform();
+
+  providerSel.addEventListener('change', () => {
+    // Preset escolhido: preenche a base URL (custom preserva o que há).
+    const preset = effectiveProvider(providerSel.value);
+    if (preset.baseUrl.length > 0) baseUrl.value = preset.baseUrl;
+    refreshProviderUi();
+  });
+  profile.addEventListener('change', refreshProfileUi);
 
   // Capacidades de voz: whisper nativo + estado dos modelos (async).
   let caps: VoiceCapabilities | null = null;
@@ -766,6 +852,8 @@ export function renderSettingsDrawer(
       model: model.value.trim(),
       baseUrl: baseUrl.value.trim(),
       apiKeySet: settings.apiKeySet || apiKey.value.trim().length > 0,
+      provider: providerSel.value,
+      profile: profile.value as Settings['profile'],
       voiceReplies: voiceReplies.checked,
       sttEngine: sttEngine.value as Settings['sttEngine'],
       vadAutoStop: vadAutoStop.checked,
@@ -775,9 +863,16 @@ export function renderSettingsDrawer(
       localSeed: Number.isFinite(seed) ? seed : -1,
       ttsEngine: ttsEngine.value as Settings['ttsEngine'],
     });
+    // Fase 6 (TODO android-09 / issue #51): a chave de API do provedor vai
+    // para o cofre via ponte (Keystore no app; localStorage por provedor no
+    // navegador). A chave legada 'geny.apikey' é limpa após a migração.
     const key = apiKey.value.trim();
     if (key.length > 0) {
-      localStorage.setItem('geny.apikey', key);
+      const provider = providerSel.value || 'custom';
+      void bridge
+        .providerKeySet({ provider, key })
+        .then(() => localStorage.removeItem('geny.apikey'))
+        .catch(() => localStorage.setItem('geny.apikey', key));
     }
     apiKey.value = '';
     window.setTimeout(() => {

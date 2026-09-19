@@ -78,6 +78,13 @@ class KeystoreManager(private val context: Context) {
         prefs.edit().remove(name).apply()
     }
 
+    /**
+     * Nomes de todos os segredos guardados (sem os valores) — usado pela
+     * listagem de chaves por provedor (Fase 6, android-09): a ponte filtra
+     * pelo prefixo `provider-key-` e devolve só os ids.
+     */
+    fun secretNames(): Set<String> = prefs.all.keys.toSet()
+
     private companion object {
         const val ANDROID_KEYSTORE = "AndroidKeyStore"
         const val ALIAS = "geny-master-key"

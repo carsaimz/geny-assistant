@@ -119,6 +119,15 @@ export interface GenyBridge {
     settingsJson?: string;
     error?: string;
   }>;
+  // ---- Chaves por provedor (Fase 6, TODO android-09) — Keystore no nativo ----
+  /** Guarda a chave de API de um provedor (cifrada no Keystore no app). */
+  providerKeySet(options: { provider: string; key: string }): Promise<{ ok: boolean; error?: string }>;
+  /** Lê a chave de um provedor (vazio quando ausente). */
+  providerKeyGet(options: { provider: string }): Promise<{ value: string }>;
+  /** Remove a chave de um provedor. */
+  providerKeyClear(options: { provider: string }): Promise<{ ok: boolean }>;
+  /** Lista os provedores COM chave guardada (nunca os valores). */
+  providerKeysList(): Promise<{ ok: boolean; providers: string[] }>;
   addListener(
     eventName: 'genyVoice' | 'genyLlm' | 'genyTts' | 'genyWake',
     listenerFunc: (event: VoiceEvent | LlmEvent | TtsEvent | WakeWordEvent) => void,
@@ -283,6 +292,50 @@ function createWebMockBridge(): GenyBridge {
     },
     async backupImport() {
       return { ok: false, error: 'unavailable_on_web' };
+    },
+    ...createWebProviderKeysMock(),
+  };
+}
+
+// ------------------------------------ mock de chaves por provedor (web) --
+
+/**
+ * **PT** Mock de chaves por provedor no navegador: sem Keystore aqui, a
+ * chave fica em localStorage por provedor (`geny.apikey.<provider>`) —
+ * apenas dev, mesma convenção da ponte nativa.
+ * **EN** Browser per-provider key mock: no Keystore here, the key lives in
+ * localStorage per provider (`geny.apikey.<provider>`) — dev only, same
+ * convention as the native bridge.
+ */
+function createWebProviderKeysMock(): Pick<
+  GenyBridge,
+  'providerKeySet' | 'providerKeyGet' | 'providerKeyClear' | 'providerKeysList'
+> {
+  const storageKey = (provider: string): string => `geny.apikey.${provider}`;
+  return {
+    async providerKeySet({ provider, key }) {
+      if (!/^[a-z0-9][a-z0-9-]{0,31}$/.test(provider)) {
+        return { ok: false, error: 'provider_invalido' };
+      }
+      localStorage.setItem(storageKey(provider), key);
+      return { ok: true };
+    },
+    async providerKeyGet({ provider }) {
+      return { value: localStorage.getItem(storageKey(provider)) ?? '' };
+    },
+    async providerKeyClear({ provider }) {
+      localStorage.removeItem(storageKey(provider));
+      return { ok: true };
+    },
+    async providerKeysList() {
+      const providers: string[] = [];
+      for (let i = 0; i < localStorage.length; i += 1) {
+        const k = localStorage.key(i);
+        if (k !== null && k.startsWith('geny.apikey.')) {
+          providers.push(k.slice('geny.apikey.'.length));
+        }
+      }
+      return { ok: true, providers };
     },
   };
 }

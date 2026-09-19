@@ -22,6 +22,9 @@ function defaultSettings(): Settings {
     model: '',
     baseUrl: '',
     apiKeySet: false,
+    // Fase 6 (core-10): provedor custom + perfil padrão (auto clássico).
+    provider: 'custom',
+    profile: 'default',
     voiceReplies: false,
     sttEngine: 'system',
     vadAutoStop: true,
@@ -45,10 +48,29 @@ function loadSettings(): Settings {
   return defaultSettings();
 }
 
+/**
+ * Chave de API do provedor ATIVO, em cache de memória (Fase 6, TODO
+ * android-09): no app a chave vive no Keystore via ponte; no navegador,
+ * em localStorage por provedor. Hidratada no boot e a cada salvamento —
+ * mantém `loadRemoteConfig` síncrono para o resto do app.
+ */
+let remoteKeyCache = '';
+
+async function hydrateRemoteKey(settings: Settings): Promise<void> {
+  const provider = settings.provider ?? 'custom';
+  try {
+    const { value } = await bridge.providerKeyGet({ provider });
+    remoteKeyCache = value;
+    return;
+  } catch {
+    // ponte antiga sem o método: cai no legado
+  }
+  remoteKeyCache = localStorage.getItem('geny.apikey') ?? '';
+}
+
 function loadRemoteConfig(settings: Settings): RemoteConfig | null {
-  const apiKey = localStorage.getItem('geny.apikey') ?? '';
   if (settings.baseUrl.length === 0 || settings.model.length === 0) return null;
-  return { baseUrl: settings.baseUrl, apiKey, model: settings.model };
+  return { baseUrl: settings.baseUrl, apiKey: remoteKeyCache, model: settings.model };
 }
 
 async function refreshStatus(): Promise<void> {
@@ -81,6 +103,8 @@ function $(id: string): HTMLElement {
 async function boot(): Promise<void> {
   let currentSettings: Settings = loadSettings();
   setLocale(currentSettings.language);
+  // Fase 6 (android-09): chave do provedor ativo antes do primeiro turno.
+  await hydrateRemoteKey(currentSettings);
 
   const chatEl = $('chat');
   const composer = $('composer');
@@ -120,8 +144,8 @@ async function boot(): Promise<void> {
       // Tela de voz: registra a resposta e dispara o ciclo mãos-livres.
       voice.notifyAssistantReply(text);
     },
-    onLocalStream: (active) => {
-      // Streaming do LLM local (TODO core-05b): mostra o botão de parar.
+    onStreamActive: (active) => {
+      // Streaming (local core-05b + remoto SSE app-05): mostra o botão de parar.
       btnStopGen.hidden = !active;
     },
   });
@@ -169,6 +193,8 @@ async function boot(): Promise<void> {
         currentSettings = s;
         localStorage.setItem(SETTINGS_KEY, JSON.stringify(s));
         setLocale(s.language);
+        // Fase 6 (android-09): provedor pode ter mudado — rehidrata a chave.
+        void hydrateRemoteKey(s);
         redrawStatic(input);
         drawer.hidden = true;
       },
@@ -179,8 +205,9 @@ async function boot(): Promise<void> {
   btnSettings.addEventListener('click', openDrawer);
 
   btnStopGen.addEventListener('click', () => {
-    // Parada do streaming (TODO core-05b): o motor devolve o texto parcial.
+    // Parada do streaming (core-05b local via nativo + app-05 remoto via abort).
     void bridge.stopLocalGenerate();
+    chat.abortRemoteStream();
   });
 
   composer.addEventListener('submit', (ev) => {

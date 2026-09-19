@@ -25,6 +25,7 @@ import com.carsaimz.genyassistant.security.BackupContent
 import com.carsaimz.genyassistant.security.BackupCrypto
 import com.carsaimz.genyassistant.security.ConfirmationManager
 import com.carsaimz.genyassistant.security.KeystoreManager
+import com.carsaimz.genyassistant.security.ProviderKeys
 import com.carsaimz.genyassistant.tools.AppTools
 import com.carsaimz.genyassistant.tools.ConfirmationLevel
 import com.carsaimz.genyassistant.tools.ContactSearchTool
@@ -356,6 +357,66 @@ class GenyPlugin : Plugin() {
         val secret = keystore.readSecret(name)
         audit.log("security", "segredo lido pelo app: $name")
         call.resolve(JSObject().put("value", secret ?: ""))
+    }
+
+    // ------------------------------------------------ chaves por provedor --
+    // Fase 6 (TODO android-09, issue #51): uma chave de API por provedor,
+    // cifrada no Keystore (AES-256-GCM). A ponte só aceita ids válidos
+    // (ProviderKeys) — nunca um nome de segredo arbitrário vindo da web;
+    // a listagem devolve os provedores, JAMAIS os valores.
+
+    @PluginMethod
+    fun providerKeySet(call: PluginCall) {
+        val provider = call.getString("provider").orEmpty()
+        val key = call.getString("key").orEmpty()
+        val name = ProviderKeys.secretName(provider)
+        if (name == null) {
+            call.resolve(JSObject().put("ok", false).put("error", "provider_invalido"))
+            return
+        }
+        if (key.isEmpty()) {
+            call.resolve(JSObject().put("ok", false).put("error", "key ausente"))
+            return
+        }
+        keystore.storeSecret(name, key)
+        audit.log("security", "chave de provedor guardada: $provider")
+        call.resolve(JSObject().put("ok", true))
+    }
+
+    @PluginMethod
+    fun providerKeyGet(call: PluginCall) {
+        val provider = call.getString("provider").orEmpty()
+        val name = ProviderKeys.secretName(provider)
+        if (name == null) {
+            call.resolve(JSObject().put("value", ""))
+            return
+        }
+        val secret = keystore.readSecret(name)
+        audit.log("security", "chave de provedor lida pelo app: $provider")
+        call.resolve(JSObject().put("value", secret ?: ""))
+    }
+
+    @PluginMethod
+    fun providerKeyClear(call: PluginCall) {
+        val provider = call.getString("provider").orEmpty()
+        val name = ProviderKeys.secretName(provider)
+        if (name == null) {
+            call.resolve(JSObject().put("ok", false).put("error", "provider_invalido"))
+            return
+        }
+        keystore.removeSecret(name)
+        audit.log("security", "chave de provedor removida: $provider")
+        call.resolve(JSObject().put("ok", true))
+    }
+
+    @PluginMethod
+    fun providerKeysList(call: PluginCall) {
+        val providers = keystore.secretNames()
+            .mapNotNull { ProviderKeys.providerFromSecretName(it) }
+            .sorted()
+        val arr = JSArray()
+        providers.forEach { arr.put(it) }
+        call.resolve(JSObject().put("ok", true).put("providers", arr))
     }
 
     // ---------------------------------------------------------------- voz --
