@@ -59,9 +59,9 @@
 
 ## Fase 6 — APIs remotas
 
-- [ ] `app-05` Streaming SSE no modo remoto
-- [ ] `core-10` Interface de provedor comum + perfis de operação
-- [ ] `android-09` Gerenciador de chaves por provedor (Keystore)
+- [x] `app-05` Streaming SSE no modo remoto — `remoteStream`/`consumeSseStream` com `stream:true`, abort pelo botão Parar, timeout de inatividade 60 s e a mesma bolha progressiva do LLM local (#49, v0.3.0-alpha.12)
+- [x] `core-10` Interface de provedor comum + perfis de operação — `providers.rs` com catálogo `ProviderSpec` (gratuito/free-tier/premium/self-hosted), `OperationProfile` (`offline-total`/`hybrid`/`home-server`) com regras puras, exports UniFFI, espelho TS e seção Provedor/Perfil nas configurações (#50, v0.3.0-alpha.12)
+- [x] `android-09` Gerenciador de chaves por provedor (Keystore) — `providerKeySet/Get/Clear/List` na ponte, AES-256-GCM via KeystoreManager, `ProviderKeys` JVM-testável, presets na UI e migração da chave legada (#51, v0.3.0-alpha.12)
 
 ## Fase 7 — Root
 

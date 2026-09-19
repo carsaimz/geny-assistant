@@ -4,6 +4,79 @@ Todas as mudanças notáveis deste projeto são documentadas aqui.
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/),
 versionamento [Semântico](https://semver.org/lang/pt-BR/).
 
+## [0.3.0-alpha.12] — Fase 6 completa: APIs remotas / Phase 6 complete: Remote APIs
+
+### Adicionado / Added
+
+- **Catálogo de provedores e perfis de operação** (`core-10`, Fase 6, #50):
+  novo módulo `providers.rs` no geny-core — `ProviderSpec` (id, rótulo,
+  nível gratuito/free-tier/premium/self-hosted, base URL, `requires_key`)
+  com 9 serviços OpenAI-compatíveis (OpenRouter, Groq, Cerebras, Mistral,
+  OpenAI, Ollama, LM Studio, vLLM, llama.cpp server) e `OperationProfile`
+  com regras puras (`suggest_mode`): "offline total" nunca fala com a rede,
+  "servidor de casa" só usa o endpoint self-hosted (nuvem premium NUNCA) e
+  "híbrido" espelha o `auto` clássico. Exports UniFFI
+  (`providers_catalog_json`, `operation_profiles_json`,
+  `suggest_mode_for_profile`); espelho TS (`providers.ts`) com paridade
+  travada em testes dos dois lados. Nas configurações: seletor de provedor
+  que preenche a base URL + selo do nível e seletor de perfil com
+  descrição; no chat, os perfis restringem o modo `auto` (modos explícitos
+  continuam mandando) e o endpoint "custom" é tratado como nuvem.
+  *Provider catalog and operation profiles* (`core-10`, Phase 6, #50):
+  new `providers.rs` module in geny-core — `ProviderSpec` (id, label,
+  free/free-tier/premium/self-hosted tier, base URL, `requires_key`) with
+  9 OpenAI-compatible services (OpenRouter, Groq, Cerebras, Mistral,
+  OpenAI, Ollama, LM Studio, vLLM, llama.cpp server) and `OperationProfile`
+  with pure rules (`suggest_mode`): "fully offline" never talks to the
+  network, "home server" only uses the self-hosted endpoint (premium cloud
+  NEVER) and "hybrid" mirrors the classic `auto`. UniFFI exports
+  (`providers_catalog_json`, `operation_profiles_json`,
+  `suggest_mode_for_profile`); TS mirror (`providers.ts`) with parity
+  locked by tests on both sides. In the settings: a provider picker that
+  fills the base URL + tier badge and a profile picker with descriptions;
+  in the chat, profiles constrain the `auto` mode (explicit modes still
+  win) and the "custom" endpoint is treated as cloud.
+
+- **Streaming SSE no modo remoto** (`app-05`, Fase 6, #49): paridade com o
+  streaming do LLM local (core-05b) — `remoteStream` envia `stream: true`
+  e consome o SSE (`data:`/`[DONE]`, cortes no meio da linha tolerados,
+  timeout de INATIVIDADE de 60 s reiniciado a cada chunk); os tokens
+  alimentam a mesma bolha provisória do chat e o botão Parar aborta via
+  `AbortController`. Erros HTTP/limpeza de bolha seguem o fluxo existente;
+  a detecção de tool call continua no texto completo.
+  *SSE streaming in remote mode* (`app-05`, Phase 6, #49): parity with the
+  local LLM streaming (core-05b) — `remoteStream` sends `stream: true` and
+  consumes the SSE (`data:`/`[DONE]`, mid-line cuts tolerated, 60 s IDLE
+  timeout reset on every chunk); tokens feed the same provisional chat
+  bubble and the Stop button aborts via `AbortController`. HTTP errors and
+  bubble cleanup follow the existing flow; tool-call detection still runs
+  on the full text.
+
+- **Chaves por provedor no Keystore** (`android-09`, Fase 6, #51): uma
+  chave de API por provedor, cifrada com AES-256-GCM (KeystoreManager) —
+  `providerKeySet`/`providerKeyGet`/`providerKeyClear`/`providerKeysList`
+  na ponte, com `ProviderKeys` (puro, JVM-testável) validando o id e
+  derivando o nome canônico `provider-key-<provider>`: nomes arbitrários
+  vindos da web nunca chegam ao cofre e a listagem NUNCA devolve valores.
+  A chave legada `geny.apikey` (localStorage) migra para o cofre no
+  primeiro salvamento e o backup cifrado (GENYBAK1) passa a levar a chave
+  do provedor ativo.
+  *Per-provider keys in the Keystore* (`android-09`, Phase 6, #51): one
+  API key per provider, encrypted with AES-256-GCM (KeystoreManager) —
+  `providerKeySet`/`providerKeyGet`/`providerKeyClear`/`providerKeysList`
+  on the bridge, with `ProviderKeys` (pure, JVM-testable) validating the
+  id and deriving the canonical `provider-key-<provider>` name: arbitrary
+  names coming from the web never reach the vault and the listing NEVER
+  returns values. The legacy `geny.apikey` (localStorage) migrates to the
+  vault on the first save and the encrypted backup (GENYBAK1) now carries
+  the active provider's key.
+
+- **i18n**: 18 chaves novas × 11 idiomas (perfis, provedor, níveis e nota
+  do Keystore).
+  *i18n*: 18 new keys × 11 languages (profiles, provider, tiers and the
+  Keystore note).
+
+
 ## [0.3.0-alpha.11] — Fase 5 completa: Memória / Phase 5 complete: Memory
 
 ### Adicionado / Added

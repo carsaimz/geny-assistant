@@ -7,11 +7,11 @@
 > to the ideas section and become issues. Live checklist: [`TODO.md`](TODO.md).
 
 - [x] **Fase 1 — Fundação / Foundation** *(concluída em v0.1.0-alpha.1)*
-- [ ] **Fase 2 — Voz / Voice** ← em andamento
-- [ ] Fase 3 — LLM local
-- [ ] Fase 4 — Ferramentas avançadas / Advanced tools
-- [ ] Fase 5 — Memória / Memory
-- [ ] Fase 6 — APIs remotas / Remote APIs
+- [x] **Fase 2 — Voz / Voice**
+- [x] Fase 3 — LLM local
+- [x] Fase 4 — Ferramentas avançadas / Advanced tools
+- [x] Fase 5 — Memória / Memory
+- [x] Fase 6 — APIs remotas / Remote APIs
 - [ ] Fase 7 — Root
 - [ ] Fase 8 — Dispositivos externos / External devices
 - [ ] Fase 9 — Multilíngue completo / Full multilingual
@@ -95,13 +95,13 @@
 - [x] Política de retenção configurável (exclusão automática, exportação/importação) — `RetentionPolicy` + envelope v1 (#47)
 - [x] Memória semântica conectada ao prompt de sistema (recall antes de responder) — `system_prompt_with_memory` em 11 idiomas, remoto e local (#45)
 
-## Fase 6 — APIs remotas / Remote APIs
+## Fase 6 — APIs remotas / Remote APIs (v0.3.0-alpha.12)
 
-- [ ] Abstração de provedor com interface comum (gratuitas / free-tier / premium)
-- [ ] Gerenciamento de chaves na UI (Keystore), por provedor
-- [ ] Streaming de respostas (SSE) no modo remoto
-- [ ] Seleção dinâmica refinada (complexidade da tarefa, custo estimado)
-- [ ] Perfis de operação (ex.: "offline total", "híbrido", "servidor de casa")
+- [x] Abstração de provedor com interface comum (gratuitas / free-tier / premium) — catálogo `ProviderSpec` no core (`providers.rs`, UniFFI) + espelho TS com presets que preenchem a base URL (#50)
+- [x] Gerenciamento de chaves na UI (Keystore), por provedor — `providerKeySet/Get/Clear/List` na ponte, cifrado AES-256-GCM, listagem nunca expõe valores (#51)
+- [x] Streaming de respostas (SSE) no modo remoto — `remoteStream` com abort, mesma bolha/Parar do LLM local (#49)
+- [x] Seleção dinâmica refinada (complexidade da tarefa, custo estimado) — nível do provedor (custo) na UI + perfis restringindo o `auto`; complexidade de tarefa segue no `select_backend` do core
+- [x] Perfis de operação (ex.: "offline total", "híbrido", "servidor de casa") — `OperationProfile` no core + regras puras (`suggest_mode`) no remoto, local e offline (#50)
 
 ## Fase 7 — Root
 
