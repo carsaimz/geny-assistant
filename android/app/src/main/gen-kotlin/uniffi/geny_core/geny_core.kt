@@ -752,6 +752,12 @@ internal interface UniffiForeignFutureCompleteVoid : com.sun.jna.Callback {
 
 
 
+
+
+
+
+
+
 // For large crates we prevent `MethodTooLargeException` (see #2340)
 // N.B. the name of the extension is very misleading, since it is 
 // rather `InterfaceTooLargeException`, caused by too many methods 
@@ -775,7 +781,13 @@ fun uniffi_geny_core_checksum_func_core_version(
 ): Short
 fun uniffi_geny_core_checksum_func_is_rtl(
 ): Short
+fun uniffi_geny_core_checksum_func_operation_profiles_json(
+): Short
+fun uniffi_geny_core_checksum_func_providers_catalog_json(
+): Short
 fun uniffi_geny_core_checksum_func_resolve_language(
+): Short
+fun uniffi_geny_core_checksum_func_suggest_mode_for_profile(
 ): Short
 fun uniffi_geny_core_checksum_method_genymemory_apply_retention(
 ): Short
@@ -894,7 +906,13 @@ fun uniffi_geny_core_fn_func_core_version(uniffi_out_err: UniffiRustCallStatus,
 ): RustBuffer.ByValue
 fun uniffi_geny_core_fn_func_is_rtl(`code`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
 ): Byte
+fun uniffi_geny_core_fn_func_operation_profiles_json(uniffi_out_err: UniffiRustCallStatus, 
+): RustBuffer.ByValue
+fun uniffi_geny_core_fn_func_providers_catalog_json(uniffi_out_err: UniffiRustCallStatus, 
+): RustBuffer.ByValue
 fun uniffi_geny_core_fn_func_resolve_language(`code`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+): RustBuffer.ByValue
+fun uniffi_geny_core_fn_func_suggest_mode_for_profile(`profileCode`: RustBuffer.ByValue,`localReady`: Byte,`premiumReady`: Byte,`selfhostedReady`: Byte,`online`: Byte,uniffi_out_err: UniffiRustCallStatus, 
 ): RustBuffer.ByValue
 fun ffi_geny_core_rustbuffer_alloc(`size`: Long,uniffi_out_err: UniffiRustCallStatus, 
 ): RustBuffer.ByValue
@@ -1034,7 +1052,16 @@ private fun uniffiCheckApiChecksums(lib: IntegrityCheckingUniffiLib) {
     if (lib.uniffi_geny_core_checksum_func_is_rtl() != 51185.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
+    if (lib.uniffi_geny_core_checksum_func_operation_profiles_json() != 39611.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if (lib.uniffi_geny_core_checksum_func_providers_catalog_json() != 31184.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
     if (lib.uniffi_geny_core_checksum_func_resolve_language() != 55615.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if (lib.uniffi_geny_core_checksum_func_suggest_mode_for_profile() != 17376.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if (lib.uniffi_geny_core_checksum_method_genymemory_apply_retention() != 21119.toShort()) {
@@ -2206,6 +2233,31 @@ public object FfiConverterSequenceTypeMemoryRecord: FfiConverterRustBuffer<List<
     
 
         /**
+         * Perfis de operação disponíveis (códigos canônicos) em JSON.
+         */ fun `operationProfilesJson`(): kotlin.String {
+            return FfiConverterString.lift(
+    uniffiRustCall() { _status ->
+    UniffiLib.INSTANCE.uniffi_geny_core_fn_func_operation_profiles_json(
+        _status)
+}
+    )
+    }
+    
+
+        /**
+         * Catálogo de provedores conhecidos em JSON (id, label, tier, base_url,
+         * requires_key) — para a UI preencher a URL base e o Kotlin validar ids.
+         */ fun `providersCatalogJson`(): kotlin.String {
+            return FfiConverterString.lift(
+    uniffiRustCall() { _status ->
+    UniffiLib.INSTANCE.uniffi_geny_core_fn_func_providers_catalog_json(
+        _status)
+}
+    )
+    }
+    
+
+        /**
          * Resolve um código de idioma (BCP-47, ex.: `pt-BR`, `zh_CN`, `xyz`) no
          * código canônico do núcleo (`pt-BR`, `zh-CN`, `en`…).
          */ fun `resolveLanguage`(`code`: kotlin.String): kotlin.String {
@@ -2213,6 +2265,20 @@ public object FfiConverterSequenceTypeMemoryRecord: FfiConverterRustBuffer<List<
     uniffiRustCall() { _status ->
     UniffiLib.INSTANCE.uniffi_geny_core_fn_func_resolve_language(
         FfiConverterString.lower(`code`),_status)
+}
+    )
+    }
+    
+
+        /**
+         * Sugere o modo do turno (`remote`/`local`/`offline`) para um perfil de
+         * operação — regras de negócio puras; bateria/rede ficam no chamador.
+         * Perfil desconhecido degrada para `offline` com honestidade.
+         */ fun `suggestModeForProfile`(`profileCode`: kotlin.String, `localReady`: kotlin.Boolean, `premiumReady`: kotlin.Boolean, `selfhostedReady`: kotlin.Boolean, `online`: kotlin.Boolean): kotlin.String {
+            return FfiConverterString.lift(
+    uniffiRustCall() { _status ->
+    UniffiLib.INSTANCE.uniffi_geny_core_fn_func_suggest_mode_for_profile(
+        FfiConverterString.lower(`profileCode`),FfiConverterBoolean.lower(`localReady`),FfiConverterBoolean.lower(`premiumReady`),FfiConverterBoolean.lower(`selfhostedReady`),FfiConverterBoolean.lower(`online`),_status)
 }
     )
     }

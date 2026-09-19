@@ -14,6 +14,7 @@ pub mod error;
 pub mod i18n;
 pub mod memory;
 pub mod orchestrator;
+pub mod providers;
 pub mod retention;
 pub mod session;
 pub mod tools;

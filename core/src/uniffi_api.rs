@@ -337,6 +337,51 @@ impl GenyMemory {
     }
 }
 
+// ------------------------------------------------------ provedores (Fase 6) --
+// TODO core-10: catálogo de provedores OpenAI-compatíveis e perfis de
+// operação — a MESMA fonte que a web usa via `providers.ts` (espelho TS).
+
+/// Catálogo de provedores conhecidos em JSON (id, label, tier, base_url,
+/// requires_key) — para a UI preencher a URL base e o Kotlin validar ids.
+#[uniffi::export]
+pub fn providers_catalog_json() -> String {
+    crate::providers::providers_catalog_json()
+}
+
+/// Perfis de operação disponíveis (códigos canônicos) em JSON.
+#[uniffi::export]
+pub fn operation_profiles_json() -> String {
+    let codes: Vec<&str> = crate::providers::OperationProfile::all()
+        .iter()
+        .map(|p| p.code())
+        .collect();
+    serde_json::to_string(&codes).unwrap_or_else(|_| "[]".to_string())
+}
+
+/// Sugere o modo do turno (`remote`/`local`/`offline`) para um perfil de
+/// operação — regras de negócio puras; bateria/rede ficam no chamador.
+/// Perfil desconhecido degrada para `offline` com honestidade.
+#[uniffi::export]
+pub fn suggest_mode_for_profile(
+    profile_code: String,
+    local_ready: bool,
+    premium_ready: bool,
+    selfhosted_ready: bool,
+    online: bool,
+) -> String {
+    match crate::providers::OperationProfile::from_code(&profile_code) {
+        Some(profile) => crate::providers::suggest_mode(
+            profile,
+            local_ready,
+            premium_ready,
+            selfhosted_ready,
+            online,
+        )
+        .to_string(),
+        None => "offline".to_string(),
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -376,6 +421,31 @@ mod tests {
         );
         assert!(p.contains("Fatos relevantes"));
         assert!(p.contains("- wifi = Rede5G"));
+    }
+
+    #[test]
+    fn provedores_e_perfis_via_uniffi() {
+        // catálogo compartilhado com a web (espelho TS providers.ts)
+        let catalog = providers_catalog_json();
+        assert!(catalog.contains("openrouter"));
+        assert!(catalog.contains("requires_key"));
+        // perfis canônicos
+        let profiles = operation_profiles_json();
+        assert!(profiles.contains("offline-total"));
+        assert!(profiles.contains("home-server"));
+        // regras puras + degradação honesta de perfil desconhecido
+        assert_eq!(
+            suggest_mode_for_profile("offline-total".into(), true, true, true, true),
+            "local"
+        );
+        assert_eq!(
+            suggest_mode_for_profile("home-server".into(), false, true, true, true),
+            "remote"
+        );
+        assert_eq!(
+            suggest_mode_for_profile("quebrado".into(), true, true, true, true),
+            "offline"
+        );
     }
 
     #[test]

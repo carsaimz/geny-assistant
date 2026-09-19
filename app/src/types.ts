@@ -63,6 +63,10 @@ export interface Settings {
   model: string;
   baseUrl: string;
   apiKeySet: boolean;
+  /** Provedor escolhido (preset do catálogo core-10 ou "custom"). */
+  provider?: string;
+  /** Perfil de operação (Fase 6, core-10) — restringe o modo `auto`. */
+  profile?: 'default' | 'offline-total' | 'hybrid' | 'home-server';
   /** Fala as respostas da Geny em voz alta (TTS local). */
   voiceReplies: boolean;
   /** Motor de reconhecimento: sistema on-device ou whisper.cpp local. */
