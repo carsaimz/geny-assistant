@@ -221,7 +221,10 @@ mod tests {
         assert!(provider_by_id("ollama").is_some());
         assert!(provider_by_id("inexistente").is_none());
         // self-hosted local dispensa chave; free-tier exige.
-        assert!(provider_by_id("ollama").unwrap().base_url.starts_with("http://localhost"));
+        assert!(provider_by_id("ollama")
+            .unwrap()
+            .base_url
+            .starts_with("http://localhost"));
         assert!(!provider_by_id("ollama").unwrap().requires_key);
         assert!(provider_by_id("groq").unwrap().requires_key);
     }
@@ -238,7 +241,10 @@ mod tests {
         for entry in &parsed {
             assert!(entry.get("id").and_then(|v| v.as_str()).is_some());
             assert!(entry.get("base_url").and_then(|v| v.as_str()).is_some());
-            assert!(entry.get("requires_key").and_then(|v| v.as_bool()).is_some());
+            assert!(entry
+                .get("requires_key")
+                .and_then(|v| v.as_bool())
+                .is_some());
         }
     }
 
