@@ -98,7 +98,7 @@ describe('chat — streaming do LLM local (core-05b)', () => {
       getRemoteConfig: () => null,
       onStatusChange: () => undefined,
       onAssistantReply: (text) => replies.push(text),
-      onLocalStream: (active) => streamStates.push(active),
+      onStreamActive: (active) => streamStates.push(active),
     });
 
   it('tokens do streaming viram a mensagem final e a bolha sai', async () => {

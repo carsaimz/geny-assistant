@@ -7,7 +7,8 @@ import { pickBackend, type BackendContext, type PickedBackend } from '../core/ba
 import { compactOutcomeJson, toolFollowupInstruction } from '../core/followup';
 import type { LlmEvent } from '../core/llm-types';
 import { matchIntent } from '../core/intent';
-import { remoteComplete, remoteConfigured, tryParseToolCall, type RemoteConfig } from '../core/remote';
+import { remoteComplete, remoteStream, remoteConfigured, tryParseToolCall, type RemoteConfig } from '../core/remote';
+import { effectiveProvider, suggestModeForProfile } from '../core/providers';
 import { buildSystemPrompt } from '../core/system-prompt';
 import { t, tf } from '../i18n';
 import type { ChatMessage, Settings, ToolDefinition, ToolOutcome } from '../types';
@@ -21,10 +22,11 @@ export interface ChatDeps {
   /** Chamada para cada resposta final da Geny (usada pelo TTS — docs §7.4). */
   onAssistantReply?: (text: string) => void;
   /**
-   * Streaming do LLM local (TODO core-05b): ligado quando a geração em
-   * stream começa e desligado quando ela termina (com sucesso ou erro).
+   * Streaming ativo (LLM local core-05b e remoto SSE app-05): ligado quando
+   * a geração em stream começa e desligado quando termina — liga o botão
+   * de Parar em ambos os casos.
    */
-  onLocalStream?: (active: boolean) => void;
+  onStreamActive?: (active: boolean) => void;
 }
 
 export class ChatUI {
@@ -34,13 +36,16 @@ export class ChatUI {
   private messages: ChatMessage[] = [];
   private seq = 0;
 
-  /** Estado do streaming do LLM local (TODO core-05b). */
+  /** Estado do streaming (LLM local core-05b e remoto SSE app-05). */
   private stream: {
     active: boolean;
     buffer: string;
     el: HTMLElement | null;
     raf: number | null;
   } | null = null;
+
+  /** Abort do SSE remoto em voo (botão Parar). */
+  private remoteAbort: AbortController | null = null;
 
   constructor(container: HTMLElement, deps: ChatDeps) {
     this.container = container;
@@ -143,7 +148,14 @@ export class ChatUI {
     if (event.type !== 'llmToken') return;
     const s = this.stream;
     if (s === null || !s.active) return; // token fora de streaming: ignora
-    s.buffer += event.text;
+    this.appendStreamToken(event.text);
+  }
+
+  /** Acumula um token na bolha provisória (rAF batching, local e remoto). */
+  private appendStreamToken(piece: string): void {
+    const s = this.stream;
+    if (s === null) return;
+    s.buffer += piece;
     if (s.raf === null) {
       s.raf = window.requestAnimationFrame(() => {
         if (s === null) return;
@@ -172,7 +184,7 @@ export class ChatUI {
     this.container.appendChild(el);
     this.container.scrollTop = this.container.scrollHeight;
     this.stream = { active: true, buffer: '', el, raf: null };
-    this.deps.onLocalStream?.(true);
+    this.deps.onStreamActive?.(true);
   }
 
   /** Remove a bolha provisória (a mensagem final entra por `push`). */
@@ -183,7 +195,16 @@ export class ChatUI {
     if (s.raf !== null) window.cancelAnimationFrame(s.raf);
     s.el?.remove();
     this.stream = null;
-    this.deps.onLocalStream?.(false);
+    this.deps.onStreamActive?.(false);
+  }
+
+  /**
+   * Parada pedida pela UI (botão Parar, TODO app-05): aborta o SSE remoto
+   * em voo — a promessa rejeita com AbortError e o turno termina limpo.
+   * O streaming local é parado pelo nativo (stopLocalGenerate).
+   */
+  abortRemoteStream(): void {
+    this.remoteAbort?.abort();
   }
 
   // ------------------------------------------------------- confirmation UI --
@@ -252,6 +273,8 @@ export class ChatUI {
         await this.sendOffline(text);
       }
     } catch (err) {
+      this.endStreaming();
+      this.remoteAbort = null;
       this.push({
         id: this.nextId(),
         role: 'assistant',
@@ -267,17 +290,25 @@ export class ChatUI {
    * Seleção de backend para este turno (TODO Fase 3 — bateria, rede e
    * configuração): lê o DeviceContext da ponte (bateria/rede) com valores
    * conservadores quando indisponível e delega ao `pickBackend` puro.
+   *
+   * Fase 6 (TODO core-10): quando um perfil de operação está ativo e o modo
+   * é `auto`, as regras do perfil (espelho do Rust `suggest_mode`) restringem
+   * a escolha — offline-total nunca fala com a rede; servidor de casa só
+   * usa o endpoint self-hosted; híbrido é o auto clássico. Modos explícitos
+   * (remote/local) continuam mandando — o usuário pediu, o perfil respeita.
    */
   private async pickBackendForTurn(settings: Settings, cfg: RemoteConfig | null): Promise<PickedBackend> {
+    const remoteReady = remoteConfigured(cfg);
     const ctx: BackendContext = {
       mode: settings.mode,
-      remoteReady: remoteConfigured(cfg),
+      remoteReady,
       online: true,
       batteryPct: -1,
       batterySaver: false,
       thermalHigh: false,
       localModelFile: settings.localModel,
     };
+    let online = true;
     if (settings.mode !== 'auto') return pickBackend(ctx);
     try {
       const { json } = await bridge.getDeviceContext();
@@ -286,9 +317,24 @@ export class ChatUI {
       ctx.batteryPct = device.batteryPct ?? -1;
       ctx.batterySaver = device.batterySaver ?? false;
       ctx.thermalHigh = device.thermalHigh ?? false;
+      online = ctx.online;
     } catch {
       // sem contexto do dispositivo: segue com os defaults conservadores
       // (assumir online só é usado quando há remoto configurado)
+    }
+    const profile = settings.profile ?? 'default';
+    if (profile !== 'default') {
+      const preset = effectiveProvider(settings.provider);
+      const selfhosted = preset.tier === 'self-hosted';
+      const suggested = suggestModeForProfile({
+        profile,
+        online,
+        localReady: settings.localModel.length > 0,
+        // endpoint "custom" é tratado como nuvem (não dá para saber sozinho)
+        premiumReady: remoteReady && (preset.id === 'custom' || !selfhosted),
+        selfhostedReady: remoteReady && preset.id !== 'custom' && selfhosted,
+      });
+      if (suggested !== null) return suggested;
     }
     return pickBackend(ctx);
   }
@@ -321,7 +367,21 @@ export class ChatUI {
       .slice(-12)
       .map((m) => ({ role: m.role === 'assistant' ? 'assistant' : 'user', content: m.content }));
     const system = await this.systemPrompt();
-    const result = await remoteComplete(cfg, system, history);
+    // TODO app-05 (Fase 6): streaming SSE — paridade com o LLM local. A
+    // bolha provisória recebe os tokens; falha/abort limpa a bolha e o
+    // fluxo de erro do `send` informa o motivo.
+    this.beginStreaming();
+    this.remoteAbort = new AbortController();
+    let result;
+    try {
+      result = await remoteStream(cfg, system, history, {
+        onToken: (piece) => this.appendStreamToken(piece),
+        signal: this.remoteAbort.signal,
+      });
+    } finally {
+      this.remoteAbort = null;
+      this.endStreaming();
+    }
     if (result.intent !== null) {
       const outcome = await this.runTool(result.intent.toolId, result.intent.params);
       this.push({

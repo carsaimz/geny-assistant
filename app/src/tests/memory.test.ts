@@ -88,7 +88,7 @@ describe('recall de memória no prompt (Fase 5)', () => {
       getRemoteConfig: () => null,
       onStatusChange: () => undefined,
       onAssistantReply: () => undefined,
-      onLocalStream: () => undefined,
+      onStreamActive: () => undefined,
     });
     await ui.init();
     await ui.send('qual a senha do wifi?');
@@ -111,7 +111,7 @@ describe('recall de memória no prompt (Fase 5)', () => {
       getRemoteConfig: () => null,
       onStatusChange: () => undefined,
       onAssistantReply: () => undefined,
-      onLocalStream: () => undefined,
+      onStreamActive: () => undefined,
     });
     await ui.init();
     await ui.send('bom dia!');
