@@ -110,13 +110,14 @@ object GenyLocalLlm {
                     } else {
                         executor.execute {
                             try {
-                                instance.generateResponseAsync(prompt) { partial, done ->
-                                    mainHandler.post {
-                                        channel.invokeMethod(
-                                            "onStream",
-                                            mapOf("partial" to partial, "done" to done)
-                                        )
-                                    }
+                                // Synchronous generation delivered as a single
+                                // completed stream chunk (version-safe API).
+                                val text = instance.generateResponse(prompt)
+                                mainHandler.post {
+                                    channel.invokeMethod(
+                                        "onStream",
+                                        mapOf("partial" to text, "done" to true)
+                                    )
                                 }
                             } catch (e: Exception) {
                                 Log.e(TAG, "generateStream failed: ${e.message}")
@@ -148,7 +149,9 @@ object GenyLocalLlm {
     }
 
     private fun applicationContext(): android.content.Context {
-        return AppContextHolder.context
+        val ctx = AppContextHolder.context
+        check(ctx != null) { "AppContextHolder was not initialized" }
+        return ctx
     }
 }
 
