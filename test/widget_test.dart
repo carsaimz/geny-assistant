@@ -3,7 +3,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:private_agent/app.dart';
-import 'package:private_agent/i18n/geny_i18n.dart';
 import 'package:private_agent/models/skill.dart';
 import 'package:private_agent/models/task_step.dart';
 import 'package:private_agent/screens/settings/settings_screen.dart';

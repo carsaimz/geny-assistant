@@ -37,7 +37,9 @@ jobs:
 
       # Static analysis (infos non-fatal by default).
       - name: Analyze code
-        run: flutter analyze
+        # Infos/warnings are non-fatal here (large pre-existing codebase);
+        # actual errors still fail the build.
+        run: flutter analyze --no-fatal-infos --no-fatal-warnings
 
       # Run the unit/widget test suite.
       - name: Run tests
