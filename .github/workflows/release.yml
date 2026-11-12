@@ -5,6 +5,8 @@ on:
   push:
     tags:
       - "v*"
+  workflow_dispatch:
+    # Allows triggering a release build manually (run it on a v* tag ref).
 
 # Avoid parallel release runs for the same ref.
 concurrency:
