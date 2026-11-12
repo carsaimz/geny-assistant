@@ -17,6 +17,10 @@ jobs:
   build:
     name: Build & Release
     runs-on: ubuntu-latest
+    # Required so softprops/action-gh-release can create the release
+    # and upload the APK/AAB assets with the default GITHUB_TOKEN.
+    permissions:
+      contents: write
     steps:
       # Check out the repository source.
       - name: Checkout repository
