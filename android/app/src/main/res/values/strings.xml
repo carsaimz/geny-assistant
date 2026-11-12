@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Geny</string>
+    <string name="accessibility_service_label">Geny Screen Control</string>
+    <string name="accessibility_service_description">Geny uses this service to read the current screen layout and perform taps, swipes, scrolling and typing on your behalf when you ask it to automate a task. No screen content leaves your device except when sent to the AI provider you configured. Disable this service at any time to stop all automation.</string>
+</resources>

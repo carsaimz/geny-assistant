@@ -1,0 +1,95 @@
+# Geny CI — analyze + test, then build debug Android artifacts.
+name: "Geny CI"
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+  workflow_dispatch:
+
+jobs:
+  # Static analysis and unit tests.
+  analyze-test:
+    name: Analyze & Test
+    runs-on: ubuntu-latest
+    steps:
+      # Check out the repository source.
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # Java 17 required by the Android Gradle toolchain (JavaVersion.VERSION_17).
+      - name: Set up Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      # Latest stable Flutter (satisfies Dart SDK ^3.12.2).
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+
+      # Resolve Dart/Flutter dependencies.
+      - name: Install dependencies
+        run: flutter pub get
+
+      # Static analysis (infos non-fatal by default).
+      - name: Analyze code
+        run: flutter analyze
+
+      # Run the unit/widget test suite.
+      - name: Run tests
+        run: flutter test
+
+  # Build debug APK and AAB so the app is installable without release signing.
+  build-android:
+    name: Build Android (debug)
+    needs: analyze-test
+    runs-on: ubuntu-latest
+    steps:
+      # Check out the repository source.
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # Java 17 required by the Android Gradle toolchain (JavaVersion.VERSION_17).
+      - name: Set up Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      # Latest stable Flutter (satisfies Dart SDK ^3.12.2).
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+
+      # Resolve Dart/Flutter dependencies.
+      - name: Install dependencies
+        run: flutter pub get
+
+      # Debug APK (signed with default debug key).
+      - name: Build debug APK
+        run: flutter build apk --debug
+
+      # Debug App Bundle (signed with default debug key).
+      - name: Build debug App Bundle
+        run: flutter build appbundle --debug
+
+      # Upload the debug APK as a workflow artifact.
+      - name: Upload debug APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: geny-debug-apk
+          path: build/app/outputs/flutter-apk/app-debug.apk
+          retention-days: 14
+
+      # Upload the debug AAB as a workflow artifact.
+      - name: Upload debug AAB artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: geny-debug-aab
+          path: build/app/outputs/bundle/debug/app-debug.aab
+          retention-days: 14
